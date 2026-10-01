@@ -1,0 +1,2467 @@
+{
+  "version": 1,
+  "goals": [
+    {
+      "id": "goal-ski-2026",
+      "name": "Ski season prep",
+      "targetDate": "2026-12-19",
+      "focus": [
+        "Legs",
+        "Balance",
+        "Cardio"
+      ],
+      "notes": "Be ready for the first week on snow: stronger quads and posterior chain, steadier single-leg balance, and an aerobic base that survives a full day on the hill.",
+      "status": "active",
+      "createdAt": "2026-08-01T09:00:00.000Z"
+    }
+  ],
+  "plans": [
+    {
+      "id": "plan-ski-base",
+      "goalId": "goal-ski-2026",
+      "name": "Pre-season base",
+      "startDate": "2026-08-03",
+      "weeks": 20,
+      "focus": [
+        "Legs",
+        "Balance",
+        "Cardio"
+      ],
+      "notes": "Four to five sessions a week. Two lower-body lifts, one balance day, one easy run, one longer run. Friday 21 Aug was a travel day and is missing on purpose.",
+      "status": "active",
+      "sessions": [
+        {
+          "id": "ps-lower",
+          "dayOfWeek": 1,
+          "kind": "strength",
+          "title": "Lower body",
+          "focus": "Legs",
+          "notes": "Main squat day. Add load when all five sets are solid.",
+          "exercises": [
+            {
+              "name": "Back squat",
+              "sets": 5,
+              "reps": "5"
+            },
+            {
+              "name": "Romanian deadlift",
+              "sets": 3,
+              "reps": "8"
+            },
+            {
+              "name": "Walking lunge",
+              "sets": 3,
+              "reps": "8"
+            },
+            {
+              "name": "Calf raise",
+              "sets": 3,
+              "reps": "12"
+            }
+          ],
+          "distanceKm": null,
+          "durationMin": null
+        },
+        {
+          "id": "ps-easy",
+          "dayOfWeek": 2,
+          "kind": "run",
+          "title": "Easy run",
+          "focus": "Cardio",
+          "notes": "Conversational. Leave Monday's legs alone.",
+          "exercises": [],
+          "distanceKm": 8,
+          "durationMin": 45
+        },
+        {
+          "id": "ps-balance",
+          "dayOfWeek": 3,
+          "kind": "strength",
+          "title": "Balance",
+          "focus": "Balance",
+          "notes": "Slow eccentrics. The left side sets the load.",
+          "exercises": [
+            {
+              "name": "Bulgarian split squat",
+              "sets": 3,
+              "reps": "8"
+            },
+            {
+              "name": "Single-leg RDL",
+              "sets": 3,
+              "reps": "8"
+            },
+            {
+              "name": "Step-down",
+              "sets": 3,
+              "reps": "8"
+            }
+          ],
+          "distanceKm": null,
+          "durationMin": null
+        },
+        {
+          "id": "ps-posterior",
+          "dayOfWeek": 5,
+          "kind": "strength",
+          "title": "Posterior chain",
+          "focus": "Legs",
+          "notes": "Hinge and hips. Stop nordics if a hamstring feels sharp.",
+          "exercises": [
+            {
+              "name": "Hip thrust",
+              "sets": 3,
+              "reps": "8"
+            },
+            {
+              "name": "Deadlift",
+              "sets": 3,
+              "reps": "5"
+            },
+            {
+              "name": "Nordic curl",
+              "sets": 3,
+              "reps": "6"
+            },
+            {
+              "name": "Side plank",
+              "sets": 3,
+              "reps": "30"
+            }
+          ],
+          "distanceKm": null,
+          "durationMin": null
+        },
+        {
+          "id": "ps-long",
+          "dayOfWeek": 6,
+          "kind": "run",
+          "title": "Long run",
+          "focus": "Cardio",
+          "notes": "Steady effort. Take a hill if the route has one.",
+          "exercises": [],
+          "distanceKm": 14,
+          "durationMin": 85
+        }
+      ]
+    }
+  ],
+  "sessions": [
+    {
+      "id": "log-ps-lower-2026-08-03",
+      "date": "2026-08-03",
+      "kind": "strength",
+      "title": "Lower body",
+      "notes": "First squat day of the block. Kept a rep in reserve.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-lower",
+      "exercises": [
+        {
+          "name": "Back squat",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 70
+            },
+            {
+              "reps": 5,
+              "weightKg": 70
+            },
+            {
+              "reps": 5,
+              "weightKg": 70
+            },
+            {
+              "reps": 5,
+              "weightKg": 70
+            },
+            {
+              "reps": 5,
+              "weightKg": 70
+            }
+          ]
+        },
+        {
+          "name": "Romanian deadlift",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 60
+            },
+            {
+              "reps": 8,
+              "weightKg": 60
+            },
+            {
+              "reps": 8,
+              "weightKg": 60
+            }
+          ]
+        },
+        {
+          "name": "Walking lunge",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 12
+            },
+            {
+              "reps": 8,
+              "weightKg": 12
+            },
+            {
+              "reps": 8,
+              "weightKg": 12
+            }
+          ]
+        },
+        {
+          "name": "Calf raise",
+          "sets": [
+            {
+              "reps": 12,
+              "weightKg": 40
+            },
+            {
+              "reps": 12,
+              "weightKg": 40
+            },
+            {
+              "reps": 12,
+              "weightKg": 40
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-08-03T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-easy-2026-08-04",
+      "date": "2026-08-04",
+      "kind": "run",
+      "title": "Easy run",
+      "notes": "Easy out-and-back. Conversational the whole way.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-easy",
+      "exercises": [],
+      "distanceKm": 5,
+      "durationSec": 1950,
+      "elevationM": 20,
+      "effort": 4,
+      "createdAt": "2026-08-04T07:15:00.000Z"
+    },
+    {
+      "id": "log-ps-balance-2026-08-05",
+      "date": "2026-08-05",
+      "kind": "strength",
+      "title": "Balance",
+      "notes": "Left side is the limiter on split squats.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-balance",
+      "exercises": [
+        {
+          "name": "Bulgarian split squat",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 10
+            },
+            {
+              "reps": 8,
+              "weightKg": 10
+            },
+            {
+              "reps": 8,
+              "weightKg": 10
+            }
+          ]
+        },
+        {
+          "name": "Single-leg RDL",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 12
+            },
+            {
+              "reps": 8,
+              "weightKg": 12
+            },
+            {
+              "reps": 8,
+              "weightKg": 12
+            }
+          ]
+        },
+        {
+          "name": "Step-down",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 0
+            },
+            {
+              "reps": 8,
+              "weightKg": 0
+            },
+            {
+              "reps": 8,
+              "weightKg": 0
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-08-05T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-posterior-2026-08-07",
+      "date": "2026-08-07",
+      "kind": "strength",
+      "title": "Posterior chain",
+      "notes": "Hip thrust lockout was the weak point.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-posterior",
+      "exercises": [
+        {
+          "name": "Hip thrust",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 70
+            },
+            {
+              "reps": 8,
+              "weightKg": 70
+            },
+            {
+              "reps": 8,
+              "weightKg": 70
+            }
+          ]
+        },
+        {
+          "name": "Deadlift",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 80
+            },
+            {
+              "reps": 5,
+              "weightKg": 80
+            },
+            {
+              "reps": 5,
+              "weightKg": 80
+            }
+          ]
+        },
+        {
+          "name": "Nordic curl",
+          "sets": [
+            {
+              "reps": 4,
+              "weightKg": 0
+            },
+            {
+              "reps": 4,
+              "weightKg": 0
+            },
+            {
+              "reps": 4,
+              "weightKg": 0
+            }
+          ]
+        },
+        {
+          "name": "Side plank",
+          "sets": [
+            {
+              "reps": 20,
+              "weightKg": 0
+            },
+            {
+              "reps": 20,
+              "weightKg": 0
+            },
+            {
+              "reps": 20,
+              "weightKg": 0
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-08-07T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-long-2026-08-08",
+      "date": "2026-08-08",
+      "kind": "run",
+      "title": "Long run",
+      "notes": "Steady, not a race. Walked the steepest minute.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-long",
+      "exercises": [],
+      "distanceKm": 8,
+      "durationSec": 3240,
+      "elevationM": 60,
+      "effort": 6,
+      "createdAt": "2026-08-08T07:15:00.000Z"
+    },
+    {
+      "id": "log-ps-lower-2026-08-10",
+      "date": "2026-08-10",
+      "kind": "strength",
+      "title": "Lower body",
+      "notes": "Bar speed was better than last week.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-lower",
+      "exercises": [
+        {
+          "name": "Back squat",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 72.5
+            },
+            {
+              "reps": 5,
+              "weightKg": 72.5
+            },
+            {
+              "reps": 5,
+              "weightKg": 72.5
+            },
+            {
+              "reps": 5,
+              "weightKg": 72.5
+            },
+            {
+              "reps": 5,
+              "weightKg": 72.5
+            }
+          ]
+        },
+        {
+          "name": "Romanian deadlift",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 62.5
+            },
+            {
+              "reps": 8,
+              "weightKg": 62.5
+            },
+            {
+              "reps": 8,
+              "weightKg": 62.5
+            }
+          ]
+        },
+        {
+          "name": "Walking lunge",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 12
+            },
+            {
+              "reps": 8,
+              "weightKg": 12
+            },
+            {
+              "reps": 8,
+              "weightKg": 12
+            }
+          ]
+        },
+        {
+          "name": "Calf raise",
+          "sets": [
+            {
+              "reps": 12,
+              "weightKg": 40
+            },
+            {
+              "reps": 12,
+              "weightKg": 40
+            },
+            {
+              "reps": 12,
+              "weightKg": 40
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-08-10T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-easy-2026-08-11",
+      "date": "2026-08-11",
+      "kind": "run",
+      "title": "Easy run",
+      "notes": "Flat route. Heart rate stayed down.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-easy",
+      "exercises": [],
+      "distanceKm": 5.5,
+      "durationSec": 2112,
+      "elevationM": 35,
+      "effort": 4,
+      "createdAt": "2026-08-11T07:15:00.000Z"
+    },
+    {
+      "id": "log-ps-balance-2026-08-12",
+      "date": "2026-08-12",
+      "kind": "strength",
+      "title": "Balance",
+      "notes": "Slowed the eccentric. Less knee cave.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-balance",
+      "exercises": [
+        {
+          "name": "Bulgarian split squat",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 10
+            },
+            {
+              "reps": 8,
+              "weightKg": 10
+            },
+            {
+              "reps": 8,
+              "weightKg": 10
+            }
+          ]
+        },
+        {
+          "name": "Single-leg RDL",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 14
+            },
+            {
+              "reps": 8,
+              "weightKg": 14
+            },
+            {
+              "reps": 8,
+              "weightKg": 14
+            }
+          ]
+        },
+        {
+          "name": "Step-down",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 0
+            },
+            {
+              "reps": 8,
+              "weightKg": 0
+            },
+            {
+              "reps": 8,
+              "weightKg": 0
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-08-12T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-posterior-2026-08-14",
+      "date": "2026-08-14",
+      "kind": "strength",
+      "title": "Posterior chain",
+      "notes": "Deadlift from the floor felt heavier than the warm-up suggested.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-posterior",
+      "exercises": [
+        {
+          "name": "Hip thrust",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 75
+            },
+            {
+              "reps": 8,
+              "weightKg": 75
+            },
+            {
+              "reps": 8,
+              "weightKg": 75
+            }
+          ]
+        },
+        {
+          "name": "Deadlift",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 85
+            },
+            {
+              "reps": 5,
+              "weightKg": 85
+            },
+            {
+              "reps": 5,
+              "weightKg": 85
+            }
+          ]
+        },
+        {
+          "name": "Nordic curl",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 0
+            },
+            {
+              "reps": 5,
+              "weightKg": 0
+            },
+            {
+              "reps": 5,
+              "weightKg": 0
+            }
+          ]
+        },
+        {
+          "name": "Side plank",
+          "sets": [
+            {
+              "reps": 25,
+              "weightKg": 0
+            },
+            {
+              "reps": 25,
+              "weightKg": 0
+            },
+            {
+              "reps": 25,
+              "weightKg": 0
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-08-14T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-long-2026-08-15",
+      "date": "2026-08-15",
+      "kind": "run",
+      "title": "Long run",
+      "notes": "Added a small hill at the end.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-long",
+      "exercises": [],
+      "distanceKm": 9,
+      "durationSec": 3600,
+      "elevationM": 80,
+      "effort": 6,
+      "createdAt": "2026-08-15T07:15:00.000Z"
+    },
+    {
+      "id": "log-ps-lower-2026-08-17",
+      "date": "2026-08-17",
+      "kind": "strength",
+      "title": "Lower body",
+      "notes": "Knees felt fine. Last set of squats was the hard one.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-lower",
+      "exercises": [
+        {
+          "name": "Back squat",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 75
+            },
+            {
+              "reps": 5,
+              "weightKg": 75
+            },
+            {
+              "reps": 5,
+              "weightKg": 75
+            },
+            {
+              "reps": 5,
+              "weightKg": 75
+            },
+            {
+              "reps": 5,
+              "weightKg": 75
+            }
+          ]
+        },
+        {
+          "name": "Romanian deadlift",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 65
+            },
+            {
+              "reps": 8,
+              "weightKg": 65
+            },
+            {
+              "reps": 8,
+              "weightKg": 65
+            }
+          ]
+        },
+        {
+          "name": "Walking lunge",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 14
+            },
+            {
+              "reps": 8,
+              "weightKg": 14
+            },
+            {
+              "reps": 8,
+              "weightKg": 14
+            }
+          ]
+        },
+        {
+          "name": "Calf raise",
+          "sets": [
+            {
+              "reps": 12,
+              "weightKg": 42.5
+            },
+            {
+              "reps": 12,
+              "weightKg": 42.5
+            },
+            {
+              "reps": 12,
+              "weightKg": 42.5
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-08-17T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-easy-2026-08-18",
+      "date": "2026-08-18",
+      "kind": "run",
+      "title": "Easy run",
+      "notes": "Short hills, still easy.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-easy",
+      "exercises": [],
+      "distanceKm": 6,
+      "durationSec": 2268,
+      "elevationM": 20,
+      "effort": 5,
+      "createdAt": "2026-08-18T07:15:00.000Z"
+    },
+    {
+      "id": "log-ps-balance-2026-08-19",
+      "date": "2026-08-19",
+      "kind": "strength",
+      "title": "Balance",
+      "notes": "Step-downs are humbling. Held the rail less.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-balance",
+      "exercises": [
+        {
+          "name": "Bulgarian split squat",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 12
+            },
+            {
+              "reps": 8,
+              "weightKg": 12
+            },
+            {
+              "reps": 8,
+              "weightKg": 12
+            }
+          ]
+        },
+        {
+          "name": "Single-leg RDL",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 14
+            },
+            {
+              "reps": 8,
+              "weightKg": 14
+            },
+            {
+              "reps": 8,
+              "weightKg": 14
+            }
+          ]
+        },
+        {
+          "name": "Step-down",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 0
+            },
+            {
+              "reps": 8,
+              "weightKg": 0
+            },
+            {
+              "reps": 8,
+              "weightKg": 0
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-08-19T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-long-2026-08-22",
+      "date": "2026-08-22",
+      "kind": "run",
+      "title": "Long run",
+      "notes": "Ten kilometres continuous. Fuelled with water only.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-long",
+      "exercises": [],
+      "distanceKm": 10,
+      "durationSec": 3960,
+      "elevationM": 90,
+      "effort": 6,
+      "createdAt": "2026-08-22T07:15:00.000Z"
+    },
+    {
+      "id": "log-ps-lower-2026-08-24",
+      "date": "2026-08-24",
+      "kind": "strength",
+      "title": "Lower body",
+      "notes": "Lunges a bit wobbly. Slowed them down.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-lower",
+      "exercises": [
+        {
+          "name": "Back squat",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 77.5
+            },
+            {
+              "reps": 5,
+              "weightKg": 77.5
+            },
+            {
+              "reps": 5,
+              "weightKg": 77.5
+            },
+            {
+              "reps": 5,
+              "weightKg": 77.5
+            },
+            {
+              "reps": 5,
+              "weightKg": 77.5
+            }
+          ]
+        },
+        {
+          "name": "Romanian deadlift",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 65
+            },
+            {
+              "reps": 8,
+              "weightKg": 65
+            },
+            {
+              "reps": 8,
+              "weightKg": 65
+            }
+          ]
+        },
+        {
+          "name": "Walking lunge",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 14
+            },
+            {
+              "reps": 8,
+              "weightKg": 14
+            },
+            {
+              "reps": 8,
+              "weightKg": 14
+            }
+          ]
+        },
+        {
+          "name": "Calf raise",
+          "sets": [
+            {
+              "reps": 12,
+              "weightKg": 45
+            },
+            {
+              "reps": 12,
+              "weightKg": 45
+            },
+            {
+              "reps": 12,
+              "weightKg": 45
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-08-24T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-easy-2026-08-25",
+      "date": "2026-08-25",
+      "kind": "run",
+      "title": "Easy run",
+      "notes": "Legs heavy from Monday. Kept the pace honest.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-easy",
+      "exercises": [],
+      "distanceKm": 6.2,
+      "durationSec": 2306,
+      "elevationM": 35,
+      "effort": 4,
+      "createdAt": "2026-08-25T07:15:00.000Z"
+    },
+    {
+      "id": "log-ps-balance-2026-08-26",
+      "date": "2026-08-26",
+      "kind": "strength",
+      "title": "Balance",
+      "notes": "Single-leg RDL balance improving if I stare at the floor less.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-balance",
+      "exercises": [
+        {
+          "name": "Bulgarian split squat",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 12
+            },
+            {
+              "reps": 8,
+              "weightKg": 12
+            },
+            {
+              "reps": 8,
+              "weightKg": 12
+            }
+          ]
+        },
+        {
+          "name": "Single-leg RDL",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 16
+            },
+            {
+              "reps": 8,
+              "weightKg": 16
+            },
+            {
+              "reps": 8,
+              "weightKg": 16
+            }
+          ]
+        },
+        {
+          "name": "Step-down",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 4
+            },
+            {
+              "reps": 8,
+              "weightKg": 4
+            },
+            {
+              "reps": 8,
+              "weightKg": 4
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-08-26T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-posterior-2026-08-28",
+      "date": "2026-08-28",
+      "kind": "strength",
+      "title": "Posterior chain",
+      "notes": "Nordics are short. Stopped before the hamstring felt sharp.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-posterior",
+      "exercises": [
+        {
+          "name": "Hip thrust",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 80
+            },
+            {
+              "reps": 8,
+              "weightKg": 80
+            },
+            {
+              "reps": 8,
+              "weightKg": 80
+            }
+          ]
+        },
+        {
+          "name": "Deadlift",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 90
+            },
+            {
+              "reps": 5,
+              "weightKg": 90
+            },
+            {
+              "reps": 5,
+              "weightKg": 90
+            }
+          ]
+        },
+        {
+          "name": "Nordic curl",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 0
+            },
+            {
+              "reps": 5,
+              "weightKg": 0
+            },
+            {
+              "reps": 5,
+              "weightKg": 0
+            }
+          ]
+        },
+        {
+          "name": "Side plank",
+          "sets": [
+            {
+              "reps": 25,
+              "weightKg": 0
+            },
+            {
+              "reps": 25,
+              "weightKg": 0
+            },
+            {
+              "reps": 25,
+              "weightKg": 0
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-08-28T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-long-2026-08-29",
+      "date": "2026-08-29",
+      "kind": "run",
+      "title": "Long run",
+      "notes": "Legs turned over fine after yesterday's hinge work.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-long",
+      "exercises": [],
+      "distanceKm": 10,
+      "durationSec": 3900,
+      "elevationM": 110,
+      "effort": 7,
+      "createdAt": "2026-08-29T07:15:00.000Z"
+    },
+    {
+      "id": "log-ps-lower-2026-08-31",
+      "date": "2026-08-31",
+      "kind": "strength",
+      "title": "Lower body",
+      "notes": "Solid five across. Quads will feel this tomorrow.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-lower",
+      "exercises": [
+        {
+          "name": "Back squat",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 80
+            },
+            {
+              "reps": 5,
+              "weightKg": 80
+            },
+            {
+              "reps": 5,
+              "weightKg": 80
+            },
+            {
+              "reps": 5,
+              "weightKg": 80
+            },
+            {
+              "reps": 5,
+              "weightKg": 80
+            }
+          ]
+        },
+        {
+          "name": "Romanian deadlift",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 67.5
+            },
+            {
+              "reps": 8,
+              "weightKg": 67.5
+            },
+            {
+              "reps": 8,
+              "weightKg": 67.5
+            }
+          ]
+        },
+        {
+          "name": "Walking lunge",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 16
+            },
+            {
+              "reps": 8,
+              "weightKg": 16
+            },
+            {
+              "reps": 8,
+              "weightKg": 16
+            }
+          ]
+        },
+        {
+          "name": "Calf raise",
+          "sets": [
+            {
+              "reps": 12,
+              "weightKg": 45
+            },
+            {
+              "reps": 12,
+              "weightKg": 45
+            },
+            {
+              "reps": 12,
+              "weightKg": 45
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-08-31T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-easy-2026-09-01",
+      "date": "2026-09-01",
+      "kind": "run",
+      "title": "Easy run",
+      "notes": "Cooler morning. Felt smooth.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-easy",
+      "exercises": [],
+      "distanceKm": 7,
+      "durationSec": 2562,
+      "elevationM": 20,
+      "effort": 5,
+      "createdAt": "2026-09-01T07:15:00.000Z"
+    },
+    {
+      "id": "log-ps-balance-2026-09-02",
+      "date": "2026-09-02",
+      "kind": "strength",
+      "title": "Balance",
+      "notes": "Added a pause at the bottom of the split squat.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-balance",
+      "exercises": [
+        {
+          "name": "Bulgarian split squat",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 14
+            },
+            {
+              "reps": 8,
+              "weightKg": 14
+            },
+            {
+              "reps": 8,
+              "weightKg": 14
+            }
+          ]
+        },
+        {
+          "name": "Single-leg RDL",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 16
+            },
+            {
+              "reps": 8,
+              "weightKg": 16
+            },
+            {
+              "reps": 8,
+              "weightKg": 16
+            }
+          ]
+        },
+        {
+          "name": "Step-down",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 4
+            },
+            {
+              "reps": 8,
+              "weightKg": 4
+            },
+            {
+              "reps": 8,
+              "weightKg": 4
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-09-02T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-posterior-2026-09-04",
+      "date": "2026-09-04",
+      "kind": "strength",
+      "title": "Posterior chain",
+      "notes": "Hinge pattern cleaner than the start of August.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-posterior",
+      "exercises": [
+        {
+          "name": "Hip thrust",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 85
+            },
+            {
+              "reps": 8,
+              "weightKg": 85
+            },
+            {
+              "reps": 8,
+              "weightKg": 85
+            }
+          ]
+        },
+        {
+          "name": "Deadlift",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 90
+            },
+            {
+              "reps": 5,
+              "weightKg": 90
+            },
+            {
+              "reps": 5,
+              "weightKg": 90
+            }
+          ]
+        },
+        {
+          "name": "Nordic curl",
+          "sets": [
+            {
+              "reps": 6,
+              "weightKg": 0
+            },
+            {
+              "reps": 6,
+              "weightKg": 0
+            },
+            {
+              "reps": 6,
+              "weightKg": 0
+            }
+          ]
+        },
+        {
+          "name": "Side plank",
+          "sets": [
+            {
+              "reps": 30,
+              "weightKg": 0
+            },
+            {
+              "reps": 30,
+              "weightKg": 0
+            },
+            {
+              "reps": 30,
+              "weightKg": 0
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-09-04T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-long-2026-09-05",
+      "date": "2026-09-05",
+      "kind": "run",
+      "title": "Long run",
+      "notes": "Longer loop. Kept the same effort, not the same pace on climbs.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-long",
+      "exercises": [],
+      "distanceKm": 12,
+      "durationSec": 4608,
+      "elevationM": 120,
+      "effort": 6,
+      "createdAt": "2026-09-05T07:15:00.000Z"
+    },
+    {
+      "id": "log-ps-lower-2026-09-07",
+      "date": "2026-09-07",
+      "kind": "strength",
+      "title": "Lower body",
+      "notes": "Repeated the squat weight. Depth was the goal, not the plates.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-lower",
+      "exercises": [
+        {
+          "name": "Back squat",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 82.5
+            },
+            {
+              "reps": 5,
+              "weightKg": 82.5
+            },
+            {
+              "reps": 5,
+              "weightKg": 82.5
+            },
+            {
+              "reps": 5,
+              "weightKg": 82.5
+            },
+            {
+              "reps": 5,
+              "weightKg": 82.5
+            }
+          ]
+        },
+        {
+          "name": "Romanian deadlift",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 70
+            },
+            {
+              "reps": 8,
+              "weightKg": 70
+            },
+            {
+              "reps": 8,
+              "weightKg": 70
+            }
+          ]
+        },
+        {
+          "name": "Walking lunge",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 16
+            },
+            {
+              "reps": 8,
+              "weightKg": 16
+            },
+            {
+              "reps": 8,
+              "weightKg": 16
+            }
+          ]
+        },
+        {
+          "name": "Calf raise",
+          "sets": [
+            {
+              "reps": 12,
+              "weightKg": 47.5
+            },
+            {
+              "reps": 12,
+              "weightKg": 47.5
+            },
+            {
+              "reps": 12,
+              "weightKg": 47.5
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-09-07T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-easy-2026-09-08",
+      "date": "2026-09-08",
+      "kind": "run",
+      "title": "Easy run",
+      "notes": "A bit flat. Cut the effort rather than the distance.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-easy",
+      "exercises": [],
+      "distanceKm": 7,
+      "durationSec": 2604,
+      "elevationM": 35,
+      "effort": 6,
+      "createdAt": "2026-09-08T07:15:00.000Z"
+    },
+    {
+      "id": "log-ps-balance-2026-09-09",
+      "date": "2026-09-09",
+      "kind": "strength",
+      "title": "Balance",
+      "notes": "Left side still wobbles, but I finished every rep.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-balance",
+      "exercises": [
+        {
+          "name": "Bulgarian split squat",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 14
+            },
+            {
+              "reps": 8,
+              "weightKg": 14
+            },
+            {
+              "reps": 8,
+              "weightKg": 14
+            }
+          ]
+        },
+        {
+          "name": "Single-leg RDL",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 18
+            },
+            {
+              "reps": 8,
+              "weightKg": 18
+            },
+            {
+              "reps": 8,
+              "weightKg": 18
+            }
+          ]
+        },
+        {
+          "name": "Step-down",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 6
+            },
+            {
+              "reps": 8,
+              "weightKg": 6
+            },
+            {
+              "reps": 8,
+              "weightKg": 6
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-09-09T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-posterior-2026-09-11",
+      "date": "2026-09-11",
+      "kind": "strength",
+      "title": "Posterior chain",
+      "notes": "Side plank time is up. Hips still drop a little on the left.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-posterior",
+      "exercises": [
+        {
+          "name": "Hip thrust",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 90
+            },
+            {
+              "reps": 8,
+              "weightKg": 90
+            },
+            {
+              "reps": 8,
+              "weightKg": 90
+            }
+          ]
+        },
+        {
+          "name": "Deadlift",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 95
+            },
+            {
+              "reps": 5,
+              "weightKg": 95
+            },
+            {
+              "reps": 5,
+              "weightKg": 95
+            }
+          ]
+        },
+        {
+          "name": "Nordic curl",
+          "sets": [
+            {
+              "reps": 6,
+              "weightKg": 0
+            },
+            {
+              "reps": 6,
+              "weightKg": 0
+            },
+            {
+              "reps": 6,
+              "weightKg": 0
+            }
+          ]
+        },
+        {
+          "name": "Side plank",
+          "sets": [
+            {
+              "reps": 30,
+              "weightKg": 0
+            },
+            {
+              "reps": 30,
+              "weightKg": 0
+            },
+            {
+              "reps": 30,
+              "weightKg": 0
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-09-11T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-long-2026-09-12",
+      "date": "2026-09-12",
+      "kind": "run",
+      "title": "Long run",
+      "notes": "Hillier route, more like a ski day than a tempo.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-long",
+      "exercises": [],
+      "distanceKm": 12,
+      "durationSec": 4536,
+      "elevationM": 140,
+      "effort": 7,
+      "createdAt": "2026-09-12T07:15:00.000Z"
+    },
+    {
+      "id": "log-ps-lower-2026-09-14",
+      "date": "2026-09-14",
+      "kind": "strength",
+      "title": "Lower body",
+      "notes": "Moved the squat up again. Bracing felt tighter.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-lower",
+      "exercises": [
+        {
+          "name": "Back squat",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 82.5
+            },
+            {
+              "reps": 5,
+              "weightKg": 82.5
+            },
+            {
+              "reps": 5,
+              "weightKg": 82.5
+            },
+            {
+              "reps": 5,
+              "weightKg": 82.5
+            },
+            {
+              "reps": 5,
+              "weightKg": 82.5
+            }
+          ]
+        },
+        {
+          "name": "Romanian deadlift",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 70
+            },
+            {
+              "reps": 8,
+              "weightKg": 70
+            },
+            {
+              "reps": 8,
+              "weightKg": 70
+            }
+          ]
+        },
+        {
+          "name": "Walking lunge",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 16
+            },
+            {
+              "reps": 8,
+              "weightKg": 16
+            },
+            {
+              "reps": 8,
+              "weightKg": 16
+            }
+          ]
+        },
+        {
+          "name": "Calf raise",
+          "sets": [
+            {
+              "reps": 12,
+              "weightKg": 50
+            },
+            {
+              "reps": 12,
+              "weightKg": 50
+            },
+            {
+              "reps": 12,
+              "weightKg": 50
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-09-14T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-easy-2026-09-15",
+      "date": "2026-09-15",
+      "kind": "run",
+      "title": "Easy run",
+      "notes": "River path. Could have talked in full sentences.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-easy",
+      "exercises": [],
+      "distanceKm": 7.5,
+      "durationSec": 2610,
+      "elevationM": 20,
+      "effort": 5,
+      "createdAt": "2026-09-15T07:15:00.000Z"
+    },
+    {
+      "id": "log-ps-balance-2026-09-16",
+      "date": "2026-09-16",
+      "kind": "strength",
+      "title": "Balance",
+      "notes": "No rail on the step-downs today.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-balance",
+      "exercises": [
+        {
+          "name": "Bulgarian split squat",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 16
+            },
+            {
+              "reps": 8,
+              "weightKg": 16
+            },
+            {
+              "reps": 8,
+              "weightKg": 16
+            }
+          ]
+        },
+        {
+          "name": "Single-leg RDL",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 18
+            },
+            {
+              "reps": 8,
+              "weightKg": 18
+            },
+            {
+              "reps": 8,
+              "weightKg": 18
+            }
+          ]
+        },
+        {
+          "name": "Step-down",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 6
+            },
+            {
+              "reps": 8,
+              "weightKg": 6
+            },
+            {
+              "reps": 8,
+              "weightKg": 6
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-09-16T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-posterior-2026-09-18",
+      "date": "2026-09-18",
+      "kind": "strength",
+      "title": "Posterior chain",
+      "notes": "Deadlift reps were smooth. Left a little in the tank.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-posterior",
+      "exercises": [
+        {
+          "name": "Hip thrust",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 95
+            },
+            {
+              "reps": 8,
+              "weightKg": 95
+            },
+            {
+              "reps": 8,
+              "weightKg": 95
+            }
+          ]
+        },
+        {
+          "name": "Deadlift",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 100
+            },
+            {
+              "reps": 5,
+              "weightKg": 100
+            },
+            {
+              "reps": 5,
+              "weightKg": 100
+            }
+          ]
+        },
+        {
+          "name": "Nordic curl",
+          "sets": [
+            {
+              "reps": 7,
+              "weightKg": 0
+            },
+            {
+              "reps": 7,
+              "weightKg": 0
+            },
+            {
+              "reps": 7,
+              "weightKg": 0
+            }
+          ]
+        },
+        {
+          "name": "Side plank",
+          "sets": [
+            {
+              "reps": 35,
+              "weightKg": 0
+            },
+            {
+              "reps": 35,
+              "weightKg": 0
+            },
+            {
+              "reps": 35,
+              "weightKg": 0
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-09-18T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-long-2026-09-19",
+      "date": "2026-09-19",
+      "kind": "run",
+      "title": "Long run",
+      "notes": "Last three kilometres were the point of the session.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-long",
+      "exercises": [],
+      "distanceKm": 13,
+      "durationSec": 4836,
+      "elevationM": 150,
+      "effort": 7,
+      "createdAt": "2026-09-19T07:15:00.000Z"
+    },
+    {
+      "id": "log-ps-lower-2026-09-21",
+      "date": "2026-09-21",
+      "kind": "strength",
+      "title": "Lower body",
+      "notes": "Easy to rush the Romanian deadlift. Stayed long on the way down.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-lower",
+      "exercises": [
+        {
+          "name": "Back squat",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 85
+            },
+            {
+              "reps": 5,
+              "weightKg": 85
+            },
+            {
+              "reps": 5,
+              "weightKg": 85
+            },
+            {
+              "reps": 5,
+              "weightKg": 85
+            },
+            {
+              "reps": 5,
+              "weightKg": 85
+            }
+          ]
+        },
+        {
+          "name": "Romanian deadlift",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 72.5
+            },
+            {
+              "reps": 8,
+              "weightKg": 72.5
+            },
+            {
+              "reps": 8,
+              "weightKg": 72.5
+            }
+          ]
+        },
+        {
+          "name": "Walking lunge",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 18
+            },
+            {
+              "reps": 8,
+              "weightKg": 18
+            },
+            {
+              "reps": 8,
+              "weightKg": 18
+            }
+          ]
+        },
+        {
+          "name": "Calf raise",
+          "sets": [
+            {
+              "reps": 12,
+              "weightKg": 50
+            },
+            {
+              "reps": 12,
+              "weightKg": 50
+            },
+            {
+              "reps": 12,
+              "weightKg": 50
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-09-21T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-easy-2026-09-22",
+      "date": "2026-09-22",
+      "kind": "run",
+      "title": "Easy run",
+      "notes": "Same loop as last week, a little quicker without pushing.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-easy",
+      "exercises": [],
+      "distanceKm": 8,
+      "durationSec": 2736,
+      "elevationM": 35,
+      "effort": 4,
+      "createdAt": "2026-09-22T07:15:00.000Z"
+    },
+    {
+      "id": "log-ps-balance-2026-09-23",
+      "date": "2026-09-23",
+      "kind": "strength",
+      "title": "Balance",
+      "notes": "Split squats felt even for the first time.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-balance",
+      "exercises": [
+        {
+          "name": "Bulgarian split squat",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 16
+            },
+            {
+              "reps": 8,
+              "weightKg": 16
+            },
+            {
+              "reps": 8,
+              "weightKg": 16
+            }
+          ]
+        },
+        {
+          "name": "Single-leg RDL",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 20
+            },
+            {
+              "reps": 8,
+              "weightKg": 20
+            },
+            {
+              "reps": 8,
+              "weightKg": 20
+            }
+          ]
+        },
+        {
+          "name": "Step-down",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 8
+            },
+            {
+              "reps": 8,
+              "weightKg": 8
+            },
+            {
+              "reps": 8,
+              "weightKg": 8
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-09-23T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-posterior-2026-09-25",
+      "date": "2026-09-25",
+      "kind": "strength",
+      "title": "Posterior chain",
+      "notes": "Strong hip thrust day. This is the ski posterior chain.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-posterior",
+      "exercises": [
+        {
+          "name": "Hip thrust",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 100
+            },
+            {
+              "reps": 8,
+              "weightKg": 100
+            },
+            {
+              "reps": 8,
+              "weightKg": 100
+            }
+          ]
+        },
+        {
+          "name": "Deadlift",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 105
+            },
+            {
+              "reps": 5,
+              "weightKg": 105
+            },
+            {
+              "reps": 5,
+              "weightKg": 105
+            }
+          ]
+        },
+        {
+          "name": "Nordic curl",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 0
+            },
+            {
+              "reps": 8,
+              "weightKg": 0
+            },
+            {
+              "reps": 8,
+              "weightKg": 0
+            }
+          ]
+        },
+        {
+          "name": "Side plank",
+          "sets": [
+            {
+              "reps": 40,
+              "weightKg": 0
+            },
+            {
+              "reps": 40,
+              "weightKg": 0
+            },
+            {
+              "reps": 40,
+              "weightKg": 0
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-09-25T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-long-2026-09-26",
+      "date": "2026-09-26",
+      "kind": "run",
+      "title": "Long run",
+      "notes": "Fourteen kilometres, mostly relaxed. Climb at the finish.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-long",
+      "exercises": [],
+      "distanceKm": 14,
+      "durationSec": 5124,
+      "elevationM": 180,
+      "effort": 6,
+      "createdAt": "2026-09-26T07:15:00.000Z"
+    },
+    {
+      "id": "log-ps-lower-2026-09-28",
+      "date": "2026-09-28",
+      "kind": "strength",
+      "title": "Lower body",
+      "notes": "Best squat day of the block so far.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-lower",
+      "exercises": [
+        {
+          "name": "Back squat",
+          "sets": [
+            {
+              "reps": 5,
+              "weightKg": 90
+            },
+            {
+              "reps": 5,
+              "weightKg": 90
+            },
+            {
+              "reps": 5,
+              "weightKg": 90
+            },
+            {
+              "reps": 5,
+              "weightKg": 90
+            },
+            {
+              "reps": 5,
+              "weightKg": 90
+            }
+          ]
+        },
+        {
+          "name": "Romanian deadlift",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 75
+            },
+            {
+              "reps": 8,
+              "weightKg": 75
+            },
+            {
+              "reps": 8,
+              "weightKg": 75
+            }
+          ]
+        },
+        {
+          "name": "Walking lunge",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 18
+            },
+            {
+              "reps": 8,
+              "weightKg": 18
+            },
+            {
+              "reps": 8,
+              "weightKg": 18
+            }
+          ]
+        },
+        {
+          "name": "Calf raise",
+          "sets": [
+            {
+              "reps": 12,
+              "weightKg": 52.5
+            },
+            {
+              "reps": 12,
+              "weightKg": 52.5
+            },
+            {
+              "reps": 12,
+              "weightKg": 52.5
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-09-28T17:30:00.000Z"
+    },
+    {
+      "id": "log-ps-easy-2026-09-29",
+      "date": "2026-09-29",
+      "kind": "run",
+      "title": "Easy run",
+      "notes": "Easy eight. Ready for Friday.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-easy",
+      "exercises": [],
+      "distanceKm": 8,
+      "durationSec": 2688,
+      "elevationM": 20,
+      "effort": 4,
+      "createdAt": "2026-09-29T07:15:00.000Z"
+    },
+    {
+      "id": "log-ps-balance-2026-09-30",
+      "date": "2026-09-30",
+      "kind": "strength",
+      "title": "Balance",
+      "notes": "Quiet session. Balance work is starting to look like strength.",
+      "goalId": "goal-ski-2026",
+      "planId": "plan-ski-base",
+      "planSessionId": "ps-balance",
+      "exercises": [
+        {
+          "name": "Bulgarian split squat",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 18
+            },
+            {
+              "reps": 8,
+              "weightKg": 18
+            },
+            {
+              "reps": 8,
+              "weightKg": 18
+            }
+          ]
+        },
+        {
+          "name": "Single-leg RDL",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 22
+            },
+            {
+              "reps": 8,
+              "weightKg": 22
+            },
+            {
+              "reps": 8,
+              "weightKg": 22
+            }
+          ]
+        },
+        {
+          "name": "Step-down",
+          "sets": [
+            {
+              "reps": 8,
+              "weightKg": 8
+            },
+            {
+              "reps": 8,
+              "weightKg": 8
+            },
+            {
+              "reps": 8,
+              "weightKg": 8
+            }
+          ]
+        }
+      ],
+      "distanceKm": null,
+      "durationSec": null,
+      "elevationM": null,
+      "effort": null,
+      "createdAt": "2026-09-30T17:30:00.000Z"
+    }
+  ]
+}
