@@ -1,12 +1,15 @@
-import type { LogPreset, Plan, Session, TrainingData } from '../types';
+import type { LogPreset, Plan, Session, TrainingData, WorkoutPreset } from '../types';
 import { addDays, formatPretty, startOfWeek, weekdayIndex } from './dates';
+import { exerciseTargets, sessionTargetsMet, type ExerciseTarget } from './targets';
 
 export interface PlanItem {
   date: string;
   plan: Plan;
   session: Plan['sessions'][number];
-  done: boolean;
+  logs: Session[];
   logged: Session | null;
+  targets: ExerciseTarget[];
+  done: boolean;
 }
 
 export function planCovers(plan: Plan, date: string): boolean {
@@ -34,8 +37,17 @@ export function planItemsForWeek(data: TrainingData, plans: Plan[], anchor: stri
       if (!planCovers(plan, date)) continue;
       for (const session of plan.sessions) {
         if (session.dayOfWeek !== day) continue;
-        const logged = weekSessions.find((entry) => entry.planSessionId === session.id) ?? null;
-        items.push({ date, plan, session, done: logged !== null, logged });
+        const logs = weekSessions.filter((entry) => entry.planSessionId === session.id);
+        const targets = exerciseTargets(session, logs);
+        items.push({
+          date,
+          plan,
+          session,
+          logs,
+          logged: logs[0] ?? null,
+          targets,
+          done: sessionTargetsMet(session, logs),
+        });
       }
     }
   }
@@ -59,6 +71,35 @@ export function recentSessions(data: TrainingData, limit = 6): Session[] {
     .slice(0, limit);
 }
 
+export function logFromPreset(preset: WorkoutPreset, data: TrainingData, date: string): LogPreset {
+  const match = matchPresetToWeek(data, preset, date);
+  const when = match ? (match.date === date ? 'today' : formatPretty(match.date)) : '';
+  return {
+    date,
+    kind: preset.kind,
+    title: preset.name,
+    goalId: match?.plan.goalId ?? activeGoal(data)?.id ?? null,
+    planId: match?.plan.id ?? null,
+    planSessionId: match?.session.id ?? null,
+    templateExercises: preset.exercises,
+    distanceKm: null,
+    durationMin: null,
+    prompt: match
+      ? `Preset · ${preset.name} · counts for ${when}`
+      : preset.kind === 'run'
+        ? `Preset · ${preset.name} · doing the run is the target`
+        : `Preset · ${preset.name} · target is sets and reps`,
+  };
+}
+
+function matchPresetToWeek(data: TrainingData, preset: WorkoutPreset, date: string): PlanItem | null {
+  const items = planItemsForWeek(data, data.plans, date).filter((item) => {
+    if (item.session.kind !== preset.kind) return false;
+    return item.session.title.trim().toLowerCase() === preset.name.trim().toLowerCase();
+  });
+  return items.find((item) => !item.done) ?? items[0] ?? null;
+}
+
 export function buildPreset(plan: Plan, session: Plan['sessions'][number], scheduled: string, today: string): LogPreset {
   const date = scheduled < today ? today : scheduled;
   const when = scheduled === today ? 'today' : formatPretty(scheduled);
@@ -72,7 +113,10 @@ export function buildPreset(plan: Plan, session: Plan['sessions'][number], sched
     templateExercises: session.exercises,
     distanceKm: session.distanceKm,
     durationMin: session.durationMin,
-    prompt: `From the plan · ${session.title} · ${when}`,
+    prompt:
+      session.kind === 'run'
+        ? `From the plan · ${session.title} · ${when} · doing the run is enough`
+        : `From the plan · ${session.title} · ${when} · target is sets and reps`,
   };
 }
 

@@ -1,4 +1,6 @@
 import type {
+  Deletion,
+  Deletions,
   ExerciseEntry,
   Goal,
   GoalStatus,
@@ -9,9 +11,11 @@ import type {
   SessionKind,
   SetEntry,
   TrainingData,
+  WorkoutPreset,
 } from '../types';
 
-const KEY = 'training-tracker:v1';
+const KEY = 'training-tracker:v2';
+const LEGACY_KEY = 'training-tracker:v1';
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -43,6 +47,11 @@ function kind(value: unknown): SessionKind {
   return value === 'run' ? 'run' : 'strength';
 }
 
+function optionalStamp(value: unknown): string | undefined {
+  const stamp = text(value);
+  return stamp || undefined;
+}
+
 function focusList(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   const seen = new Set<string>();
@@ -62,11 +71,13 @@ function normalizeExercise(value: unknown): PlanExercise | null {
   if (!record) return null;
   const name = text(record.name);
   if (!name) return null;
-  return {
+  const exercise: PlanExercise = {
     name,
     sets: Math.max(1, Math.round(numberOr(record.sets, 1))),
     reps: text(record.reps) || '5',
   };
+  if (record.count === 'seconds') exercise.count = 'seconds';
+  return exercise;
 }
 
 function normalizeSet(value: unknown): SetEntry | null {
@@ -121,6 +132,7 @@ function normalizeGoal(value: unknown): Goal | null {
     notes: text(record.notes),
     status: status(record.status),
     createdAt: text(record.createdAt) || new Date().toISOString(),
+    updatedAt: optionalStamp(record.updatedAt),
   };
 }
 
@@ -141,6 +153,27 @@ function normalizePlan(value: unknown): Plan | null {
       ? record.sessions.map(normalizePlanSession).filter((item) => item !== null)
       : [],
     status: status(record.status),
+    updatedAt: optionalStamp(record.updatedAt),
+  };
+}
+
+function normalizePreset(value: unknown): WorkoutPreset | null {
+  const record = asRecord(value);
+  if (!record) return null;
+  const name = text(record.name);
+  if (!name) return null;
+  const presetKind = kind(record.kind);
+  return {
+    id: text(record.id) || `preset-${Math.random().toString(36).slice(2, 8)}`,
+    name,
+    kind: presetKind,
+    focus: text(record.focus),
+    notes: text(record.notes),
+    exercises: presetKind === 'strength' && Array.isArray(record.exercises)
+      ? record.exercises.map(normalizeExercise).filter((item) => item !== null)
+      : [],
+    createdAt: text(record.createdAt) || new Date().toISOString(),
+    updatedAt: optionalStamp(record.updatedAt),
   };
 }
 
@@ -168,34 +201,138 @@ function normalizeSession(value: unknown): Session | null {
     elevationM: numberOrNull(record.elevationM),
     effort: effort !== null ? Math.min(10, Math.max(1, Math.round(effort))) : null,
     createdAt: text(record.createdAt) || new Date().toISOString(),
+    updatedAt: optionalStamp(record.updatedAt),
   };
 }
 
+function normalizeDeletion(value: unknown): Deletion | null {
+  const record = asRecord(value);
+  if (!record) return null;
+  const id = text(record.id);
+  const at = text(record.at);
+  if (!id || !at) return null;
+  return { id, at };
+}
+
+function deletionList(value: unknown): Deletion[] {
+  if (!Array.isArray(value)) return [];
+  const map = new Map<string, Deletion>();
+  for (const item of value) {
+    const deletion = normalizeDeletion(item);
+    if (!deletion) continue;
+    const previous = map.get(deletion.id);
+    if (!previous || deletion.at > previous.at) map.set(deletion.id, deletion);
+  }
+  return [...map.values()];
+}
+
+export function emptyDeletions(): Deletions {
+  return { goals: [], plans: [], presets: [], sessions: [] };
+}
+
+function normalizeDeletions(value: unknown): Deletions {
+  const record = asRecord(value);
+  if (!record) return emptyDeletions();
+  return {
+    goals: deletionList(record.goals),
+    plans: deletionList(record.plans),
+    presets: deletionList(record.presets),
+    sessions: deletionList(record.sessions),
+  };
+}
+
+function entityStamp(item: { updatedAt?: string; createdAt?: string }): string {
+  return item.updatedAt || item.createdAt || '';
+}
+
+function withoutDeleted<T extends { id: string; updatedAt?: string; createdAt?: string }>(items: T[], deletions: Deletion[]): T[] {
+  const tombstones = new Map(deletions.map((item) => [item.id, item.at]));
+  return items.filter((item) => {
+    const at = tombstones.get(item.id);
+    return !at || entityStamp(item) > at;
+  });
+}
+
 export function emptyData(): TrainingData {
-  return { version: 1, goals: [], plans: [], sessions: [] };
+  return { version: 1, goals: [], plans: [], presets: [], sessions: [], deleted: emptyDeletions() };
 }
 
 export function normalize(input: unknown): TrainingData {
   const record = asRecord(input);
   if (!record) throw new Error('The file needs to be a JSON object.');
-  if (!Array.isArray(record.goals) || !Array.isArray(record.plans) || !Array.isArray(record.sessions)) {
+  if (record.goals !== undefined && !Array.isArray(record.goals)) throw new Error('Goals need to be an array.');
+  if (record.plans !== undefined && !Array.isArray(record.plans)) throw new Error('Plans need to be an array.');
+  if (record.sessions !== undefined && !Array.isArray(record.sessions)) throw new Error('Sessions need to be an array.');
+  if (!Array.isArray(record.goals) && !Array.isArray(record.plans) && !Array.isArray(record.sessions)) {
     throw new Error('The file needs goals, plans, and sessions arrays.');
   }
-  const goals = record.goals.map(normalizeGoal).filter((item) => item !== null);
-  const plans = record.plans.map(normalizePlan).filter((item) => item !== null);
-  const sessions = record.sessions.map(normalizeSession).filter((item) => item !== null);
+  const deleted = normalizeDeletions(record.deleted);
+  const goals = withoutDeleted(
+    (Array.isArray(record.goals) ? record.goals : []).map(normalizeGoal).filter((item) => item !== null),
+    deleted.goals,
+  );
+  const plans = withoutDeleted(
+    (Array.isArray(record.plans) ? record.plans : []).map(normalizePlan).filter((item) => item !== null),
+    deleted.plans,
+  );
+  const presets = withoutDeleted(
+    (Array.isArray(record.presets) ? record.presets : []).map(normalizePreset).filter((item) => item !== null),
+    deleted.presets,
+  );
+  const sessions = withoutDeleted(
+    (Array.isArray(record.sessions) ? record.sessions : []).map(normalizeSession).filter((item) => item !== null),
+    deleted.sessions,
+  );
   goals.sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
   plans.sort((a, b) => a.startDate.localeCompare(b.startDate) || a.id.localeCompare(b.id));
   sessions.sort((a, b) => a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
-  return { version: 1, goals, plans, sessions };
+  return { version: 1, goals, plans, presets, sessions, deleted };
 }
 
 export function serialize(data: TrainingData): string {
   return `${JSON.stringify(normalize(data), null, 2)}\n`;
 }
 
+function rememberDeletion(list: Deletion[], id: string, at: string): Deletion[] {
+  return [...list.filter((item) => item.id !== id), { id, at }];
+}
+
+export function removeGoal(data: TrainingData, goalId: string): TrainingData {
+  const at = new Date().toISOString();
+  const plans = data.plans.filter((plan) => plan.goalId === goalId);
+  return {
+    ...data,
+    goals: data.goals.filter((goal) => goal.id !== goalId),
+    plans: data.plans.filter((plan) => plan.goalId !== goalId),
+    deleted: {
+      ...data.deleted,
+      goals: rememberDeletion(data.deleted.goals, goalId, at),
+      plans: plans.reduce((list, plan) => rememberDeletion(list, plan.id, at), data.deleted.plans),
+    },
+  };
+}
+
+export function removePlan(data: TrainingData, planId: string): TrainingData {
+  const at = new Date().toISOString();
+  return {
+    ...data,
+    plans: data.plans.filter((plan) => plan.id !== planId),
+    deleted: { ...data.deleted, plans: rememberDeletion(data.deleted.plans, planId, at) },
+  };
+}
+
+export function removeSession(data: TrainingData, sessionId: string): TrainingData {
+  const at = new Date().toISOString();
+  return {
+    ...data,
+    sessions: data.sessions.filter((session) => session.id !== sessionId),
+    deleted: { ...data.deleted, sessions: rememberDeletion(data.deleted.sessions, sessionId, at) },
+  };
+}
+
 export function loadLocal(): TrainingData | null {
   try {
+    localStorage.removeItem(LEGACY_KEY);
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     return normalize(JSON.parse(raw));

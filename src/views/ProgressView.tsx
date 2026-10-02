@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { DistanceChart, LiftChart, PaceChart } from '../components/Charts';
+import { WeekBoard } from '../components/WeekBoard';
 import { addDays, formatPretty, todayISO } from '../lib/dates';
 import { formatDuration, formatPace, trimNum } from '../lib/format';
 import { cx } from '../lib/cx';
 import { averagePace, exerciseOptions, liftSeries, runPoints, sessionSummary, summarize, weeklyDistance } from '../lib/stats';
-import type { TrainingData } from '../types';
+import { activeGoal } from '../lib/plans';
+import type { LogPreset, TrainingData } from '../types';
 
 type RangeId = '4w' | '12w' | 'all';
 type KindFilter = 'all' | 'strength' | 'run';
 
-export function ProgressView({ data }: { data: TrainingData }) {
+export function ProgressView({ data, onLog }: { data: TrainingData; onLog: (preset: LogPreset) => void }) {
   const today = todayISO();
   const [range, setRange] = useState<RangeId>('12w');
   const [kind, setKind] = useState<KindFilter>('all');
@@ -32,14 +34,18 @@ export function ProgressView({ data }: { data: TrainingData }) {
   const easy = runs.filter((point) => !point.long);
   const earlyPace = averagePace(easy.slice(0, 3));
   const latePace = averagePace(easy.slice(-3));
+  const goal = activeGoal(data);
+  const plans = goal ? data.plans.filter((plan) => plan.goalId === goal.id && plan.status === 'active') : [];
 
   return (
     <div className="stack page">
       <header className="page-head">
         <p className="kicker">History</p>
         <h1>Progress</h1>
-        <p className="lead">Lifts, kilometres, and the sessions behind them.</p>
+        <p className="lead">This week is sets, reps, and runs completed. Load and pace show up once you log them.</p>
       </header>
+
+      {plans.length > 0 ? <WeekBoard data={data} plans={plans} onLog={onLog} /> : null}
 
       <div className="filters" role="group" aria-label="Time range">
         {([

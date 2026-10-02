@@ -4,17 +4,21 @@ import { Field } from '../components/Field';
 import {
   COMMON_LIFTS,
   RUN_TITLES,
+  applyTemplateMeta,
   blankExercise,
   blankSet,
   draftFromPreset,
   draftFromSession,
+  exercisesFromTemplate,
   blankDraft,
   type Draft,
 } from '../lib/draft';
 import { isISODate, startOfWeek, todayISO } from '../lib/dates';
 import { parseNum } from '../lib/format';
-import { planChoices } from '../lib/plans';
+import { findPlanSession, logFromPreset, planChoices } from '../lib/plans';
 import { cx } from '../lib/cx';
+import { ExerciseDemo } from '../components/ExerciseDemo';
+import { findDemo } from '../lib/demos';
 import type { DraftRequest } from './draft-request';
 import type { Session, TrainingData } from '../types';
 
@@ -33,7 +37,11 @@ export function LogView({
 }) {
   const existing = sessionId ? data.sessions.find((session) => session.id === sessionId) : undefined;
   const [draft, setDraft] = useState<Draft>(() => {
-    if (existing) return draftFromSession(existing);
+    if (existing) {
+      const base = draftFromSession(existing);
+      const template = existing.planSessionId ? findPlanSession(data, existing.planSessionId)?.session.exercises ?? [] : [];
+      return applyTemplateMeta(base, template);
+    }
     if (request.mode === 'preset') return draftFromPreset(request.preset, data.sessions);
     return blankDraft(todayISO());
   });
@@ -80,6 +88,10 @@ export function LogView({
       goalId: choice.plan.goalId,
       kind: choice.session.kind,
       title: choice.session.title,
+      exercises: choice.session.kind === 'strength' ? exercisesFromTemplate(choice.session.exercises, data.sessions) : current.exercises,
+      prompt: choice.session.kind === 'run' ? `${choice.session.title} · doing the run is enough` : `${choice.session.title} · target is sets and reps`,
+      distanceHint: choice.session.kind === 'run' ? 'Optional. Saving with this blank still counts as doing the run.' : '',
+      durationHint: choice.session.kind === 'run' ? 'Optional.' : '',
     }));
   }
 
@@ -101,6 +113,23 @@ export function LogView({
         <h1>{existing ? draft.title || 'Session' : 'Log a session'}</h1>
       </header>
       {draft.prompt ? <p className="callout">{draft.prompt}</p> : null}
+      {!existing && data.presets.length > 0 ? (
+        <div className="stack">
+          <p className="kicker">Start from a preset</p>
+          <div className="chips" aria-label="Workout presets">
+            {data.presets.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className={cx('chip', draft.title === preset.name && draft.kind === preset.kind && 'on')}
+                onClick={() => setDraft(draftFromPreset(logFromPreset(preset, data, draft.date || todayISO()), data.sessions))}
+              >
+                {preset.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="seg" role="group" aria-label="Session type">
         <button type="button" className={cx(draft.kind === 'strength' && 'on')} onClick={() => update('kind', 'strength')}>
@@ -176,13 +205,14 @@ export function LogView({
         <StrengthFields draft={draft} setDraft={setDraft} />
       ) : (
         <div className="stack">
+          <p className="muted fine">Distance, time, and effort are optional. Saving the run is enough for the week.</p>
           <div className="form-grid two">
             <Field label="Distance (km)" hint={draft.distanceHint}>
               <input
                 inputMode="decimal"
                 value={draft.distanceKm}
                 onChange={(event) => update('distanceKm', event.target.value)}
-                placeholder="8"
+                placeholder="Optional"
               />
             </Field>
             <Field label="Climb (m)">
@@ -196,10 +226,10 @@ export function LogView({
           </div>
           <div className="form-grid two">
             <Field label="Minutes" hint={draft.durationHint}>
-              <input inputMode="numeric" value={draft.durationMin} onChange={(event) => update('durationMin', event.target.value)} placeholder="45" />
+              <input inputMode="numeric" value={draft.durationMin} onChange={(event) => update('durationMin', event.target.value)} placeholder="Optional" />
             </Field>
             <Field label="Seconds">
-              <input inputMode="numeric" value={draft.durationSec} onChange={(event) => update('durationSec', event.target.value)} placeholder="0" />
+              <input inputMode="numeric" value={draft.durationSec} onChange={(event) => update('durationSec', event.target.value)} placeholder="Optional" />
             </Field>
           </div>
           <div className="field">
@@ -231,7 +261,7 @@ export function LogView({
         </p>
       ) : null}
 
-      <div className="form-actions">
+      <div className="form-actions save-bar">
         <button type="submit" className="btn primary">
           Save session
         </button>
@@ -260,6 +290,8 @@ export function LogView({
 }
 
 function StrengthFields({ draft, setDraft }: { draft: Draft; setDraft: (value: Draft | ((current: Draft) => Draft)) => void }) {
+  const [demoKey, setDemoKey] = useState<string | null>(null);
+
   function addLift(name: string) {
     setDraft((current) => {
       if (current.exercises.some((exercise) => exercise.name.trim().toLowerCase() === name.toLowerCase())) return current;
@@ -273,6 +305,7 @@ function StrengthFields({ draft, setDraft }: { draft: Draft; setDraft: (value: D
 
   return (
     <div className="stack">
+      <p className="muted fine">Load is optional. This week’s target is the sets and reps.</p>
       <div className="chips" aria-label="Common lifts">
         {COMMON_LIFTS.map((name) => (
           <button key={name} type="button" className="chip" onClick={() => addLift(name)}>
@@ -308,14 +341,32 @@ function StrengthFields({ draft, setDraft }: { draft: Draft; setDraft: (value: D
               Remove
             </button>
           </div>
+          {exercise.targetLabel ? <p className="muted fine">Target {exercise.targetLabel}. Kilograms are not part of the target.</p> : null}
+          {findDemo(exercise.name) ? (
+            <button
+              type="button"
+              className="btn ghost small"
+              aria-expanded={demoKey === exercise.key}
+              onClick={() => setDemoKey(demoKey === exercise.key ? null : exercise.key)}
+            >
+              {demoKey === exercise.key ? 'Hide demo' : 'How to do this'}
+            </button>
+          ) : null}
+          {demoKey === exercise.key ? <ExerciseDemo name={exercise.name} /> : null}
+          <div className="set-head" aria-hidden="true">
+            <span />
+            <span>{exercise.count === 'seconds' ? 'Seconds' : 'Reps'}</span>
+            <span>kg</span>
+            <span />
+          </div>
           {exercise.sets.map((set, setIndex) => (
             <div key={set.key} className="set-row">
               <span>{setIndex + 1}</span>
               <input
                 inputMode="numeric"
-                aria-label={`Set ${setIndex + 1} reps`}
+                aria-label={`Set ${setIndex + 1} ${exercise.count === 'seconds' ? 'seconds' : 'reps'}`}
                 value={set.reps}
-                placeholder="Reps"
+                placeholder={exercise.count === 'seconds' ? 'Sec' : 'Reps'}
                 onChange={(event) =>
                   setDraft((current) => ({
                     ...current,
@@ -406,7 +457,7 @@ function toSession(draft: Draft, id: string, createdAt: string): Session | strin
         const weight = parseNum(set.weightKg);
         sets.push({ reps: Math.round(reps), weightKg: weight === null ? 0 : Math.max(0, Math.round(weight * 10) / 10) });
       }
-      if (sets.length === 0) return `Add reps for ${name}.`;
+      if (sets.length === 0) return `Add ${exercise.count === 'seconds' ? 'seconds' : 'reps'} for ${name}.`;
       exercises.push({ name, sets });
     }
     if (exercises.length === 0) return 'Add at least one exercise.';
@@ -423,16 +474,17 @@ function toSession(draft: Draft, id: string, createdAt: string): Session | strin
       elevationM: null,
       effort: null,
       createdAt,
+      updatedAt: new Date().toISOString(),
     };
   }
 
   const distance = parseNum(draft.distanceKm);
-  const minutes = parseNum(draft.durationMin) ?? 0;
-  const seconds = parseNum(draft.durationSec) ?? 0;
-  if (distance === null || distance <= 0) return 'Enter the distance in kilometres.';
-  if (minutes < 0 || seconds < 0) return 'Time can’t be negative.';
-  const durationSec = Math.round(minutes * 60 + seconds);
-  if (durationSec <= 0) return 'Enter how long the run took.';
+  const minutes = parseNum(draft.durationMin);
+  const seconds = parseNum(draft.durationSec);
+  if ((minutes !== null && minutes < 0) || (seconds !== null && seconds < 0) || (distance !== null && distance < 0)) {
+    return 'Distance and time can’t be negative.';
+  }
+  const durationSec = Math.round((minutes ?? 0) * 60 + (seconds ?? 0));
   const elevation = parseNum(draft.elevationM);
   return {
     id,
@@ -442,10 +494,11 @@ function toSession(draft: Draft, id: string, createdAt: string): Session | strin
     notes: draft.notes.trim(),
     ...link,
     exercises: [],
-    distanceKm: Math.round(distance * 100) / 100,
-    durationSec,
+    distanceKm: distance !== null && distance > 0 ? Math.round(distance * 100) / 100 : null,
+    durationSec: durationSec > 0 ? durationSec : null,
     elevationM: elevation === null ? null : Math.max(0, elevation),
     effort: draft.effort,
     createdAt,
+    updatedAt: new Date().toISOString(),
   };
 }

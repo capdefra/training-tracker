@@ -1,12 +1,21 @@
 import { useState } from 'react';
 import { commitTrainingFile, loadGithubSettings, saveGithubSettings, type GithubSettings } from '../lib/github';
+import { GIST_FILENAME } from '../lib/gist';
 import { downloadData, normalize, serialize } from '../lib/storage';
+import type { SyncStatus } from '../hooks/useTrainingData';
 import type { TrainingData } from '../types';
 
 export function DataView({
   data,
   dirty,
   persisted,
+  syncStatus,
+  syncError,
+  gistId,
+  gistConnected,
+  onConnectGist,
+  onDisconnectGist,
+  onForceSync,
   onImport,
   onReload,
   onSynced,
@@ -14,6 +23,13 @@ export function DataView({
   data: TrainingData;
   dirty: boolean;
   persisted: boolean;
+  syncStatus: SyncStatus;
+  syncError: string | null;
+  gistId: string;
+  gistConnected: boolean;
+  onConnectGist: (gistId: string, token: string) => Promise<void>;
+  onDisconnectGist: () => void;
+  onForceSync: () => Promise<void>;
   onImport: (data: TrainingData) => void;
   onReload: () => Promise<void>;
   onSynced: () => void;
@@ -26,6 +42,9 @@ export function DataView({
   const [settings, setSettings] = useState<GithubSettings>(() => loadGithubSettings());
   const [commitUrl, setCommitUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [gistInput, setGistInput] = useState(gistId);
+  const [tokenInput, setTokenInput] = useState('');
+  const [connecting, setConnecting] = useState(false);
 
   function report(text: string) {
     setError(null);
@@ -95,15 +114,48 @@ export function DataView({
         <p className="kicker">Storage</p>
         <h1>Data</h1>
         <p className="lead">
-          {data.sessions.length} sessions · {data.goals.length} {data.goals.length === 1 ? 'goal' : 'goals'} · {data.plans.length}{' '}
-          {data.plans.length === 1 ? 'plan' : 'plans'}
+          {data.sessions.length} sessions · {data.presets.length} presets · {data.goals.length} {data.goals.length === 1 ? 'goal' : 'goals'} ·{' '}
+          {data.plans.length} {data.plans.length === 1 ? 'plan' : 'plans'}
         </p>
       </header>
+
+      <GistSync
+        connected={gistConnected}
+        gistId={gistId}
+        gistInput={gistInput}
+        tokenInput={tokenInput}
+        status={syncStatus}
+        error={syncError}
+        connecting={connecting}
+        onGistInput={setGistInput}
+        onTokenInput={setTokenInput}
+        onConnect={() => {
+          setConnecting(true);
+          void onConnectGist(gistInput, tokenInput)
+            .then(() => {
+              setTokenInput('');
+              report('Connected. This browser and the gist now share one log.');
+            })
+            .catch(() => undefined)
+            .finally(() => setConnecting(false));
+        }}
+        onDisconnect={() => {
+          onDisconnectGist();
+          setTokenInput('');
+          setGistInput('');
+          report('Disconnected. The log in this browser stays here.');
+        }}
+        onSync={() => {
+          void onForceSync()
+            .then(() => report('Synced with the gist.'))
+            .catch(() => undefined);
+        }}
+      />
 
       <section className="card stack">
         <h2>Where the log lives</h2>
         <p>
-          Edits are saved in this browser immediately. The file in the repo, <code>public/data/training.json</code>, is what a new browser and GitHub Pages load.
+          This browser keeps a cache so logging works offline. A private gist is the copy your phone and laptop share. The file shipped with the site, <code>public/data/training.json</code>, is only the starter program.
         </p>
         <p className={dirty ? 'callout' : 'notice'}>
           {dirty
@@ -167,7 +219,11 @@ git push`}</pre>
           </button>
         ) : (
           <div className="confirm">
-            <p>Discard browser edits and load the file this site was built with?</p>
+            <p>
+              {gistConnected
+                ? 'Load the program shipped with the site, then merge it with the gist. Sessions already in the gist stay.'
+                : 'Discard browser edits and load the file this site was built with?'}
+            </p>
             <button type="button" className="btn danger small" onClick={() => void reload()}>
               Discard and reload
             </button>
@@ -178,11 +234,11 @@ git push`}</pre>
         )}
       </section>
 
-      <section className="card stack">
-        <h2>Commit from this browser</h2>
+      <details className="card stack">
+        <summary>Publish the starter file to the repository</summary>
         <p>
-          Optional. A fine-grained personal access token with Contents read and write on this repository can update <code>public/data/training.json</code> directly.
-          The token stays in this browser and is not written into the training file.
+          Optional, and separate from gist sync. A fine-grained token with Contents read and write on this repository can update <code>public/data/training.json</code>.
+          That token stays in this browser and is never written into the log. Day-to-day logging uses the gist above.
         </p>
         <label className="field">
           <span>Token</span>
@@ -233,10 +289,107 @@ git push`}</pre>
             </a>
           </p>
         ) : null}
-      </section>
+      </details>
 
       {message ? <p className="notice">{message}</p> : null}
       {error ? <p className="error">{error}</p> : null}
     </div>
+  );
+}
+
+function GistSync({
+  connected,
+  gistId,
+  gistInput,
+  tokenInput,
+  status,
+  error,
+  connecting,
+  onGistInput,
+  onTokenInput,
+  onConnect,
+  onDisconnect,
+  onSync,
+}: {
+  connected: boolean;
+  gistId: string;
+  gistInput: string;
+  tokenInput: string;
+  status: SyncStatus;
+  error: string | null;
+  connecting: boolean;
+  onGistInput: (value: string) => void;
+  onTokenInput: (value: string) => void;
+  onConnect: () => void;
+  onDisconnect: () => void;
+  onSync: () => void;
+}) {
+  const label = status === 'syncing' ? 'Syncing' : status === 'synced' ? 'Synced' : status === 'error' ? 'Needs attention' : 'Not syncing';
+  return (
+    <section className="card stack">
+      <div className="split">
+        <h2>Sync across devices</h2>
+        <span className={`sync-pill ${status}`}>
+          <i className="sync-dot" />
+          {label}
+        </span>
+      </div>
+      <p>
+        The log in this browser is a cache. A private GitHub gist is the copy your phone and laptop share. The gist id and token stay in this browser and are never written into the training file.
+      </p>
+      {connected ? (
+        <div className="stack">
+          <p>
+            Connected to gist <code>{gistId}</code>, file <code>{GIST_FILENAME}</code>.
+          </p>
+          {error ? <p className="error">{error}</p> : null}
+          <div className="form-actions">
+            <button type="button" className="btn primary" disabled={status === 'syncing'} onClick={onSync}>
+              Sync now
+            </button>
+            <button type="button" className="btn danger ghost" onClick={onDisconnect}>
+              Disconnect
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="stack">
+          <ol className="steps">
+            <li>
+              Create a <a className="text-link" href="https://github.com/settings/tokens/new?scopes=gist&description=Training%20tracker" target="_blank" rel="noreferrer">classic personal access token</a> with only the <code>gist</code> scope.
+            </li>
+            <li>
+              Create a <a className="text-link" href="https://gist.github.com/" target="_blank" rel="noreferrer">secret gist</a>. Name the file <code>{GIST_FILENAME}</code>. The contents can be <code>{'{}'}</code>.
+            </li>
+            <li>Copy the gist id from the URL (the long id after your username) and paste it here, on each device, with the token.</li>
+          </ol>
+          <label className="field">
+            <span>Gist id or URL</span>
+            <input
+              value={gistInput}
+              autoComplete="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              placeholder="gist.github.com/you/…"
+              onChange={(event) => onGistInput(event.target.value)}
+            />
+          </label>
+          <label className="field">
+            <span>Token</span>
+            <input
+              type="password"
+              value={tokenInput}
+              autoComplete="off"
+              placeholder="ghp_…"
+              onChange={(event) => onTokenInput(event.target.value)}
+            />
+          </label>
+          {error ? <p className="error">{error}</p> : null}
+          <button type="button" className="btn primary" disabled={connecting || !gistInput.trim() || !tokenInput.trim()} onClick={onConnect}>
+            {connecting ? 'Connecting…' : 'Connect'}
+          </button>
+        </div>
+      )}
+    </section>
   );
 }

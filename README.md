@@ -1,6 +1,6 @@
 # Training Tracker
 
-A static training log for strength workouts, runs, and plans tied to a goal. The sample program is ski-season prep: legs, balance, and cardio, with about two months of sessions already filled in so the progress charts have a slope.
+A static training log for strength workouts, runs, and plans tied to a goal. The starter program is ski-season prep: legs, balance, and cardio, aimed at 19 December 2026. The log starts empty. Workout presets and a weekly plan are included; past sample sessions are not.
 
 The app runs entirely in the browser. There is no server and no database. The log is a JSON file in this repo, `public/data/training.json`, which is the same general approach as the [Cardmarket wishlist tracker](https://github.com/capdefra/magiccardmarket-wishlist-tracker): a client-side Vite app, data you can commit, and GitHub Pages for hosting.
 
@@ -21,29 +21,45 @@ Use the dev server (or `npm run preview` after a build). Opening `index.html` as
 | `npm run build` | Typecheck and production build into `dist/` |
 | `npm run preview` | Serve the production build |
 | `npm run lint` | Lint with oxlint |
-| `npm run sample-data` | Rebuild the original sample log (overwrites `public/data/training.json`) |
+| `npm run sample-data` | Rewrite the starter log: goal, plan, presets, and no sessions |
 
 ## What you can do
 
-**Today** shows the active goal, this week’s plan, and recent sessions. Open a planned session and log it, or record something that was not on the plan.
+**Today** shows the active goal, this week’s targets, workout presets, and recent sessions. Open a planned session or start a preset. The layout is meant for a phone: large tap targets, no sideways scrolling, and the save button stays above the tab bar while you log.
 
-**Log** takes a strength workout (exercises, sets, reps, load in kilograms) or a run (distance, time, optional climb, effort from 1 to 10). Logging from the plan prefills the template and your last loads for those lifts.
+**Workouts** are reusable presets. The starter set is lower body, easy run, balance, posterior chain, and long run. Strength presets include a short demo for each exercise (the movement, the steps, and what to watch). Starting a preset fills the log. If that workout is still open on this week’s plan, the entry counts toward it.
 
-**Plans** is where goals and weekly templates live. A goal has a name, a target date, and focus tags. A plan has a start date, a length in weeks, and sessions on chosen days. “Start with a ski-base week” fills a legs, balance, and cardio template you can edit.
+**Log** takes a strength workout or a run. Strength targets are sets and reps (or seconds for a hold such as a side plank). Kilograms are optional and are not the weekly target. A run counts as soon as you save it; distance, time, climb, and effort are optional. Each strength exercise can open its demo while you train.
 
-**Progress** charts one lift at a time (top set and an estimated 1RM) and shows weekly running distance plus pace. The history list opens any session for edits. Estimated 1RM uses the Epley formula: `weight × (1 + reps / 30)`.
+**Plans** is where goals and the repeating week live. A goal has a name, a target date, and focus tags. A plan has a start date, a length in weeks, and sessions on chosen days. “Start with a ski-base week” fills the same legs, balance, and cardio week. Editing a strength session sets sets and reps, not a weight. A run session has no pace or distance target.
 
-**Data** is how the log gets back into git. See below.
+**Progress** leads with this week: sets completed against the target, and runs done. After you have logged load or distance, the charts still show one lift at a time (top set and an estimated 1RM) and weekly running distance plus pace. Estimated 1RM uses the Epley formula: `weight × (1 + reps / 30)`.
 
-The sample goal is **Ski season prep**, aimed at 19 December 2026. The week template is lower body, an easy run, balance work, posterior chain, and a long run. Friday 21 August is missing on purpose (a travel day), so the history is not a perfect streak.
+**Data** syncs the log to a private GitHub gist so the phone and laptop share one copy. See below.
+
+The starter goal is **Ski season prep**, aimed at 19 December 2026. The week is lower body, an easy run, balance work, posterior chain, and a long run. There are no historical sessions.
 
 ## How data is stored
 
-1. The site loads `data/training.json`, built from `public/data/training.json`.
-2. Edits are written to `localStorage` in the browser, so logging works with no backend and survives a refresh.
-3. A different browser, or a fresh profile, still sees the committed file until you publish your copy.
+1. The site loads `data/training.json`, built from `public/data/training.json`. That file is the starter program: the goal, the plan, and the presets.
+2. Edits are cached in `localStorage`, so logging works offline and survives a refresh.
+3. A private GitHub gist is the copy shared across devices. The gist id and token live only in that browser.
 
-When the browser copy differs from the file this site was built with, the Data tab says so. The token for the optional GitHub commit (below) is stored separately and is never written into `training.json`.
+The gist token is never written into `training.json` or committed to this repository.
+
+### Sync with a gist
+
+On the Data tab, connect the same gist on each device:
+
+1. Create a [classic personal access token](https://github.com/settings/tokens/new?scopes=gist&description=Training%20tracker) with only the `gist` scope. A fine-grained token does not have that scope.
+2. Create a [secret gist](https://gist.github.com/). Name the file `training-tracker.json`. The contents can be `{}`.
+3. Copy the gist id from the URL (`gist.github.com/<you>/<id>`) and paste the id and token into the Data tab.
+
+The app loads the gist when it opens, merges it with the cache, and saves back a couple of seconds after you change something. `Sync now` does the same immediately. Disconnecting stops the sync and leaves the cache on that device.
+
+Sessions, goals, plans, and presets merge by id. The later edit wins. A delete is recorded, so removing a session on the phone removes it on the laptop at the next sync.
+
+This follows the same idea as the [Cardmarket wishlist tracker](https://github.com/capdefra/magiccardmarket-wishlist-tracker): the browser calls the GitHub API directly, and the gist is the shared JSON file. Here you paste the gist id yourself so both devices are aimed at the one gist.
 
 ### Publish the log back to the repo
 
@@ -56,7 +72,7 @@ git commit -m "Update training log"
 git push
 ```
 
-The Pages workflow rebuilds the site from that commit. Until you do this, the new sessions stay on the device that recorded them.
+The Pages workflow rebuilds the site from that commit. That publishes the starter program. Day-to-day sessions belong in the gist, not in this commit, unless you want them in the repository too.
 
 You can also paste a fine-grained GitHub personal access token on the Data tab and commit the file from the app. Give the token **Contents: Read and write** on this repository only. It stays in the browser’s `localStorage`.
 
@@ -80,11 +96,11 @@ https://capdefra.github.io/training-tracker/
 ## Project layout
 
 ```
-public/data/training.json     committed log and sample data
+public/data/training.json     starter goal, plan, and presets (no sessions)
 src/views                     Today, Log, Plans, Progress, Data
-src/lib                       dates, stats, storage, optional GitHub commit
+src/lib                       dates, targets, gist sync, storage, exercise demos
 .github/workflows/deploy.yml  Pages deploy
-scripts/sample-data.mjs       rebuilds the original sample
+scripts/sample-data.mjs       rewrites the starter file
 ```
 
 ## Data model
@@ -93,6 +109,8 @@ scripts/sample-data.mjs       rebuilds the original sample
 
 - **goals** — name, target date, focus tags, notes, status (`active`, `paused`, `done`)
 - **plans** — linked to a goal, with a start date, a number of weeks, and a weekly template
+- **presets** — reusable workouts you can start from Today or the log
 - **sessions** — a strength workout or a run, optionally linked to a plan session
+- **deleted** — ids removed on one device, so a sync does not bring them back
 
-Strength load is in kilograms. Run distance is in kilometres. A plan session counts as done for the week when a log in that Monday–Sunday is linked to it.
+A strength target is sets and reps of an exercise (seconds for a hold). It does not include weight. A run on the plan is done when a run is logged against it that week. Logged kilograms, distance, and pace are history, not the target.

@@ -6,6 +6,7 @@ import { WeekBoard } from '../components/WeekBoard';
 import { DAY_OPTIONS, addDays, formatLong, weekdayLabel } from '../lib/dates';
 import { uid } from '../lib/ids';
 import { cx } from '../lib/cx';
+import { describePlanSession } from '../lib/targets';
 import type { LogPreset, Plan, PlanExercise, PlanSession, SessionKind, TrainingData } from '../types';
 
 export function PlanEditor({
@@ -182,14 +183,7 @@ function rankDay(day: number): number {
 }
 
 function describeSession(session: PlanSession): string {
-  if (session.kind === 'run') {
-    const bits: string[] = [];
-    if (session.distanceKm) bits.push(`${session.distanceKm} km`);
-    if (session.durationMin) bits.push(`${session.durationMin} min`);
-    return bits.join(' · ') || 'Run';
-  }
-  if (session.exercises.length === 0) return 'Strength';
-  return session.exercises.map((exercise) => `${exercise.name} ${exercise.sets}×${exercise.reps}`).join(', ');
+  return describePlanSession(session);
 }
 
 function TemplateForm({
@@ -204,7 +198,7 @@ function TemplateForm({
   onDelete?: () => void;
 }) {
   const [kind, setKind] = useState<SessionKind>(initial?.kind ?? 'strength');
-  const [exercises, setExercises] = useState<PlanExercise[]>(initial?.exercises ?? [{ name: '', sets: 3, reps: '8' }]);
+  const [exercises, setExercises] = useState<PlanExercise[]>(initial?.exercises ?? [{ name: '', sets: 3, reps: '8', count: 'reps' }]);
   const [error, setError] = useState<string | null>(null);
 
   function save(event: FormEvent<HTMLFormElement>) {
@@ -216,14 +210,20 @@ function TemplateForm({
       return;
     }
     const cleaned = exercises
-      .map((exercise) => ({ name: exercise.name.trim(), sets: Math.max(1, Math.round(exercise.sets || 1)), reps: exercise.reps.trim() || '5' }))
+      .map((exercise) => {
+        const next: PlanExercise = {
+          name: exercise.name.trim(),
+          sets: Math.max(1, Math.round(exercise.sets || 1)),
+          reps: exercise.reps.trim() || '5',
+        };
+        if (exercise.count === 'seconds') next.count = 'seconds';
+        return next;
+      })
       .filter((exercise) => exercise.name);
     if (kind === 'strength' && cleaned.length === 0) {
       setError('Add at least one exercise, or switch this to a run.');
       return;
     }
-    const distance = Number(form.get('distanceKm'));
-    const duration = Number(form.get('durationMin'));
     onSave({
       id: initial?.id ?? uid('ps'),
       dayOfWeek: Number(form.get('dayOfWeek')),
@@ -232,8 +232,8 @@ function TemplateForm({
       focus: String(form.get('focus') ?? '').trim(),
       notes: String(form.get('notes') ?? '').trim(),
       exercises: kind === 'strength' ? cleaned : [],
-      distanceKm: kind === 'run' && Number.isFinite(distance) && distance > 0 ? distance : null,
-      durationMin: kind === 'run' && Number.isFinite(duration) && duration > 0 ? duration : null,
+      distanceKm: null,
+      durationMin: null,
     });
   }
 
@@ -271,43 +271,52 @@ function TemplateForm({
       </div>
       {kind === 'strength' ? (
         <div className="stack">
+          <p className="muted fine">Targets are sets and reps, or seconds for a hold. Load is not a target.</p>
           {exercises.map((exercise, index) => (
             <div key={`${initial?.id ?? 'new'}-${index}`} className="set-row template-row">
               <input
+                className="t-name"
                 aria-label="Exercise"
                 value={exercise.name}
                 placeholder="Exercise"
                 onChange={(event) => setExercises((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, name: event.target.value } : item)))}
               />
               <input
+                className="t-sets"
                 aria-label="Sets"
                 inputMode="numeric"
                 value={exercise.sets}
                 onChange={(event) => setExercises((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, sets: Number(event.target.value) } : item)))}
               />
               <input
-                aria-label="Reps"
+                className="t-reps"
+                aria-label={exercise.count === 'seconds' ? 'Seconds' : 'Reps'}
                 value={exercise.reps}
                 onChange={(event) => setExercises((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, reps: event.target.value } : item)))}
               />
-              <button type="button" className="icon-btn" aria-label="Remove exercise" onClick={() => setExercises((current) => current.filter((_, itemIndex) => itemIndex !== index))}>
+              <select
+                className="t-unit"
+                aria-label="Count"
+                value={exercise.count ?? 'reps'}
+                onChange={(event) => {
+                  const count = event.target.value === 'seconds' ? 'seconds' : 'reps';
+                  setExercises((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, count } : item)));
+                }}
+              >
+                <option value="reps">reps</option>
+                <option value="seconds">sec</option>
+              </select>
+              <button type="button" className="icon-btn t-remove" aria-label="Remove exercise" onClick={() => setExercises((current) => current.filter((_, itemIndex) => itemIndex !== index))}>
                 ×
               </button>
             </div>
           ))}
-          <button type="button" className="btn ghost small" onClick={() => setExercises((current) => [...current, { name: '', sets: 3, reps: '8' }])}>
+          <button type="button" className="btn ghost small" onClick={() => setExercises((current) => [...current, { name: '', sets: 3, reps: '8', count: 'reps' }])}>
             Add exercise
           </button>
         </div>
       ) : (
-        <div className="form-grid two">
-          <Field label="Distance (km)">
-            <input name="distanceKm" inputMode="decimal" defaultValue={initial?.distanceKm ?? ''} />
-          </Field>
-          <Field label="Target minutes">
-            <input name="durationMin" inputMode="numeric" defaultValue={initial?.durationMin ?? ''} />
-          </Field>
-        </div>
+        <p className="muted">A run is done when it is logged. There is no pace or distance target.</p>
       )}
       {error ? <p className="error">{error}</p> : null}
       <div className="form-actions">
