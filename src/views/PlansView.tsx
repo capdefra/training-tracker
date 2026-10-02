@@ -5,6 +5,7 @@ import { FocusField } from '../components/FocusField';
 import { formatCountdown, formatLong, todayISO } from '../lib/dates';
 import { cx } from '../lib/cx';
 import { uid } from '../lib/ids';
+import { removeGoal, removePlan } from '../lib/storage';
 import { skiBaseSessions } from '../lib/templates';
 import { PlanEditor } from './PlanEditor';
 import type { Goal, GoalStatus, LogPreset, Plan, TrainingData } from '../types';
@@ -41,7 +42,7 @@ export function PlansView({
             New goal
           </button>
         </div>
-        <p className="muted">A goal is the date you are training for. A plan is the week you repeat until you get there.</p>
+        <p className="muted">A goal is the date you are training for. A plan is the week you repeat. Strength targets are sets and reps. A run counts when you do it.</p>
         {creating ? (
           <GoalForm
             initial={null}
@@ -111,24 +112,21 @@ function GoalDetail({
   const today = todayISO();
 
   function savePlan(next: Plan) {
+    const stamped = { ...next, updatedAt: new Date().toISOString() };
     update((current) => ({
       ...current,
-      plans: current.plans.some((plan) => plan.id === next.id)
-        ? current.plans.map((plan) => (plan.id === next.id ? next : plan))
-        : [...current.plans, next],
+      plans: current.plans.some((plan) => plan.id === stamped.id)
+        ? current.plans.map((plan) => (plan.id === stamped.id ? stamped : plan))
+        : [...current.plans, stamped],
     }));
   }
 
   function deletePlan(id: string) {
-    update((current) => ({ ...current, plans: current.plans.filter((plan) => plan.id !== id) }));
+    update((current) => removePlan(current, id));
   }
 
   function deleteGoal() {
-    update((current) => ({
-      ...current,
-      goals: current.goals.filter((item) => item.id !== goal.id),
-      plans: current.plans.filter((plan) => plan.goalId !== goal.id),
-    }));
+    update((current) => removeGoal(current, goal.id));
     window.location.hash = '#/plans';
   }
 
@@ -232,6 +230,7 @@ function GoalForm({
       notes: String(form.get('notes') ?? '').trim(),
       status,
       createdAt: initial?.createdAt ?? new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
   }
 

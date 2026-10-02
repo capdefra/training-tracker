@@ -3,6 +3,7 @@ import { Icon, type IconName } from './components/Icon';
 import { cx } from './lib/cx';
 import { useHashRoute, type RouteName } from './hooks/useHashRoute';
 import { useTrainingData } from './hooks/useTrainingData';
+import { removeSession } from './lib/storage';
 import type { LogPreset } from './types';
 import type { DraftRequest } from './views/draft-request';
 import { DataView } from './views/DataView';
@@ -99,9 +100,7 @@ export default function App() {
               {item.label}
             </a>
           ))}
-          <p className="nav-status">
-            {store.repo === null ? 'Saved in this browser' : store.dirty ? 'Edits are in this browser only' : 'Matches the site file'}
-          </p>
+          <p className="nav-status">{syncLabel(store.syncStatus, store.gistId, store.dirty, store.repo === null)}</p>
         </nav>
         <main className="content">
           {route.name === 'today' ? <TodayView data={data} onLog={openLog} /> : null}
@@ -121,18 +120,25 @@ export default function App() {
                 window.location.hash = '#/today';
               }}
               onDelete={(id) => {
-                store.update((current) => ({ ...current, sessions: current.sessions.filter((item) => item.id !== id) }));
+                store.update((current) => removeSession(current, id));
                 window.location.hash = '#/today';
               }}
             />
           ) : null}
           {route.name === 'plans' ? <PlansView data={data} goalId={route.id} update={store.update} onLog={openLog} /> : null}
-          {route.name === 'progress' ? <ProgressView data={data} /> : null}
+          {route.name === 'progress' ? <ProgressView data={data} onLog={openLog} /> : null}
           {route.name === 'data' ? (
             <DataView
               data={data}
               dirty={store.dirty}
               persisted={store.persisted}
+              syncStatus={store.syncStatus}
+              syncError={store.syncError}
+              gistId={store.gistId}
+              gistConnected={store.gistConnected}
+              onConnectGist={store.connectGist}
+              onDisconnectGist={store.disconnectGist}
+              onForceSync={store.forceSync}
               onImport={store.replaceAll}
               onReload={store.resetToRepo}
               onSynced={store.markRepoSynced}
@@ -158,6 +164,17 @@ export default function App() {
       </nav>
     </div>
   );
+}
+
+function syncLabel(status: 'idle' | 'syncing' | 'synced' | 'error', gistId: string, dirty: boolean, repoMissing: boolean): string {
+  if (gistId) {
+    if (status === 'syncing') return 'Syncing the gist…';
+    if (status === 'synced') return 'Synced to your gist';
+    if (status === 'error') return 'Gist sync needs attention';
+    return 'Gist sync is on';
+  }
+  if (repoMissing) return 'Saved in this browser';
+  return dirty ? 'Edits are in this browser only' : 'Matches the site file';
 }
 
 function BrandMark() {

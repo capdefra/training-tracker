@@ -1,4 +1,4 @@
-import type { ExerciseEntry, LogPreset, Session } from '../types';
+import type { EffortCount, ExerciseEntry, LogPreset, PlanExercise, Session } from '../types';
 import { todayISO } from './dates';
 import { trimNum } from './format';
 import { uid } from './ids';
@@ -14,6 +14,8 @@ export interface ExerciseDraft {
   key: string;
   name: string;
   sets: SetDraft[];
+  count: EffortCount;
+  targetLabel: string;
 }
 
 export interface Draft {
@@ -40,7 +42,7 @@ export function blankSet(reps = '5'): SetDraft {
 }
 
 export function blankExercise(name = ''): ExerciseDraft {
-  return { key: uid('ex'), name, sets: [blankSet()] };
+  return { key: uid('ex'), name, sets: [blankSet()], count: 'reps', targetLabel: '' };
 }
 
 export function blankDraft(date = todayISO()): Draft {
@@ -89,6 +91,8 @@ export function draftFromSession(session: Session): Draft {
           key: uid('ex'),
           name: exercise.name,
           sets: setsFromExercise(exercise),
+          count: 'reps' as const,
+          targetLabel: '',
         }))
       : [blankExercise()],
     distanceKm: session.distanceKm !== null ? trimNum(session.distanceKm) : '',
@@ -102,25 +106,46 @@ export function draftFromSession(session: Session): Draft {
   };
 }
 
+function setsForTemplate(exercise: PlanExercise, previous: ExerciseEntry | null): SetDraft[] {
+  const reps = String(parseInt(exercise.reps, 10) || '');
+  const count = Math.max(1, exercise.sets);
+  return Array.from({ length: count }, (_, index) => {
+    const prior = previous?.sets[index] ?? previous?.sets.at(-1);
+    const draft = blankSet(reps);
+    if (prior && prior.weightKg > 0) draft.weightKg = trimNum(prior.weightKg);
+    return draft;
+  });
+}
+
+export function applyTemplateMeta(draft: Draft, template: PlanExercise[]): Draft {
+  if (template.length === 0) return draft;
+  return {
+    ...draft,
+    exercises: draft.exercises.map((exercise) => {
+      const match = template.find((item) => item.name.trim().toLowerCase() === exercise.name.trim().toLowerCase());
+      if (!match) return exercise;
+      return {
+        ...exercise,
+        count: match.count === 'seconds' ? 'seconds' : 'reps',
+        targetLabel: match.count === 'seconds' ? `${match.sets}×${match.reps} sec` : `${match.sets}×${match.reps}`,
+      };
+    }),
+  };
+}
+
+export function exercisesFromTemplate(template: PlanExercise[], sessions: Session[]): ExerciseDraft[] {
+  if (template.length === 0) return [blankExercise()];
+  return template.map((exercise) => ({
+    key: uid('ex'),
+    name: exercise.name,
+    sets: setsForTemplate(exercise, lastExercise(sessions, exercise.name)),
+    count: exercise.count === 'seconds' ? 'seconds' : 'reps',
+    targetLabel: exercise.count === 'seconds' ? `${exercise.sets}×${exercise.reps} sec` : `${exercise.sets}×${exercise.reps}`,
+  }));
+}
+
 export function draftFromPreset(preset: LogPreset, sessions: Session[]): Draft {
-  const exercises =
-    preset.kind === 'strength'
-      ? preset.templateExercises.length
-        ? preset.templateExercises.map((exercise) => {
-            const previous = lastExercise(sessions, exercise.name);
-            if (previous) {
-              return { key: uid('ex'), name: exercise.name, sets: setsFromExercise(previous) };
-            }
-            const reps = String(parseInt(exercise.reps, 10) || '');
-            const count = Math.max(1, exercise.sets);
-            return {
-              key: uid('ex'),
-              name: exercise.name,
-              sets: Array.from({ length: count }, () => blankSet(reps)),
-            };
-          })
-        : [blankExercise()]
-      : [blankExercise()];
+  const exercises = preset.kind === 'strength' ? exercisesFromTemplate(preset.templateExercises, sessions) : [blankExercise()];
 
   return {
     ...blankDraft(preset.date),
@@ -132,9 +157,10 @@ export function draftFromPreset(preset: LogPreset, sessions: Session[]): Draft {
     planSessionId: preset.planSessionId ?? '',
     exercises,
     distanceKm: preset.distanceKm !== null ? trimNum(preset.distanceKm) : '',
+    durationMin: preset.durationMin !== null ? String(preset.durationMin) : '',
     prompt: preset.prompt,
-    distanceHint: preset.distanceKm !== null ? `Plan target ${trimNum(preset.distanceKm)} km` : '',
-    durationHint: preset.durationMin !== null ? `Plan target ${preset.durationMin} min` : '',
+    distanceHint: preset.kind === 'run' ? 'Optional. Saving with this blank still counts as doing the run.' : '',
+    durationHint: preset.kind === 'run' ? 'Optional.' : '',
   };
 }
 

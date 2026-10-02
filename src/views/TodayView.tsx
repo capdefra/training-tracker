@@ -1,3 +1,4 @@
+import { PresetList } from '../components/PresetList';
 import { WeekBoard } from '../components/WeekBoard';
 import { formatCountdown, formatLong, formatPretty, formatWeekday, todayISO } from '../lib/dates';
 import { activeGoal, recentSessions } from '../lib/plans';
@@ -38,7 +39,7 @@ export function TodayView({ data, onLog }: { data: TrainingData; onLog: (preset?
       ) : (
         <section className="card empty">
           <h2>No goal yet</h2>
-          <p>A goal is the season or race the plan is building toward. The sample log starts with ski season prep.</p>
+          <p>A goal is the season or race the plan is building toward.</p>
           <a className="btn primary" href="#/plans">
             Create a goal
           </a>
@@ -80,6 +81,8 @@ export function TodayView({ data, onLog }: { data: TrainingData; onLog: (preset?
           <p className="muted">Add a plan to see the week laid out, or log a session on its own.</p>
         )}
       </section>
+
+      <PresetList data={data} onLog={(preset) => onLog(preset)} />
 
       <section className="stack">
         <div className="split">
