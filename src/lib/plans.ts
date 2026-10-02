@@ -58,11 +58,11 @@ export function weekSentence(items: PlanItem[], today: string): string {
   if (items.length === 0) return 'Nothing from a plan is scheduled this week.';
   const done = items.filter((item) => item.done).length;
   const open = items.filter((item) => !item.done);
-  if (open.length === 0) return `All ${items.length} sessions logged this week.`;
+  if (open.length === 0) return `All ${items.length} sessions done this week.`;
   const next = open.find((item) => item.date >= today) ?? open[0];
-  if (!next) return `${done} of ${items.length} logged.`;
+  if (!next) return `${done} of ${items.length} done.`;
   const when = next.date === today ? 'today' : next.date < today ? `still open from ${formatPretty(next.date)}` : `up on ${formatPretty(next.date)}`;
-  return `${done} of ${items.length} logged. Next is ${next.session.title}, ${when}.`;
+  return `${done} of ${items.length} done. Next is ${next.session.title}, ${when}.`;
 }
 
 export function recentSessions(data: TrainingData, limit = 6): Session[] {
