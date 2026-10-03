@@ -114,9 +114,58 @@ export function WeekBoard({
     const onScrollEnd = () => settle(true);
     scroller.addEventListener('scroll', onScroll, { passive: true });
     scroller.addEventListener('scrollend', onScrollEnd);
+
+    let startX = 0;
+    let startLeft = 0;
+    let dragging = false;
+    let moved = false;
+    let blockClick = false;
+    const onDown = (event: PointerEvent) => {
+      if (event.pointerType === 'touch' || event.button !== 0) return;
+      dragging = true;
+      moved = false;
+      startX = event.clientX;
+      startLeft = scroller.scrollLeft;
+    };
+    const onMove = (event: PointerEvent) => {
+      if (!dragging) return;
+      const dx = event.clientX - startX;
+      if (!moved && Math.abs(dx) > 8) {
+        moved = true;
+        scroller.setPointerCapture(event.pointerId);
+      }
+      if (!moved) return;
+      scroller.scrollLeft = startLeft - dx;
+    };
+    const onUp = () => {
+      if (!dragging) return;
+      dragging = false;
+      if (!moved) return;
+      blockClick = true;
+      window.setTimeout(() => {
+        blockClick = false;
+      }, 80);
+    };
+    const onClick = (event: MouseEvent) => {
+      if (!blockClick) return;
+      blockClick = false;
+      event.preventDefault();
+      event.stopPropagation();
+    };
+    scroller.addEventListener('pointerdown', onDown);
+    scroller.addEventListener('pointermove', onMove);
+    scroller.addEventListener('pointerup', onUp);
+    scroller.addEventListener('pointercancel', onUp);
+    scroller.addEventListener('click', onClick, true);
+
     return () => {
       scroller.removeEventListener('scroll', onScroll);
       scroller.removeEventListener('scrollend', onScrollEnd);
+      scroller.removeEventListener('pointerdown', onDown);
+      scroller.removeEventListener('pointermove', onMove);
+      scroller.removeEventListener('pointerup', onUp);
+      scroller.removeEventListener('pointercancel', onUp);
+      scroller.removeEventListener('click', onClick, true);
       window.clearTimeout(timer);
     };
   }, []);
