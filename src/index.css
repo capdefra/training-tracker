@@ -468,6 +468,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 @media (min-width: 720px) {
   .form-grid.two { grid-template-columns: 1fr 1fr; }
   .stats { grid-template-columns: repeat(4, 1fr); }
+  .metric-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (min-width: 900px) {
