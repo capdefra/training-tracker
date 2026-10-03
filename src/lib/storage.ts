@@ -4,8 +4,10 @@ import type {
   ExerciseEntry,
   Goal,
   GoalStatus,
+  PhaseChange,
   Plan,
   PlanExercise,
+  PlanPhase,
   PlanSession,
   Session,
   SessionKind,
@@ -100,6 +102,49 @@ function normalizeLoggedExercise(value: unknown): ExerciseEntry | null {
   return { name, sets };
 }
 
+function isoDate(value: unknown): string {
+  const date = text(value);
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : '';
+}
+
+function normalizePhaseChange(value: unknown): PhaseChange | null {
+  const record = asRecord(value);
+  if (!record) return null;
+  const sessionId = text(record.sessionId);
+  if (!sessionId) return null;
+  const change: PhaseChange = { sessionId };
+  if (typeof record.notes === 'string' && record.notes.trim()) change.notes = record.notes.trim();
+  if (record.durationMin === null) change.durationMin = null;
+  else {
+    const duration = numberOrNull(record.durationMin);
+    if (duration !== null) change.durationMin = duration;
+  }
+  if (record.sets !== undefined && record.sets !== null) {
+    const sets = Math.round(numberOr(record.sets, 0));
+    if (sets > 0) change.sets = sets;
+  }
+  if (change.notes === undefined && change.durationMin === undefined && change.sets === undefined) return null;
+  return change;
+}
+
+function normalizePhase(value: unknown): PlanPhase | null {
+  const record = asRecord(value);
+  if (!record) return null;
+  const startDate = isoDate(record.startDate);
+  const endDate = isoDate(record.endDate);
+  if (!startDate || !endDate || endDate < startDate) return null;
+  const sessions = Array.isArray(record.sessions)
+    ? record.sessions.map(normalizePhaseChange).filter((item) => item !== null)
+    : [];
+  if (sessions.length === 0) return null;
+  return {
+    name: text(record.name),
+    startDate,
+    endDate,
+    sessions,
+  };
+}
+
 function normalizePlanSession(value: unknown): PlanSession | null {
   const record = asRecord(value);
   if (!record) return null;
@@ -141,20 +186,29 @@ function normalizePlan(value: unknown): Plan | null {
   if (!record) return null;
   const name = text(record.name);
   if (!name) return null;
-  return {
+  const endDate = isoDate(record.endDate);
+  const phases = Array.isArray(record.phases)
+    ? record.phases.map(normalizePhase).filter((item) => item !== null)
+    : [];
+  phases.sort((a, b) => a.startDate.localeCompare(b.startDate) || a.endDate.localeCompare(b.endDate) || a.name.localeCompare(b.name));
+  const updatedAt = optionalStamp(record.updatedAt);
+  const plan: Plan = {
     id: text(record.id) || `plan-${Math.random().toString(36).slice(2, 8)}`,
     goalId: text(record.goalId),
     name,
     startDate: text(record.startDate),
     weeks: Math.min(104, Math.max(1, Math.round(numberOr(record.weeks, 8)))),
+    ...(endDate ? { endDate } : {}),
     focus: focusList(record.focus),
     notes: text(record.notes),
     sessions: Array.isArray(record.sessions)
       ? record.sessions.map(normalizePlanSession).filter((item) => item !== null)
       : [],
+    ...(phases.length > 0 ? { phases } : {}),
     status: status(record.status),
-    updatedAt: optionalStamp(record.updatedAt),
+    ...(updatedAt ? { updatedAt } : {}),
   };
+  return plan;
 }
 
 function normalizePreset(value: unknown): WorkoutPreset | null {

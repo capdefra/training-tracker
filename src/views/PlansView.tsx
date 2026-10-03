@@ -6,7 +6,7 @@ import { formatCountdown, formatLong, todayISO } from '../lib/dates';
 import { cx } from '../lib/cx';
 import { uid } from '../lib/ids';
 import { removeGoal, removePlan } from '../lib/storage';
-import { skiBaseSessions } from '../lib/templates';
+import { HOME_SKI_END, HOME_SKI_FOCUS, HOME_SKI_NAME, HOME_SKI_NOTES, HOME_SKI_START, HOME_SKI_WEEKS, homeSkiWeek } from '../lib/templates';
 import { PlanEditor } from './PlanEditor';
 import type { Goal, GoalStatus, LogPreset, Plan, TrainingData } from '../types';
 
@@ -42,7 +42,7 @@ export function PlansView({
             New goal
           </button>
         </div>
-        <p className="muted">A goal is the date you are training for. A plan is the week you repeat. Strength targets are sets and reps. A run counts when you do it.</p>
+        <p className="muted">A goal is the date you are training for. A plan is the week you repeat, and phases can change the runs or the sets on later dates. Strength targets are sets and reps. A run counts when you do it.</p>
         {creating ? (
           <GoalForm
             initial={null}
@@ -242,7 +242,7 @@ function GoalForm({
       </Field>
       <div className="form-grid two">
         <Field label="Target date">
-          <input name="targetDate" type="date" defaultValue={initial?.targetDate ?? '2026-12-19'} />
+          <input name="targetDate" type="date" defaultValue={initial?.targetDate ?? '2026-12-15'} />
         </Field>
         {initial ? (
           <Field label="Status">
@@ -290,29 +290,43 @@ function GoalForm({
 }
 
 function NewPlanForm({ goal, onSave, onCancel }: { goal: Goal; onSave: (plan: Plan) => void; onCancel: () => void }) {
-  const [focus, setFocus] = useState<string[]>(goal.focus);
+  const [focus, setFocus] = useState<string[]>(HOME_SKI_FOCUS);
   const [template, setTemplate] = useState(true);
+  const [name, setName] = useState(HOME_SKI_NAME);
+  const [startDate, setStartDate] = useState(HOME_SKI_START);
+  const [weeks, setWeeks] = useState(String(HOME_SKI_WEEKS));
+  const [notes, setNotes] = useState(HOME_SKI_NOTES);
   const [error, setError] = useState<string | null>(null);
+
+  function applyTemplate(on: boolean) {
+    setTemplate(on);
+    if (!on) return;
+    setName(HOME_SKI_NAME);
+    setStartDate(HOME_SKI_START);
+    setWeeks(String(HOME_SKI_WEEKS));
+    setNotes(HOME_SKI_NOTES);
+    setFocus(HOME_SKI_FOCUS);
+  }
 
   function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const name = String(form.get('name') ?? '').trim();
-    const startDate = String(form.get('startDate') ?? '');
-    const weeks = Number(form.get('weeks'));
-    if (!name || !startDate || !Number.isFinite(weeks) || weeks < 1) {
+    const weekCount = Number(weeks);
+    if (!name.trim() || !startDate || !Number.isFinite(weekCount) || weekCount < 1) {
       setError('Name, start date, and a number of weeks are required.');
       return;
     }
+    const week = template ? homeSkiWeek(() => uid('ps')) : null;
     onSave({
       id: uid('plan'),
       goalId: goal.id,
-      name,
+      name: name.trim(),
       startDate,
-      weeks: Math.min(104, Math.round(weeks)),
+      weeks: Math.min(104, Math.round(weekCount)),
+      ...(template && startDate === HOME_SKI_START ? { endDate: HOME_SKI_END } : {}),
       focus,
-      notes: String(form.get('notes') ?? '').trim(),
-      sessions: template ? skiBaseSessions() : [],
+      notes: notes.trim(),
+      sessions: week?.sessions ?? [],
+      ...(week ? { phases: week.phases } : {}),
       status: 'active',
     });
   }
@@ -321,23 +335,23 @@ function NewPlanForm({ goal, onSave, onCancel }: { goal: Goal; onSave: (plan: Pl
     <form className="card stack" onSubmit={save}>
       <h2>New plan</h2>
       <Field label="Name">
-        <input name="name" defaultValue="Pre-season base" required />
+        <input name="name" value={name} onChange={(event) => setName(event.target.value)} required />
       </Field>
       <div className="form-grid two">
         <Field label="Starts">
-          <input name="startDate" type="date" defaultValue={todayISO()} required />
+          <input name="startDate" type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} required />
         </Field>
         <Field label="Weeks">
-          <input name="weeks" type="number" min={1} max={104} defaultValue={12} required />
+          <input name="weeks" type="number" min={1} max={104} value={weeks} onChange={(event) => setWeeks(event.target.value)} required />
         </Field>
       </div>
       <FocusField value={focus} onChange={setFocus} />
       <label className="check">
-        <input type="checkbox" checked={template} onChange={(event) => setTemplate(event.target.checked)} />
-        <span>Start with a ski-base week: legs, balance, and cardio</span>
+        <input type="checkbox" checked={template} onChange={(event) => applyTemplate(event.target.checked)} />
+        <span>Start with the home ski plan: five days, run phases, and a 2-set taper</span>
       </label>
       <Field label="Notes">
-        <textarea name="notes" rows={2} placeholder="How this block should feel" />
+        <textarea name="notes" rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="How this block should feel" />
       </Field>
       {error ? <p className="error">{error}</p> : null}
       <div className="form-actions">

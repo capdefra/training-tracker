@@ -1,29 +1,67 @@
+import { useState, type ReactNode } from 'react';
 import { buildPreset, planItemsForWeek, weekSentence, type PlanItem } from '../lib/plans';
-import { addDays, formatPretty, formatWeekday, startOfWeek, todayISO } from '../lib/dates';
+import { addDays, formatDayMonth, formatPretty, formatWeekday, startOfWeek, todayISO } from '../lib/dates';
 import { cx } from '../lib/cx';
-import type { LogPreset, Plan, TrainingData } from '../types';
+import { runPrescription } from '../lib/targets';
+import type { LogPreset, Plan, PlanPhase, TrainingData } from '../types';
 
 export function WeekBoard({
   data,
   plans,
   onLog,
   variant = 'full',
+  heading = 'h2',
+  actions,
+  anchor: anchorProp,
+  onAnchor,
 }: {
   data: TrainingData;
   plans: Plan[];
   onLog: (preset: LogPreset) => void;
   variant?: 'full' | 'list';
+  heading?: 'h2' | 'h3';
+  actions?: ReactNode;
+  anchor?: string;
+  onAnchor?: (date: string) => void;
 }) {
   const today = todayISO();
-  const monday = startOfWeek(today);
+  const [internal, setInternal] = useState(today);
+  const anchor = anchorProp ?? internal;
+  const monday = startOfWeek(anchor);
+  const thisMonday = startOfWeek(today);
   const days = Array.from({ length: 7 }, (_, index) => addDays(monday, index));
-  const items = planItemsForWeek(data, plans, today);
+  const items = planItemsForWeek(data, plans, anchor);
   const showPlan = new Set(items.map((item) => item.plan.id)).size > 1;
-
   const totals = weekTotals(items);
+  const label = monday === thisMonday ? 'This week' : `Week of ${formatDayMonth(monday)}`;
+  const phases = phaseSummary(items);
+  const Title = heading;
+
+  function move(date: string) {
+    if (!anchorProp) setInternal(date);
+    onAnchor?.(date);
+  }
 
   return (
     <section className="stack">
+      <div className="split">
+        <Title>{label}</Title>
+        {actions}
+      </div>
+      <div className="quick week-nav">
+        <button type="button" className="btn ghost" onClick={() => move(addDays(monday, -7))}>
+          Previous
+        </button>
+        {monday !== thisMonday ? (
+          <button type="button" className="btn ghost" onClick={() => move(today)}>
+            This week
+          </button>
+        ) : null}
+        <button type="button" className="btn ghost" onClick={() => move(addDays(monday, 7))}>
+          Next
+        </button>
+      </div>
+      {phases ? <p className="muted">{phases}</p> : null}
       <p className="lead">{weekSentence(items, today)}</p>
       {items.length > 0 ? (
         <div className="stats week-stats">
@@ -62,7 +100,7 @@ export function WeekBoard({
       ) : (
         <ul className="checklist">
           {items.map((item) => (
-            <li key={`${item.plan.id}-${item.session.id}`} className={cx('check-item', item.done && 'done')}>
+            <li key={`${item.plan.id}-${item.session.id}-${item.date}`} className={cx('check-item', item.done && 'done')}>
               <div className="check-main">
                 <p className="kicker">
                   {formatPretty(item.date)}
@@ -71,7 +109,7 @@ export function WeekBoard({
                 </p>
                 <h3>{item.session.title}</h3>
                 {item.session.kind === 'run' ? (
-                  <p className="muted">{item.done ? 'Run done' : 'Do the run'}</p>
+                  <p className="muted">{item.done ? `Run done · ${runPrescription(item.session)}` : runPrescription(item.session)}</p>
                 ) : (
                   <ul className="targets">
                     {item.targets.map((target) => {
@@ -115,6 +153,17 @@ export function WeekBoard({
       )}
     </section>
   );
+}
+
+function phaseSummary(items: PlanItem[]): string {
+  const seen = new Set<string>();
+  const phases: PlanPhase[] = [];
+  for (const item of items) {
+    if (!item.phase || seen.has(item.phase.startDate + item.phase.name)) continue;
+    seen.add(item.phase.startDate + item.phase.name);
+    phases.push(item.phase);
+  }
+  return phases.map((phase) => `${phase.name}, ${formatDayMonth(phase.startDate)} – ${formatDayMonth(phase.endDate)}`).join(' · ');
 }
 
 function weekTotals(items: PlanItem[]) {

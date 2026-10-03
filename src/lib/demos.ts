@@ -397,7 +397,7 @@ const DEMOS: ExerciseDemo[] = [
     cues: [
       'Elbow under the shoulder, feet stacked, body on its side.',
       'Lift the hips until there is a straight line from head to heels.',
-      'Hold. Log the seconds in the reps box. The target is 3 holds of 30 seconds each side.',
+      'Hold. Log the seconds in the reps box. The target is 20-30 seconds each side.',
     ],
     watch: 'Do not let the hips sag or twist open. Switch sides between sets.',
   },

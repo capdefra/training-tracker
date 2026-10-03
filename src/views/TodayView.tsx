@@ -47,38 +47,71 @@ export function TodayView({ data, onLog }: { data: TrainingData; onLog: (preset?
       )}
 
       <section className="stack">
-        <div className="split">
-          <h2>This week</h2>
-          <div className="quick">
-            <button type="button" className="btn ghost small" onClick={() => onLog()}>
-              Log strength
-            </button>
-            <button
-              type="button"
-              className="btn ghost small"
-              onClick={() =>
-                onLog({
-                  date: today,
-                  kind: 'run',
-                  title: 'Easy run',
-                  goalId: goal?.id ?? null,
-                  planId: null,
-                  planSessionId: null,
-                  templateExercises: [],
-                  distanceKm: null,
-                  durationMin: null,
-                  prompt: '',
-                })
-              }
-            >
-              Log a run
-            </button>
-          </div>
-        </div>
         {plans.length > 0 ? (
-          <WeekBoard data={data} plans={plans} onLog={(preset) => onLog(preset)} />
+          <WeekBoard
+            data={data}
+            plans={plans}
+            onLog={(preset) => onLog(preset)}
+            actions={
+              <div className="quick">
+                <button type="button" className="btn ghost small" onClick={() => onLog()}>
+                  Log strength
+                </button>
+                <button
+                  type="button"
+                  className="btn ghost small"
+                  onClick={() =>
+                    onLog({
+                      date: today,
+                      kind: 'run',
+                      title: 'Easy run',
+                      goalId: goal?.id ?? null,
+                      planId: null,
+                      planSessionId: null,
+                      templateExercises: [],
+                      distanceKm: null,
+                      durationMin: null,
+                      prompt: '',
+                    })
+                  }
+                >
+                  Log a run
+                </button>
+              </div>
+            }
+          />
         ) : (
-          <p className="muted">Add a plan to see the week laid out, or log a session on its own.</p>
+          <>
+            <div className="split">
+              <h2>This week</h2>
+              <div className="quick">
+                <button type="button" className="btn ghost small" onClick={() => onLog()}>
+                  Log strength
+                </button>
+                <button
+                  type="button"
+                  className="btn ghost small"
+                  onClick={() =>
+                    onLog({
+                      date: today,
+                      kind: 'run',
+                      title: 'Easy run',
+                      goalId: goal?.id ?? null,
+                      planId: null,
+                      planSessionId: null,
+                      templateExercises: [],
+                      distanceKm: null,
+                      durationMin: null,
+                      prompt: '',
+                    })
+                  }
+                >
+                  Log a run
+                </button>
+              </div>
+            </div>
+            <p className="muted">Add a plan to see the week laid out, or log a session on its own.</p>
+          </>
         )}
       </section>
 

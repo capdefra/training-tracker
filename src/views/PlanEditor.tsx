@@ -3,9 +3,10 @@ import type { FormEvent } from 'react';
 import { Field } from '../components/Field';
 import { FocusField } from '../components/FocusField';
 import { WeekBoard } from '../components/WeekBoard';
-import { DAY_OPTIONS, addDays, formatLong, weekdayLabel } from '../lib/dates';
+import { DAY_OPTIONS, addDays, formatDayMonth, formatLong, startOfWeek, todayISO, weekdayLabel } from '../lib/dates';
 import { uid } from '../lib/ids';
 import { cx } from '../lib/cx';
+import { describePhase, planLastDay } from '../lib/plans';
 import { describePlanSession } from '../lib/targets';
 import type { LogPreset, Plan, PlanExercise, PlanSession, SessionKind, TrainingData } from '../types';
 
@@ -26,8 +27,11 @@ export function PlanEditor({
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const end = plan.startDate ? addDays(plan.startDate, plan.weeks * 7 - 1) : '';
+  const [anchor, setAnchor] = useState(todayISO());
+  const end = planLastDay(plan);
   const ordered = [...plan.sessions].sort((a, b) => rankDay(a.dayOfWeek) - rankDay(b.dayOfWeek));
+  const viewedMonday = startOfWeek(anchor);
+  const viewedSunday = addDays(viewedMonday, 6);
 
   function saveMeta(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -36,11 +40,14 @@ export function PlanEditor({
     const startDate = String(form.get('startDate') ?? '');
     const weeks = Number(form.get('weeks'));
     if (!name || !startDate || !Number.isFinite(weeks) || weeks < 1) return;
+    const nextWeeks = Math.min(104, Math.round(weeks));
+    const spanChanged = startDate !== plan.startDate || nextWeeks !== plan.weeks;
     onChange({
       ...plan,
       name,
       startDate,
-      weeks: Math.min(104, Math.round(weeks)),
+      weeks: nextWeeks,
+      endDate: spanChanged ? undefined : plan.endDate,
       notes: String(form.get('notes') ?? '').trim(),
       status: String(form.get('status') ?? 'active') === 'paused' || String(form.get('status')) === 'done' ? (String(form.get('status')) as Plan['status']) : 'active',
     });
@@ -120,14 +127,34 @@ export function PlanEditor({
         </form>
       ) : null}
 
-      <div className="stack">
-        <h4>This week</h4>
-        <WeekBoard data={data} plans={[plan]} onLog={onLog} variant="list" />
-      </div>
+      <WeekBoard data={data} plans={[plan]} onLog={onLog} variant="list" heading="h3" anchor={anchor} onAnchor={setAnchor} />
+
+      {plan.phases && plan.phases.length > 0 ? (
+        <div className="stack">
+          <h4>Phases</h4>
+          <p className="muted">The week repeats. A phase replaces the run, or the sets, on those dates.</p>
+          <ul className="template">
+            {plan.phases.map((phase) => {
+              const on = phase.endDate >= viewedMonday && phase.startDate <= viewedSunday;
+              return (
+                <li key={`${phase.startDate}-${phase.name}`}>
+                  <button type="button" className={cx('phase-jump', on && 'on')} onClick={() => setAnchor(phase.startDate)}>
+                    <p className="kicker">
+                      {formatDayMonth(phase.startDate)} – {formatDayMonth(phase.endDate)}
+                    </p>
+                    <strong>{phase.name}</strong>
+                    <p className="muted">{describePhase(plan, phase)}</p>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="stack">
         <div className="split">
-          <h4>Week template</h4>
+          <h4>Repeating week</h4>
           <button type="button" className="btn ghost small" onClick={() => { setAdding((open) => !open); setEditingId(null); }}>
             {adding ? 'Close' : 'Add session'}
           </button>
@@ -157,7 +184,18 @@ export function PlanEditor({
                     onChange({ ...plan, sessions: plan.sessions.map((item) => (item.id === session.id ? next : item)) });
                     setEditingId(null);
                   }}
-                  onDelete={() => onChange({ ...plan, sessions: plan.sessions.filter((item) => item.id !== session.id) })}
+                  onDelete={() =>
+                    onChange({
+                      ...plan,
+                      sessions: plan.sessions.filter((item) => item.id !== session.id),
+                      phases: plan.phases
+                        ?.map((phase) => ({
+                          ...phase,
+                          sessions: phase.sessions.filter((change) => change.sessionId !== session.id),
+                        }))
+                        .filter((phase) => phase.sessions.length > 0),
+                    })
+                  }
                 />
               ) : null}
             </li>
@@ -232,8 +270,8 @@ function TemplateForm({
       focus: String(form.get('focus') ?? '').trim(),
       notes: String(form.get('notes') ?? '').trim(),
       exercises: kind === 'strength' ? cleaned : [],
-      distanceKm: null,
-      durationMin: null,
+      distanceKm: initial?.distanceKm ?? null,
+      durationMin: initial?.durationMin ?? null,
     });
   }
 

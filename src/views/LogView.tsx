@@ -39,7 +39,7 @@ export function LogView({
   const [draft, setDraft] = useState<Draft>(() => {
     if (existing) {
       const base = draftFromSession(existing);
-      const template = existing.planSessionId ? findPlanSession(data, existing.planSessionId)?.session.exercises ?? [] : [];
+      const template = existing.planSessionId ? findPlanSession(data, existing.planSessionId, existing.date)?.session.exercises ?? [] : [];
       return applyTemplateMeta(base, template);
     }
     if (request.mode === 'preset') return draftFromPreset(request.preset, data.sessions);
@@ -89,9 +89,13 @@ export function LogView({
       kind: choice.session.kind,
       title: choice.session.title,
       exercises: choice.session.kind === 'strength' ? exercisesFromTemplate(choice.session.exercises, data.sessions) : current.exercises,
-      prompt: choice.session.kind === 'run' ? `${choice.session.title} · doing the run is enough` : `${choice.session.title} · target is sets and reps`,
+      prompt:
+        choice.session.kind === 'run'
+          ? `${choice.session.title} · ${choice.session.notes || 'doing the run is enough'}`
+          : `${choice.session.title} · target is sets and reps`,
       distanceHint: choice.session.kind === 'run' ? 'Optional. Saving with this blank still counts as doing the run.' : '',
-      durationHint: choice.session.kind === 'run' ? 'Optional.' : '',
+      durationHint: choice.session.kind === 'run' ? 'Optional. Saving still counts.' : '',
+      durationMin: choice.session.kind === 'run' && choice.session.durationMin ? String(choice.session.durationMin) : current.durationMin,
     }));
   }
 
