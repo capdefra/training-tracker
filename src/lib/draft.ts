@@ -1,6 +1,6 @@
-import type { EffortCount, ExerciseEntry, LogPreset, PlanExercise, Session } from '../types';
+import type { EffortCount, ExerciseEntry, LogPreset, PlanExercise, RunSplit, Session } from '../types';
 import { todayISO } from './dates';
-import { trimNum } from './format';
+import { formatDuration, formatKm, formatPace, trimNum } from './format';
 import { uid } from './ids';
 import { lastExercise } from './stats';
 
@@ -18,6 +18,13 @@ export interface ExerciseDraft {
   targetLabel: string;
 }
 
+export interface SplitDraft {
+  key: string;
+  time: string;
+  pace: string;
+  heartRate: string;
+}
+
 export interface Draft {
   date: string;
   kind: 'strength' | 'run';
@@ -28,9 +35,24 @@ export interface Draft {
   planSessionId: string;
   exercises: ExerciseDraft[];
   distanceKm: string;
-  durationMin: string;
-  durationSec: string;
+  /** Workout time, as `33:57` or whole minutes. */
+  duration: string;
   elevationM: string;
+  pace: string;
+  heartRate: string;
+  activeKcal: string;
+  totalKcal: string;
+  cadence: string;
+  power: string;
+  place: string;
+  source: string;
+  activity: string;
+  startTime: string;
+  endTime: string;
+  tempC: string;
+  humidity: string;
+  airQuality: string;
+  splits: SplitDraft[];
   effort: number | null;
   prompt: string;
   distanceHint: string;
@@ -45,6 +67,24 @@ export function blankExercise(name = ''): ExerciseDraft {
   return { key: uid('ex'), name, sets: [blankSet()], count: 'reps', targetLabel: '' };
 }
 
+export function blankSplit(): SplitDraft {
+  return { key: uid('split'), time: '', pace: '', heartRate: '' };
+}
+
+function clockFromMinutes(minutes: number): string {
+  if (!Number.isFinite(minutes) || minutes <= 0) return '';
+  return formatDuration(Math.round(minutes * 60));
+}
+
+function splitFromSession(split: RunSplit): SplitDraft {
+  return {
+    key: uid('split'),
+    time: split.timeSec > 0 ? formatDuration(split.timeSec) : '',
+    pace: split.paceSec ? formatPace(split.paceSec) : '',
+    heartRate: split.heartRate ? String(split.heartRate) : '',
+  };
+}
+
 export function blankDraft(date = todayISO()): Draft {
   return {
     date,
@@ -56,9 +96,23 @@ export function blankDraft(date = todayISO()): Draft {
     planSessionId: '',
     exercises: [blankExercise()],
     distanceKm: '',
-    durationMin: '',
-    durationSec: '',
+    duration: '',
     elevationM: '',
+    pace: '',
+    heartRate: '',
+    activeKcal: '',
+    totalKcal: '',
+    cadence: '',
+    power: '',
+    place: '',
+    source: '',
+    activity: '',
+    startTime: '',
+    endTime: '',
+    tempC: '',
+    humidity: '',
+    airQuality: '',
+    splits: [],
     effort: null,
     prompt: '',
     distanceHint: '',
@@ -75,9 +129,6 @@ function setsFromExercise(exercise: ExerciseEntry): SetDraft[] {
 }
 
 export function draftFromSession(session: Session): Draft {
-  const duration = session.durationSec ?? 0;
-  const minutes = session.durationSec ? String(Math.floor(duration / 60)) : '';
-  const seconds = session.durationSec ? String(duration % 60) : '';
   return {
     date: session.date,
     kind: session.kind,
@@ -95,10 +146,24 @@ export function draftFromSession(session: Session): Draft {
           targetLabel: '',
         }))
       : [blankExercise()],
-    distanceKm: session.distanceKm !== null ? trimNum(session.distanceKm) : '',
-    durationMin: minutes,
-    durationSec: seconds,
+    distanceKm: session.distanceKm !== null ? formatKm(session.distanceKm) : '',
+    duration: session.durationSec ? formatDuration(session.durationSec) : '',
     elevationM: session.elevationM !== null ? trimNum(session.elevationM) : '',
+    pace: session.paceSec ? formatPace(session.paceSec) : '',
+    heartRate: session.heartRate ? String(session.heartRate) : '',
+    activeKcal: session.activeKcal ? String(session.activeKcal) : '',
+    totalKcal: session.totalKcal ? String(session.totalKcal) : '',
+    cadence: session.cadenceSpm ? String(session.cadenceSpm) : '',
+    power: session.powerW ? String(session.powerW) : '',
+    place: session.place,
+    source: session.source,
+    activity: session.activity,
+    startTime: session.startTime,
+    endTime: session.endTime,
+    tempC: session.weather?.tempC !== null && session.weather?.tempC !== undefined ? trimNum(session.weather.tempC) : '',
+    humidity: session.weather?.humidityPct !== null && session.weather?.humidityPct !== undefined ? String(session.weather.humidityPct) : '',
+    airQuality: session.weather?.airQuality !== null && session.weather?.airQuality !== undefined ? String(session.weather.airQuality) : '',
+    splits: session.splits.map(splitFromSession),
     effort: session.effort,
     prompt: '',
     distanceHint: '',
@@ -156,8 +221,8 @@ export function draftFromPreset(preset: LogPreset, sessions: Session[]): Draft {
     planId: preset.planId ?? '',
     planSessionId: preset.planSessionId ?? '',
     exercises,
-    distanceKm: preset.distanceKm !== null ? trimNum(preset.distanceKm) : '',
-    durationMin: preset.durationMin !== null ? String(preset.durationMin) : '',
+    distanceKm: preset.distanceKm !== null ? formatKm(preset.distanceKm) : '',
+    duration: preset.durationMin !== null ? clockFromMinutes(preset.durationMin) : '',
     prompt: preset.prompt,
     distanceHint: preset.kind === 'run' ? 'Optional. Saving with this blank still counts as doing the run.' : '',
     durationHint: preset.kind === 'run' ? 'Optional.' : '',

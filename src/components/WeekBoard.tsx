@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { buildPreset, planItemsForWeek, planLastDay, weekSentence, type PlanItem } from '../lib/plans';
 import { addDays, daysBetween, formatDayMonth, formatLong, formatPretty, formatWeekday, startOfWeek, todayISO } from '../lib/dates';
 import { cx } from '../lib/cx';
+import { sessionSummary } from '../lib/stats';
 import { runPrescription } from '../lib/targets';
 import type { LogPreset, Plan, PlanPhase, TrainingData } from '../types';
 
@@ -342,6 +343,9 @@ function DayPanel({
                 })}
               </ul>
             )}
+            {item.logged && item.session.kind === 'run' && sessionSummary(item.logged) !== 'Run' ? (
+              <p className="muted">{sessionSummary(item.logged)}</p>
+            ) : null}
           </article>
         ))
       )}

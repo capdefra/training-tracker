@@ -14,7 +14,10 @@ import {
   type Draft,
 } from '../lib/draft';
 import { isISODate, startOfWeek, todayISO } from '../lib/dates';
-import { parseNum } from '../lib/format';
+import { formatDuration, parseNum } from '../lib/format';
+import { hasDisplayedMetrics, readWatch } from '../lib/watch';
+import { RunWatchFields, StrengthWatchFields } from '../components/WatchFields';
+import { WatchSummary } from '../components/WatchSummary';
 import { findPlanSession, logFromPreset, planChoices } from '../lib/plans';
 import { cx } from '../lib/cx';
 import { ExerciseDemo } from '../components/ExerciseDemo';
@@ -62,6 +65,7 @@ export function LogView({
   }
 
   const choices = planChoices(data, draft.date || todayISO(), draft.planSessionId || null);
+  const shown = existing ? previewSession(existing, draft) : null;
   const weekStart = isISODate(draft.date) ? startOfWeek(draft.date) : '';
   const duplicate = draft.planSessionId
     ? data.sessions.some((session) => {
@@ -95,7 +99,7 @@ export function LogView({
           : `${choice.session.title} · target is sets and reps`,
       distanceHint: choice.session.kind === 'run' ? 'Optional. Saving with this blank still counts as doing the run.' : '',
       durationHint: choice.session.kind === 'run' ? 'Optional. Saving still counts.' : '',
-      durationMin: choice.session.kind === 'run' && choice.session.durationMin ? String(choice.session.durationMin) : current.durationMin,
+      duration: choice.session.kind === 'run' && choice.session.durationMin ? minutesClock(choice.session.durationMin) : current.duration,
     }));
   }
 
@@ -116,6 +120,7 @@ export function LogView({
         <p className="kicker">{existing ? 'Edit' : 'New entry'}</p>
         <h1>{existing ? draft.title || 'Session' : 'Log a session'}</h1>
       </header>
+      {existing && shown ? <WatchSummary session={shown} /> : null}
       {draft.prompt ? <p className="callout">{draft.prompt}</p> : null}
       {!existing && data.presets.length > 0 ? (
         <div className="stack">
@@ -208,51 +213,7 @@ export function LogView({
       {draft.kind === 'strength' ? (
         <StrengthFields draft={draft} setDraft={setDraft} />
       ) : (
-        <div className="stack">
-          <p className="muted fine">Distance, time, and effort are optional. Saving the run is enough for the week.</p>
-          <div className="form-grid two">
-            <Field label="Distance (km)" hint={draft.distanceHint}>
-              <input
-                inputMode="decimal"
-                value={draft.distanceKm}
-                onChange={(event) => update('distanceKm', event.target.value)}
-                placeholder="Optional"
-              />
-            </Field>
-            <Field label="Climb (m)">
-              <input
-                inputMode="decimal"
-                value={draft.elevationM}
-                onChange={(event) => update('elevationM', event.target.value)}
-                placeholder="Optional"
-              />
-            </Field>
-          </div>
-          <div className="form-grid two">
-            <Field label="Minutes" hint={draft.durationHint}>
-              <input inputMode="numeric" value={draft.durationMin} onChange={(event) => update('durationMin', event.target.value)} placeholder="Optional" />
-            </Field>
-            <Field label="Seconds">
-              <input inputMode="numeric" value={draft.durationSec} onChange={(event) => update('durationSec', event.target.value)} placeholder="Optional" />
-            </Field>
-          </div>
-          <div className="field">
-            <span>Effort, 1 easy to 10 max</span>
-            <div className="effort" role="group" aria-label="Effort">
-              {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  className={cx(draft.effort === value && 'on')}
-                  onClick={() => update('effort', draft.effort === value ? null : value)}
-                  aria-pressed={draft.effort === value}
-                >
-                  {value}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        <RunWatchFields draft={draft} setDraft={setDraft} />
       )}
 
       <Field label="Notes">
@@ -438,8 +399,27 @@ function StrengthFields({ draft, setDraft }: { draft: Draft; setDraft: (value: D
       <button type="button" className="btn ghost" onClick={() => setDraft((current) => ({ ...current, exercises: [...current.exercises, blankExercise()] }))}>
         Add exercise
       </button>
+      <StrengthWatchFields draft={draft} setDraft={setDraft} />
     </div>
   );
+}
+
+function minutesClock(minutes: number): string {
+  return formatDuration(Math.round(minutes * 60));
+}
+
+function previewSession(existing: Session, draft: Draft): Session | null {
+  const watch = readWatch(draft, draft.kind === 'run');
+  const session =
+    typeof watch === 'string'
+      ? existing
+      : {
+          ...existing,
+          title: draft.title.trim() || existing.title,
+          date: isISODate(draft.date) ? draft.date : existing.date,
+          ...metricsFromWatch(watch, draft.kind === 'run', draft.kind === 'run' ? parseNum(draft.distanceKm) : null),
+        };
+  return hasDisplayedMetrics(session) ? session : null;
 }
 
 function toSession(draft: Draft, id: string, createdAt: string): Session | string {
@@ -465,6 +445,8 @@ function toSession(draft: Draft, id: string, createdAt: string): Session | strin
       exercises.push({ name, sets });
     }
     if (exercises.length === 0) return 'Add at least one exercise.';
+    const watch = readWatch(draft, false);
+    if (typeof watch === 'string') return watch;
     return {
       id,
       date: draft.date,
@@ -473,23 +455,17 @@ function toSession(draft: Draft, id: string, createdAt: string): Session | strin
       notes: draft.notes.trim(),
       ...link,
       exercises,
-      distanceKm: null,
-      durationSec: null,
-      elevationM: null,
-      effort: null,
+      ...metricsFromWatch(watch, false, null),
       createdAt,
       updatedAt: new Date().toISOString(),
     };
   }
 
   const distance = parseNum(draft.distanceKm);
-  const minutes = parseNum(draft.durationMin);
-  const seconds = parseNum(draft.durationSec);
-  if ((minutes !== null && minutes < 0) || (seconds !== null && seconds < 0) || (distance !== null && distance < 0)) {
-    return 'Distance and time can’t be negative.';
-  }
-  const durationSec = Math.round((minutes ?? 0) * 60 + (seconds ?? 0));
-  const elevation = parseNum(draft.elevationM);
+  if (draft.distanceKm.trim() && distance === null) return 'Distance needs to be a number.';
+  if (distance !== null && distance < 0) return 'Distance can’t be negative.';
+  const watch = readWatch(draft, true);
+  if (typeof watch === 'string') return watch;
   return {
     id,
     date: draft.date,
@@ -498,11 +474,30 @@ function toSession(draft: Draft, id: string, createdAt: string): Session | strin
     notes: draft.notes.trim(),
     ...link,
     exercises: [],
-    distanceKm: distance !== null && distance > 0 ? Math.round(distance * 100) / 100 : null,
-    durationSec: durationSec > 0 ? durationSec : null,
-    elevationM: elevation === null ? null : Math.max(0, elevation),
-    effort: draft.effort,
+    ...metricsFromWatch(watch, true, distance),
     createdAt,
     updatedAt: new Date().toISOString(),
+  };
+}
+
+function metricsFromWatch(watch: Exclude<ReturnType<typeof readWatch>, string>, run: boolean, distance: number | null) {
+  return {
+    distanceKm: run && distance !== null && distance > 0 ? Math.round(distance * 100) / 100 : null,
+    durationSec: watch.durationSec,
+    elevationM: run ? watch.elevationM : null,
+    effort: watch.effort,
+    paceSec: run ? watch.paceSec : null,
+    heartRate: watch.heartRate,
+    activeKcal: watch.activeKcal,
+    totalKcal: watch.totalKcal,
+    cadenceSpm: run ? watch.cadenceSpm : null,
+    powerW: run ? watch.powerW : null,
+    place: watch.place,
+    source: watch.source,
+    activity: watch.activity,
+    startTime: watch.startTime,
+    endTime: watch.endTime,
+    weather: watch.weather,
+    splits: run ? watch.splits : [],
   };
 }

@@ -1,6 +1,6 @@
 import type { ExerciseEntry, Session, SetEntry } from '../types';
 import { addDays, formatDayMonth, startOfWeek } from './dates';
-import { trimNum } from './format';
+import { formatDuration, formatKm, formatPace, trimNum } from './format';
 
 export function epley(weightKg: number, reps: number): number {
   if (weightKg <= 0 || reps <= 0) return 0;
@@ -192,16 +192,23 @@ export function bestLift(session: Session): { name: string; reps: number; weight
   return best;
 }
 
+export function sessionPaceSec(session: Session): number | null {
+  if (session.paceSec && session.paceSec > 0) return session.paceSec;
+  if (session.distanceKm && session.durationSec && session.distanceKm > 0 && session.durationSec > 0) {
+    return session.durationSec / session.distanceKm;
+  }
+  return null;
+}
+
 export function sessionSummary(session: Session): string {
   if (session.kind === 'run') {
     const bits: string[] = [];
-    if (session.distanceKm) bits.push(`${trimNum(session.distanceKm)} km`);
-    if (session.distanceKm && session.durationSec) {
-      bits.push(`${formatPaceInline(session.durationSec / session.distanceKm)} /km`);
-    } else if (session.durationSec) {
-      bits.push(`${Math.round(session.durationSec / 60)} min`);
-    }
-    if (session.elevationM) bits.push(`${Math.round(session.elevationM)} m up`);
+    if (session.distanceKm) bits.push(`${formatKm(session.distanceKm)} km`);
+    if (session.durationSec) bits.push(formatDuration(session.durationSec));
+    const pace = sessionPaceSec(session);
+    if (pace) bits.push(`${formatPace(pace)} /km`);
+    if (session.heartRate) bits.push(`${Math.round(session.heartRate)} bpm`);
+    else if (session.elevationM) bits.push(`${Math.round(session.elevationM)} m up`);
     return bits.join(' · ') || 'Run';
   }
   const top = bestLift(session);
@@ -209,14 +216,11 @@ export function sessionSummary(session: Session): string {
   if (!top) return count ? `${count} exercises` : 'Strength';
   const load = top.weightKg > 0 ? `${trimNum(top.weightKg)}×${top.reps}` : `${top.reps} reps`;
   const extra = count > 1 ? ` · ${count} exercises` : '';
-  return `${top.name} ${load}${extra}`;
-}
-
-function formatPaceInline(secPerKm: number): string {
-  const total = Math.round(secPerKm);
-  const minutes = Math.floor(total / 60);
-  const seconds = total % 60;
-  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+  const watch: string[] = [];
+  if (session.durationSec) watch.push(formatDuration(session.durationSec));
+  if (session.heartRate) watch.push(`${Math.round(session.heartRate)} bpm`);
+  const tail = watch.length > 0 ? ` · ${watch.join(' · ')}` : '';
+  return `${top.name} ${load}${extra}${tail}`;
 }
 
 export function averagePace(points: RunPoint[]): number | null {
