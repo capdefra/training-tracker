@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Icon, type IconName } from './components/Icon';
 import { cx } from './lib/cx';
+import { requestScreenWakeLock } from './lib/screen-wake';
 import { useHashRoute, type RouteName } from './hooks/useHashRoute';
+import { useScreenWakeLock } from './hooks/useScreenWakeLock';
 import { useTrainingData } from './hooks/useTrainingData';
 import { removeSession } from './lib/storage';
 import type { LogPreset } from './types';
@@ -21,6 +23,7 @@ const NAV: { href: string; name: RouteName; label: string; icon: IconName }[] = 
 ];
 
 export default function App() {
+  useScreenWakeLock();
   const store = useTrainingData();
   const route = useHashRoute();
   const [request, setRequest] = useState<DraftRequest>({ token: 0, mode: 'new' });
@@ -38,6 +41,8 @@ export default function App() {
   }, [route.name, route.id]);
 
   function openLog(preset?: LogPreset) {
+    // Safari grants the first screen wake lock only during a user gesture.
+    requestScreenWakeLock();
     setRequest(preset ? { token: Date.now(), mode: 'preset', preset } : { token: Date.now(), mode: 'new' });
     window.location.hash = '#/log';
   }
