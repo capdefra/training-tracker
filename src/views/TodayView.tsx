@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { PresetList } from '../components/PresetList';
 import { WeekBoard } from '../components/WeekBoard';
-import { formatCountdown, formatLong, formatPretty, todayISO } from '../lib/dates';
+import { cx } from '../lib/cx';
+import { formatCountdown, formatLong, formatPretty, startOfWeek, todayISO } from '../lib/dates';
 import { activeGoal, planItemsForWeek, recentSessions, type PlanItem } from '../lib/plans';
 import { sessionSummary } from '../lib/stats';
 import type { LogPreset, TrainingData } from '../types';
@@ -13,20 +14,81 @@ export function TodayView({ data, onLog }: { data: TrainingData; onLog: (preset?
   const plans = goal ? data.plans.filter((plan) => plan.goalId === goal.id && plan.status === 'active') : [];
   const recent = recentSessions(data, 5);
   const weekItems = plans.length > 0 ? planItemsForWeek(data, plans, focus) : [];
+  const onToday = focus === today;
+  const goalLine = goal ? (goal.targetDate ? `${goal.name} · ${formatCountdown(today, goal.targetDate)}` : goal.name) : '';
 
   return (
     <div className="stack page">
       <header className="page-head">
-        <p className="kicker">{focus === today ? 'Today' : formatPretty(focus)}</p>
-        <h1>{formatLong(focus)}</h1>
-        {goal && focus === today ? (
-          <p className="muted">{goal.targetDate ? `${goal.name} · ${formatCountdown(today, goal.targetDate)}` : goal.name}</p>
-        ) : null}
+        <h1 className="sr-only">Today, {formatLong(today)}</h1>
+        <button type="button" className={cx('today-heading', !onToday && 'is-away')} onClick={() => setFocus(today)}>
+          <span className="kicker">{onToday ? 'Today' : 'Return to today'}</span>
+          <span className="today-title">{formatLong(today)}</span>
+          {goalLine ? <span className="muted">{goalLine}</span> : null}
+        </button>
       </header>
 
       {plans.length > 0 ? (
-        <WeekBoard data={data} plans={plans} onLog={onLog} anchor={focus} onAnchor={setFocus} showDate={false} />
+        <WeekBoard
+          data={data}
+          plans={plans}
+          onLog={onLog}
+          anchor={focus}
+          onAnchor={setFocus}
+          showDate={false}
+          showTodayLink={false}
+          beforeDay={
+            <details className="card more-fold">
+              <summary>{weekSummary(weekItems, startOfWeek(focus) === startOfWeek(today))}</summary>
+              <div className="stack more-body">
+                {goal ? (
+                  <section className="stack">
+                    <h2>{goal.name}</h2>
+                    <p className="muted">{goal.targetDate ? `${formatLong(goal.targetDate)} · ${formatCountdown(today, goal.targetDate)}` : 'No target date'}</p>
+                    {goal.focus.length > 0 ? (
+                      <div className="tags">
+                        {goal.focus.map((tag) => (
+                          <span key={tag} className="tag light">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                    {goal.notes ? <p>{goal.notes}</p> : null}
+                  </section>
+                ) : null}
+                <PresetList data={data} onLog={onLog} embedded />
+                <section className="stack">
+                  <h2>Recent</h2>
+                  {recent.length === 0 ? (
+                    <p className="muted">Nothing logged yet.</p>
+                  ) : (
+                    <ul className="session-list">
+                      {recent.map((session) => (
+                        <li key={session.id}>
+                          <a className="session-link" href={`#/log/${session.id}`}>
+                            <span>
+                              <strong>{session.title}</strong>
+                              <small>
+                                {formatPretty(session.date)} · {session.kind === 'run' ? 'Run' : 'Strength'}
+                              </small>
+                            </span>
+                            <em>{sessionSummary(session)}</em>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <button type="button" className="btn ghost" onClick={() => onLog()}>
+                    Log something else
+                  </button>
+                </section>
+              </div>
+            </details>
+          }
+        />
       ) : (
+        <>
         <section className="session-card">
           <h2>No plan yet</h2>
           <p className="muted">Add a plan to see the week, or log a session on its own.</p>
@@ -44,55 +106,55 @@ export function TodayView({ data, onLog }: { data: TrainingData; onLog: (preset?
             </a>
           )}
         </section>
-      )}
-
-      <details className="card more-fold">
-        <summary>{weekSummary(weekItems, focus === today)}</summary>
-        <div className="stack more-body">
-          {goal ? (
-            <section className="stack">
-              <h2>{goal.name}</h2>
-              <p className="muted">{goal.targetDate ? `${formatLong(goal.targetDate)} · ${formatCountdown(today, goal.targetDate)}` : 'No target date'}</p>
-              {goal.focus.length > 0 ? (
-                <div className="tags">
-                  {goal.focus.map((tag) => (
-                    <span key={tag} className="tag light">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-              {goal.notes ? <p>{goal.notes}</p> : null}
-            </section>
-          ) : null}
-          <PresetList data={data} onLog={onLog} embedded />
-          <section className="stack">
-            <h2>Recent</h2>
-            {recent.length === 0 ? (
-              <p className="muted">Nothing logged yet.</p>
-            ) : (
-              <ul className="session-list">
-                {recent.map((session) => (
-                  <li key={session.id}>
-                    <a className="session-link" href={`#/log/${session.id}`}>
-                      <span>
-                        <strong>{session.title}</strong>
-                        <small>
-                          {formatPretty(session.date)} · {session.kind === 'run' ? 'Run' : 'Strength'}
-                        </small>
+        <details className="card more-fold">
+          <summary>{weekSummary(weekItems, startOfWeek(focus) === startOfWeek(today))}</summary>
+          <div className="stack more-body">
+            {goal ? (
+              <section className="stack">
+                <h2>{goal.name}</h2>
+                <p className="muted">{goal.targetDate ? `${formatLong(goal.targetDate)} · ${formatCountdown(today, goal.targetDate)}` : 'No target date'}</p>
+                {goal.focus.length > 0 ? (
+                  <div className="tags">
+                    {goal.focus.map((tag) => (
+                      <span key={tag} className="tag light">
+                        {tag}
                       </span>
-                      <em>{sessionSummary(session)}</em>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <button type="button" className="btn ghost" onClick={() => onLog()}>
-              Log something else
-            </button>
-          </section>
-        </div>
-      </details>
+                    ))}
+                  </div>
+                ) : null}
+                {goal.notes ? <p>{goal.notes}</p> : null}
+              </section>
+            ) : null}
+            <PresetList data={data} onLog={onLog} embedded />
+            <section className="stack">
+              <h2>Recent</h2>
+              {recent.length === 0 ? (
+                <p className="muted">Nothing logged yet.</p>
+              ) : (
+                <ul className="session-list">
+                  {recent.map((session) => (
+                    <li key={session.id}>
+                      <a className="session-link" href={`#/log/${session.id}`}>
+                        <span>
+                          <strong>{session.title}</strong>
+                          <small>
+                            {formatPretty(session.date)} · {session.kind === 'run' ? 'Run' : 'Strength'}
+                          </small>
+                        </span>
+                        <em>{sessionSummary(session)}</em>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <button type="button" className="btn ghost" onClick={() => onLog()}>
+                Log something else
+              </button>
+            </section>
+          </div>
+        </details>
+        </>
+      )}
     </div>
   );
 }
