@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { DistanceChart, LiftChart, PaceChart } from '../components/Charts';
 import { WeekBoard } from '../components/WeekBoard';
 import { addDays, formatPretty, todayISO } from '../lib/dates';
-import { formatDuration, formatPace, trimNum } from '../lib/format';
+import { effortLabel, formatDuration, formatPace, trimNum } from '../lib/format';
 import { cx } from '../lib/cx';
 import { averagePace, exerciseOptions, liftSeries, runPoints, sessionSummary, summarize, weeklyDistance } from '../lib/stats';
 import { activeGoal } from '../lib/plans';
@@ -156,7 +156,7 @@ export function ProgressView({ data, onLog }: { data: TrainingData; onLog: (pres
                     <strong>{session.title}</strong>
                     <small>
                       {formatPretty(session.date)} · {session.kind === 'run' ? 'Run' : 'Strength'}
-                      {session.effort ? ` · effort ${session.effort}` : ''}
+                      {session.effort ? ` · effort ${session.effort} ${effortLabel(session.effort)}` : ''}
                     </small>
                   </span>
                   <em>{sessionSummary(session)}</em>

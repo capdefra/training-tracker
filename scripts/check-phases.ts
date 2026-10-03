@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { effortLabel, formatPace } from '../src/lib/format';
 import { mergeTraining } from '../src/lib/merge';
 import { planCovers, planItemsForWeek } from '../src/lib/plans';
+import { sessionSummary } from '../src/lib/stats';
 import { normalize, serialize } from '../src/lib/storage';
 import { starterDocument } from '../src/lib/templates';
 import type { PlanSession, Session, TrainingData } from '../src/types';
@@ -182,6 +184,85 @@ check('old plan stays deleted', !cleaned.plans.some((item) => item.id === 'plan-
 check('old preset stays deleted', !cleaned.presets.some((item) => item.id === 'preset-lower'));
 check('a session logged against the old week is kept', cleaned.sessions.some((item) => item.id === 'log-run'));
 check('goal survives its older tombstone', cleaned.goals.some((item) => item.id === 'goal-ski-2026'));
+check('goal tombstone was not replaced', data.deleted.goals.filter((item) => item.id === 'goal-ski-2026').length === 1);
+check(
+  'goal tombstone stays older than the goal',
+  (data.goals.find((item) => item.id === 'goal-ski-2026')?.updatedAt ?? '') > (data.deleted.goals.find((item) => item.id === 'goal-ski-2026')?.at ?? '9'),
+);
+
+const watchRaw = {
+  version: 1,
+  goals: [],
+  plans: [],
+  presets: [],
+  sessions: [
+    {
+      id: 'log-watch',
+      date: '2026-10-03',
+      kind: 'run',
+      title: 'Outdoor run',
+      notes: '',
+      goalId: null,
+      planId: null,
+      planSessionId: null,
+      exercises: [],
+      distanceKm: 5.07,
+      durationSec: 2037,
+      elevationM: 19,
+      effort: 4,
+      paceSec: 402,
+      heartRate: 142,
+      activeKcal: 428,
+      totalKcal: 499,
+      cadenceSpm: 132,
+      powerW: 246,
+      place: 'Barcelona',
+      source: 'Apple Watch',
+      activity: 'Outdoor run',
+      startTime: '11:30',
+      endTime: '12:03',
+      weather: { tempC: 21, humidityPct: 83, airQuality: 2 },
+      // Shape fixture only. The real per-km rows were not provided.
+      splits: [{ km: 1, timeSec: 390, paceSec: 390, heartRate: 136 }],
+      createdAt: '2026-10-03T10:05:00.000Z',
+    },
+    {
+      id: 'log-old',
+      date: '2026-09-02',
+      kind: 'run',
+      title: 'Easy run',
+      notes: 'felt fine',
+      goalId: 'goal-ski-2026',
+      planId: null,
+      planSessionId: null,
+      exercises: [],
+      distanceKm: 4,
+      durationSec: 1500,
+      elevationM: 12,
+      effort: 3,
+      createdAt: '2026-09-02T09:00:00.000Z',
+    },
+  ],
+  deleted: { goals: [], plans: [], presets: [], sessions: [] },
+};
+const watched = normalize(watchRaw);
+const again = normalize(JSON.parse(serialize(watched)));
+const watch = again.sessions.find((session) => session.id === 'log-watch');
+const oldRun = again.sessions.find((session) => session.id === 'log-old');
+check('watch distance round trips', watch?.distanceKm === 5.07);
+check('watch time round trips', watch?.durationSec === 2037);
+check('watch pace round trips', watch?.paceSec === 402 && formatPace(watch.paceSec) === '6:42');
+check('watch heart rate round trips', watch?.heartRate === 142);
+check('watch calories round trip', watch?.activeKcal === 428 && watch?.totalKcal === 499);
+check('watch elevation cadence power round trip', watch?.elevationM === 19 && watch?.cadenceSpm === 132 && watch?.powerW === 246);
+check('effort 4 is moderate', watch?.effort === 4 && effortLabel(4) === 'Moderate');
+check('watch place and clock round trip', watch?.place === 'Barcelona' && watch?.source === 'Apple Watch' && watch?.startTime === '11:30' && watch?.endTime === '12:03');
+check('watch weather round trips', watch?.weather?.tempC === 21 && watch?.weather?.humidityPct === 83 && watch?.weather?.airQuality === 2);
+check('watch split round trips', watch?.splits.length === 1 && watch.splits[0]?.timeSec === 390 && watch.splits[0]?.paceSec === 390 && watch.splits[0]?.heartRate === 136);
+check('summary lists the watch metrics', sessionSummary(watch!) === '5.07 km · 33:57 · 6:42 /km · 142 bpm');
+check('older run without new fields still loads', oldRun?.distanceKm === 4 && oldRun?.heartRate === null && oldRun?.splits.length === 0 && oldRun?.paceSec === null && oldRun?.notes === 'felt fine');
+check('older run pace still comes from time and distance', sessionSummary(oldRun!).includes('6:15'));
+check('watch import does not tombstone the ski goal', again.deleted.goals.length === 0);
 
 if (failures.length > 0) {
   console.error(failures.map((failure) => `- ${failure}`).join('\n'));

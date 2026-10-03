@@ -73,6 +73,25 @@ export interface SetEntry {
   weightKg: number;
 }
 
+/** One kilometre from a watch split. Time and pace are both stored because the last split can be short of a full kilometre. */
+export interface RunSplit {
+  km: number;
+  /** Split time in seconds. */
+  timeSec: number;
+  /** Pace in seconds per kilometre. */
+  paceSec: number | null;
+  /** Average heart rate for the split, bpm. */
+  heartRate: number | null;
+}
+
+/** Weather line from a watch workout summary. Missing parts stay null. */
+export interface SessionWeather {
+  tempC: number | null;
+  humidityPct: number | null;
+  /** The number the watch shows beside air quality. */
+  airQuality: number | null;
+}
+
 export interface ExerciseEntry {
   name: string;
   sets: SetEntry[];
@@ -91,7 +110,30 @@ export interface Session {
   distanceKm: number | null;
   durationSec: number | null;
   elevationM: number | null;
+  /** 1–10. Apple labels 1–3 easy, 4–6 moderate, 7–8 hard, 9–10 all out. */
   effort: number | null;
+  /** Average pace in seconds per kilometre, when the watch reports one. */
+  paceSec: number | null;
+  /** Average heart rate, bpm. */
+  heartRate: number | null;
+  activeKcal: number | null;
+  totalKcal: number | null;
+  /** Steps per minute. */
+  cadenceSpm: number | null;
+  /** Average power, watts. */
+  powerW: number | null;
+  /** Where the watch placed the workout, such as a city. */
+  place: string;
+  /** Device that recorded it, such as Apple Watch. */
+  source: string;
+  /** Watch activity name, such as Outdoor run. The title can stay the plan name. */
+  activity: string;
+  /** Local start, HH:MM. */
+  startTime: string;
+  /** Local finish, HH:MM. */
+  endTime: string;
+  weather: SessionWeather | null;
+  splits: RunSplit[];
   createdAt: string;
   updatedAt?: string;
 }

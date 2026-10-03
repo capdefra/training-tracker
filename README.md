@@ -29,7 +29,7 @@ Use the dev server (or `npm run preview` after a build). Opening `index.html` as
 
 **Workouts** are reusable presets. The starter set is Lower A, an easy run, full upper, Lower B, and a longer run. Strength presets include a short demo when one exists for that exercise (the movement, the steps, and what to watch). Starting a preset fills the log. If that workout is still open on this week’s plan, the entry counts toward it, including the phase for that date.
 
-**Log** takes a strength workout or a run. Strength targets are sets and reps (or seconds for a hold such as a side plank). Kilograms are optional and are not the weekly target. A run counts as soon as you save it; distance, time, climb, and effort are optional. Each strength exercise can open its demo while you train.
+**Log** takes a strength workout or a run. Strength targets are sets and reps (or seconds for a hold such as a side plank). Kilograms are optional and are not the weekly target. A run counts as soon as you save it. Runs are logged after the fact: distance, workout time, pace, heart rate, active and total calories, elevation, cadence, power, effort, weather, and per-kilometre splits (time, pace, heart rate) are all optional. A strength session can also store workout time, heart rate, calories, and effort when a watch recorded them. Each strength exercise can open its demo while you train.
 
 **Plans** is where goals and the repeating week live. A goal has a name, a target date, and focus tags. A plan has a start date, a length in weeks, and sessions on chosen days. Phases are inclusive date windows that replace a session’s notes, duration, or set count. The home ski plan uses them for the run phases and the 2-set taper. “Start with the home ski plan” fills that week. Editing a strength session sets sets and reps, not a weight. A run counts when it is logged; the phase says how long it should be.
 
@@ -110,7 +110,7 @@ scripts/sample-data.mjs       rewrites the starter file
 - **goals** — name, target date, focus tags, notes, status (`active`, `paused`, `done`)
 - **plans** — linked to a goal, with a start date, a number of weeks, an optional end date, a weekly template, and optional phases (inclusive dates that change a session’s notes, minutes, or set count)
 - **presets** — reusable workouts you can start from Today or the log
-- **sessions** — a strength workout or a run, optionally linked to a plan session
+- **sessions** — a strength workout or a run, optionally linked to a plan session. A run can hold a watch summary: pace, heart rate, active and total calories, cadence, power, elevation, effort, place, source, activity, start and finish, weather, and splits. Older sessions that lack those fields still load. Strength uses the same time, heart rate, calorie, and effort fields when they are present.
 - **deleted** — ids removed on one device, so a sync does not bring them back
 
 A strength target is sets and reps of an exercise (seconds for a hold). It does not include weight. A run on the plan is done when a run is logged against it that week. Logged kilograms, distance, and pace are history, not the target.

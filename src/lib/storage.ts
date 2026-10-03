@@ -9,8 +9,10 @@ import type {
   PlanExercise,
   PlanPhase,
   PlanSession,
+  RunSplit,
   Session,
   SessionKind,
+  SessionWeather,
   SetEntry,
   TrainingData,
   WorkoutPreset,
@@ -231,6 +233,51 @@ function normalizePreset(value: unknown): WorkoutPreset | null {
   };
 }
 
+function clock(value: unknown): string {
+  const raw = text(value);
+  const match = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(raw);
+  if (!match) return '';
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour > 23 || minute > 59) return '';
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+
+function positiveCount(value: unknown): number | null {
+  const parsed = numberOrNull(value);
+  if (parsed === null || parsed <= 0) return null;
+  return Math.round(parsed);
+}
+
+function normalizeWeather(value: unknown): SessionWeather | null {
+  const record = asRecord(value);
+  if (!record) return null;
+  const tempC = numberOrNull(record.tempC);
+  const humidity = numberOrNull(record.humidityPct);
+  const air = numberOrNull(record.airQuality);
+  const humidityPct = humidity !== null && humidity >= 0 ? Math.round(humidity) : null;
+  const airQuality = air !== null && air >= 0 ? Math.round(air) : null;
+  if (tempC === null && humidityPct === null && airQuality === null) return null;
+  return { tempC, humidityPct, airQuality };
+}
+
+function normalizeSplit(value: unknown, index: number): RunSplit | null {
+  const record = asRecord(value);
+  if (!record) return null;
+  const time = numberOrNull(record.timeSec);
+  const pace = positiveCount(record.paceSec);
+  const heart = positiveCount(record.heartRate);
+  const timeSec = time !== null && time >= 0 ? Math.round(time) : null;
+  if (timeSec === null && pace === null && heart === null) return null;
+  const km = positiveCount(record.km);
+  return {
+    km: km ?? index + 1,
+    timeSec: timeSec ?? 0,
+    paceSec: pace,
+    heartRate: heart,
+  };
+}
+
 function normalizeSession(value: unknown): Session | null {
   const record = asRecord(value);
   if (!record) return null;
@@ -238,6 +285,9 @@ function normalizeSession(value: unknown): Session | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
   const sessionKind = kind(record.kind);
   const effort = numberOrNull(record.effort);
+  const splits = Array.isArray(record.splits)
+    ? record.splits.map(normalizeSplit).filter((item) => item !== null)
+    : [];
   return {
     id: text(record.id) || `log-${Math.random().toString(36).slice(2, 8)}`,
     date,
@@ -254,6 +304,19 @@ function normalizeSession(value: unknown): Session | null {
     durationSec: numberOrNull(record.durationSec),
     elevationM: numberOrNull(record.elevationM),
     effort: effort !== null ? Math.min(10, Math.max(1, Math.round(effort))) : null,
+    paceSec: positiveCount(record.paceSec),
+    heartRate: positiveCount(record.heartRate),
+    activeKcal: positiveCount(record.activeKcal),
+    totalKcal: positiveCount(record.totalKcal),
+    cadenceSpm: positiveCount(record.cadenceSpm),
+    powerW: positiveCount(record.powerW),
+    place: text(record.place),
+    source: text(record.source),
+    activity: text(record.activity),
+    startTime: clock(record.startTime),
+    endTime: clock(record.endTime),
+    weather: normalizeWeather(record.weather),
+    splits,
     createdAt: text(record.createdAt) || new Date().toISOString(),
     updatedAt: optionalStamp(record.updatedAt),
   };
