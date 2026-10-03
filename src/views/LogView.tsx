@@ -21,7 +21,6 @@ import { WatchSummary } from '../components/WatchSummary';
 import { findPlanSession, logFromPreset, planChoices } from '../lib/plans';
 import { cx } from '../lib/cx';
 import { ExerciseDemo } from '../components/ExerciseDemo';
-import { findDemo } from '../lib/demos';
 import type { DraftRequest } from './draft-request';
 import type { Session, TrainingData } from '../types';
 
@@ -255,8 +254,6 @@ export function LogView({
 }
 
 function StrengthFields({ draft, setDraft }: { draft: Draft; setDraft: (value: Draft | ((current: Draft) => Draft)) => void }) {
-  const [demoKey, setDemoKey] = useState<string | null>(null);
-
   function addLift(name: string) {
     setDraft((current) => {
       if (current.exercises.some((exercise) => exercise.name.trim().toLowerCase() === name.toLowerCase())) return current;
@@ -307,17 +304,7 @@ function StrengthFields({ draft, setDraft }: { draft: Draft; setDraft: (value: D
             </button>
           </div>
           {exercise.targetLabel ? <p className="muted fine">Target {exercise.targetLabel}. Kilograms are not part of the target.</p> : null}
-          {findDemo(exercise.name) ? (
-            <button
-              type="button"
-              className="btn ghost small"
-              aria-expanded={demoKey === exercise.key}
-              onClick={() => setDemoKey(demoKey === exercise.key ? null : exercise.key)}
-            >
-              {demoKey === exercise.key ? 'Hide demo' : 'How to do this'}
-            </button>
-          ) : null}
-          {demoKey === exercise.key ? <ExerciseDemo name={exercise.name} /> : null}
+          <ExerciseDemo name={exercise.name} />
           <div className="set-head" aria-hidden="true">
             <span />
             <span>{exercise.count === 'seconds' ? 'Seconds' : 'Reps'}</span>
