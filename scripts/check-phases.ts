@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { effortLabel, formatPace } from '../src/lib/format';
 import { mergeTraining } from '../src/lib/merge';
-import { planCovers, planItemsForWeek } from '../src/lib/plans';
+import { extraLogsForDay, planCovers, planItemsForWeek } from '../src/lib/plans';
 import { sessionSummary } from '../src/lib/stats';
 import { normalize, serialize } from '../src/lib/storage';
 import { starterDocument } from '../src/lib/templates';
@@ -122,6 +122,37 @@ function loggedStrength(date: string, session: PlanSession, setCount: number): S
 const withRun = { ...data, sessions: [loggedRun('2026-10-06', 'ps-easy')] };
 check('a saved run counts', planItemsForWeek(withRun, withRun.plans, '2026-10-06').find((entry) => entry.session.id === 'ps-easy')?.done === true);
 check('the other run stays open', planItemsForWeek(withRun, withRun.plans, '2026-10-06').find((entry) => entry.session.id === 'ps-long')?.done === false);
+
+const beforePlan = {
+  ...data,
+  sessions: [{ ...loggedRun('2026-10-03', ''), id: 'log-easy-2026-10-03', planId: null, planSessionId: null }],
+};
+const oct3 = planItemsForWeek(beforePlan, beforePlan.plans, '2026-10-03').filter((entry) => entry.date === '2026-10-03');
+check('3 Oct is before the plan', oct3.length === 0);
+check(
+  'a logged run still shows on 3 Oct',
+  extraLogsForDay(beforePlan.sessions, oct3, '2026-10-03').map((entry) => entry.id).join() === 'log-easy-2026-10-03',
+);
+
+const shakeout = {
+  ...loggedRun('2026-10-06', ''),
+  id: 'log-shakeout',
+  title: 'Shakeout',
+  planId: null,
+  planSessionId: null,
+  createdAt: '2026-10-06T18:00:00.000Z',
+};
+const bothDay = { ...data, sessions: [loggedRun('2026-10-06', 'ps-easy'), shakeout] };
+const tuesday = planItemsForWeek(bothDay, bothDay.plans, '2026-10-06').filter((entry) => entry.date === '2026-10-06');
+const tuesdayEasy = tuesday.find((entry) => entry.session.id === 'ps-easy');
+const tuesdayExtras = extraLogsForDay(bothDay.sessions, tuesday, '2026-10-06');
+check('a linked run marks the plan done', tuesdayEasy?.done === true);
+check('the linked run is not a second card', !tuesdayExtras.some((entry) => entry.id === 'log-run'));
+check('an extra log on that day stays separate', tuesdayExtras.some((entry) => entry.id === 'log-shakeout'));
+
+const wednesday = planItemsForWeek(data, data.plans, '2026-10-07').filter((entry) => entry.date === '2026-10-07');
+check('a planned day with no log is not done', wednesday.length === 1 && wednesday[0]?.done === false);
+check('a planned day with no log has nothing else', extraLogsForDay(data.sessions, wednesday, '2026-10-07').length === 0);
 
 const lower = plan.sessions.find((session) => session.id === 'ps-lower-a');
 if (!lower) throw new Error('missing lower A');

@@ -83,13 +83,14 @@ export function planItemsForWeek(data: TrainingData, plans: Plan[], anchor: stri
         const resolved = sessionForDate(plan, session, date);
         const logs = weekSessions.filter((entry) => entry.planSessionId === session.id);
         const targets = exerciseTargets(resolved, logs);
+        const sameDay = logs.find((entry) => entry.date === date);
         items.push({
           date,
           plan,
           phase: phaseOn(plan, date),
           session: resolved,
           logs,
-          logged: logs[0] ?? null,
+          logged: sameDay ?? logs[0] ?? null,
           targets,
           done: sessionTargetsMet(resolved, logs),
         });
@@ -97,6 +98,23 @@ export function planItemsForWeek(data: TrainingData, plans: Plan[], anchor: stri
     }
   }
   return items;
+}
+
+/**
+ * Sessions logged on `date` that are not already represented by a plan card that day.
+ * A log fulfills the plan card when it is linked to that plan session, so it is not shown twice.
+ */
+export function extraLogsForDay(sessions: Session[], planned: PlanItem[], date: string): Session[] {
+  const claimed = new Set<string>();
+  for (const item of planned) {
+    if (item.date !== date) continue;
+    for (const log of item.logs) {
+      if (log.date === date) claimed.add(log.id);
+    }
+  }
+  return sessions
+    .filter((session) => session.date === date && !claimed.has(session.id))
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
 }
 
 export function weekSentence(items: PlanItem[], today: string): string {
