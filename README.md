@@ -25,7 +25,7 @@ Use the dev server (or `npm run preview` after a build). Opening `index.html` as
 
 ## What you can do
 
-**Today** shows the active goal, this week’s targets, workout presets, and recent sessions. Open a planned session or start a preset. The layout is meant for a phone: large tap targets, no sideways scrolling, and the save button stays above the tab bar while you log.
+**Today** shows the active goal, this week’s targets, workout presets, and recent sessions. The week is a calendar: swipe or scroll sideways between weeks, and tap a day to open what is planned (the session, the exercises or the run, and whether it is done). A today glance stays on screen on a phone, including while you are looking at another week. Open a planned session or start a preset. The layout is meant for a phone: large tap targets, the page itself does not scroll sideways, and the save button stays above the tab bar while you log.
 
 **Workouts** are reusable presets. The starter set is Lower A, an easy run, full upper, Lower B, and a longer run. Strength presets include a short demo when one exists for that exercise (the movement, the steps, and what to watch). Starting a preset fills the log. If that workout is still open on this week’s plan, the entry counts toward it, including the phase for that date.
 

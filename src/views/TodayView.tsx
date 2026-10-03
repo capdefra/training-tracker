@@ -18,34 +18,6 @@ export function TodayView({ data, onLog }: { data: TrainingData; onLog: (preset?
         <h1>{formatLong(today)}</h1>
       </header>
 
-      {goal ? (
-        <section className="hero">
-          <p className="kicker light">{goal.status === 'active' ? 'Active goal' : goal.status}</p>
-          <h2>{goal.name}</h2>
-          <p>
-            {goal.targetDate ? `${formatLong(goal.targetDate)} · ${formatCountdown(today, goal.targetDate)}` : 'No target date'}
-          </p>
-          {goal.focus.length > 0 ? (
-            <div className="tags">
-              {goal.focus.map((tag) => (
-                <span key={tag} className="tag">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          ) : null}
-          {goal.notes ? <p className="hero-notes">{goal.notes}</p> : null}
-        </section>
-      ) : (
-        <section className="card empty">
-          <h2>No goal yet</h2>
-          <p>A goal is the season or race the plan is building toward.</p>
-          <a className="btn primary" href="#/plans">
-            Create a goal
-          </a>
-        </section>
-      )}
-
       <section className="stack">
         {plans.length > 0 ? (
           <WeekBoard
@@ -114,6 +86,34 @@ export function TodayView({ data, onLog }: { data: TrainingData; onLog: (preset?
           </>
         )}
       </section>
+
+      {goal ? (
+        <section className="hero">
+          <p className="kicker light">{goal.status === 'active' ? 'Active goal' : goal.status}</p>
+          <h2>{goal.name}</h2>
+          <p>
+            {goal.targetDate ? `${formatLong(goal.targetDate)} · ${formatCountdown(today, goal.targetDate)}` : 'No target date'}
+          </p>
+          {goal.focus.length > 0 ? (
+            <div className="tags">
+              {goal.focus.map((tag) => (
+                <span key={tag} className="tag">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          ) : null}
+          {goal.notes ? <p className="hero-notes">{goal.notes}</p> : null}
+        </section>
+      ) : (
+        <section className="card empty">
+          <h2>No goal yet</h2>
+          <p>A goal is the season or race the plan is building toward.</p>
+          <a className="btn primary" href="#/plans">
+            Create a goal
+          </a>
+        </section>
+      )}
 
       <PresetList data={data} onLog={(preset) => onLog(preset)} />
 
