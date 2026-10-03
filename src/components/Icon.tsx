@@ -1,4 +1,4 @@
-export type IconName = 'today' | 'log' | 'plans' | 'progress' | 'data';
+export type IconName = 'today' | 'log' | 'plans' | 'progress' | 'activity' | 'data';
 
 export function Icon({ name }: { name: IconName }) {
   const common = {
@@ -41,6 +41,21 @@ export function Icon({ name }: { name: IconName }) {
       <svg {...common}>
         <path d="M4 16.5l5-5 3.5 3.5L20 7.5" />
         <path d="M14.5 7.5H20V13" />
+      </svg>
+    );
+  }
+  if (name === 'activity') {
+    return (
+      <svg {...common}>
+        <rect x="3.5" y="3.5" width="4.2" height="4.2" rx="1" />
+        <rect x="9.9" y="3.5" width="4.2" height="4.2" rx="1" />
+        <rect x="16.3" y="3.5" width="4.2" height="4.2" rx="1" />
+        <rect x="3.5" y="9.9" width="4.2" height="4.2" rx="1" />
+        <rect x="9.9" y="9.9" width="4.2" height="4.2" rx="1" fill="currentColor" stroke="none" />
+        <rect x="16.3" y="9.9" width="4.2" height="4.2" rx="1" />
+        <rect x="3.5" y="16.3" width="4.2" height="4.2" rx="1" />
+        <rect x="9.9" y="16.3" width="4.2" height="4.2" rx="1" />
+        <rect x="16.3" y="16.3" width="4.2" height="4.2" rx="1" />
       </svg>
     );
   }

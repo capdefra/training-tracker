@@ -8,6 +8,7 @@ import { useTrainingData } from './hooks/useTrainingData';
 import { removeSession } from './lib/storage';
 import type { LogPreset } from './types';
 import type { DraftRequest } from './views/draft-request';
+import { ActivityView } from './views/ActivityView';
 import { DataView } from './views/DataView';
 import { LogView } from './views/LogView';
 import { PlansView } from './views/PlansView';
@@ -19,6 +20,7 @@ const NAV: { href: string; name: RouteName; label: string; icon: IconName }[] = 
   { href: '#/log', name: 'log', label: 'Log', icon: 'log' },
   { href: '#/plans', name: 'plans', label: 'Plans', icon: 'plans' },
   { href: '#/progress', name: 'progress', label: 'Progress', icon: 'progress' },
+  { href: '#/activity', name: 'activity', label: 'Activity', icon: 'activity' },
   { href: '#/data', name: 'data', label: 'Data', icon: 'data' },
 ];
 
@@ -34,11 +36,12 @@ export default function App() {
       log: 'Log',
       plans: 'Plans',
       progress: 'Progress',
+      activity: 'Activity',
       data: 'Data',
     };
     document.title = `${titles[route.name]} · Training Tracker`;
     window.scrollTo({ top: 0 });
-  }, [route.name, route.id]);
+  }, [route.name, route.id, route.date]);
 
   function openLog(preset?: LogPreset) {
     // Safari grants the first screen wake lock only during a user gesture.
@@ -108,7 +111,7 @@ export default function App() {
           <p className="nav-status">{syncLabel(store.syncStatus, store.gistId, store.dirty, store.repo === null)}</p>
         </nav>
         <main className="content">
-          {route.name === 'today' ? <TodayView data={data} onLog={openLog} /> : null}
+          {route.name === 'today' ? <TodayView key={route.date ?? 'today'} data={data} onLog={openLog} date={route.date} /> : null}
           {route.name === 'log' ? (
             <LogView
               key={route.id ? `edit-${route.id}` : `new-${request.token}`}
@@ -132,6 +135,7 @@ export default function App() {
           ) : null}
           {route.name === 'plans' ? <PlansView data={data} goalId={route.id} update={store.update} onLog={openLog} /> : null}
           {route.name === 'progress' ? <ProgressView data={data} onLog={openLog} /> : null}
+          {route.name === 'activity' ? <ActivityView data={data} /> : null}
           {route.name === 'data' ? (
             <DataView
               data={data}

@@ -91,6 +91,7 @@ code { font-family: var(--mono); font-size: 0.92em; }
   gap: 8px;
   min-height: 44px;
   padding: 0 16px;
+  line-height: 1;
   border-radius: 999px;
   border: 1px solid transparent;
   background: var(--card);
@@ -106,6 +107,9 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .btn.danger { color: var(--ember); }
 .btn:disabled { opacity: 0.6; cursor: wait; }
 .icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 44px;
   height: 44px;
   border: 0;
@@ -114,17 +118,22 @@ code { font-family: var(--mono); font-size: 0.92em; }
   cursor: pointer;
   font-size: 1.3rem;
   line-height: 1;
+  padding: 0;
 }
 .form-actions, .confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .text-link { color: var(--spruce); font-weight: 650; text-decoration: underline; text-underline-offset: 3px; }
 
-.chip, .filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--line);
   background: transparent;
   border-radius: 999px;
-  min-height: 34px;
+  min-height: 44px;
   padding: 0 12px;
+  line-height: 1;
   cursor: pointer;
 }
 .chip.on, .seg button.on, .effort button.on { background: var(--spruce); color: #f6f3ec; border-color: var(--spruce); }
@@ -135,7 +144,7 @@ code { font-family: var(--mono); font-size: 0.92em; }
   right: 0;
   bottom: 0;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 2px;
   padding: 6px 8px calc(8px + env(safe-area-inset-bottom));
   background: rgba(255, 252, 247, 0.94);
@@ -149,8 +158,9 @@ code { font-family: var(--mono); font-size: 0.92em; }
   align-items: center;
   gap: 2px;
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.64rem;
   font-weight: 650;
+  line-height: 1.1;
   padding: 6px 0;
   border-radius: 12px;
 }
@@ -235,28 +245,40 @@ code { font-family: var(--mono); font-size: 0.92em; }
 .day-list { display: flex; flex-direction: column; gap: 12px; }
 .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; min-width: 0; }
 .day {
+  appearance: none;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 14px;
-  min-height: 64px;
+  height: 68px;
+  min-height: 68px;
   min-width: 0;
-  padding: 8px 0;
+  padding: 0;
   text-align: center;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  line-height: 1;
+}
+button.day { width: 100%; }
+.day-label {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  cursor: pointer;
-  font: inherit;
-  color: inherit;
+  gap: 3px;
+  width: 100%;
+  height: 100%;
+  padding: 8px 1px;
+  line-height: 1;
 }
-button.day { width: 100%; }
-.day span { color: var(--muted); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
-.day strong { font-family: var(--display); font-size: 1.15rem; }
+.day-label > span { display: block; color: var(--muted); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1; }
+.day strong { display: block; color: var(--ink); font-family: var(--display); font-size: 1.15rem; font-weight: 560; line-height: 1; }
 .day.today { border-color: var(--spruce); }
 .day.selected { background: #f3faf6; border-color: var(--spruce); box-shadow: inset 0 0 0 1px var(--spruce); }
-.mark { width: 7px; height: 7px; border-radius: 50%; margin-top: 4px; background: transparent; border: 1.5px solid transparent; }
+.mark { display: block; width: 7px; height: 7px; border-radius: 50%; margin-top: 1px; background: transparent; border: 1.5px solid transparent; flex: none; }
 .day.planned .mark { border-color: var(--spruce); }
 .day.done .mark { background: var(--spruce); border-color: var(--spruce); }
 .session-card {
@@ -359,12 +381,16 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .form-grid { display: grid; gap: 12px; }
 .seg, .effort { display: flex; gap: 6px; flex-wrap: wrap; }
 .seg button, .effort button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 44px;
   padding: 0 14px;
   border-radius: 999px;
   border: 1px solid var(--line);
   background: #fff;
   cursor: pointer;
+  line-height: 1;
 }
 .effort button { flex: 1 1 2.5rem; }
 .seg button { flex: 1; }
@@ -527,7 +553,56 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .sync-pill.error .sync-dot { background: var(--ember); }
 details.card > summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
 details.card > summary::marker { color: var(--spruce); }
-.chip { min-height: 44px; }
+.activity-legend { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.activity-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1;
+}
+.activity-swatch { width: 12px; height: 12px; border-radius: 3px; display: block; flex: none; }
+.activity-swatch.empty { background: #efe8db; }
+.activity-swatch.planned { background: transparent; box-shadow: inset 0 0 0 1.5px var(--spruce); }
+.activity-swatch.partial { background: #8fbfa6; }
+.activity-swatch.done { background: var(--spruce); }
+.activity { display: flex; flex-direction: column; gap: 4px; }
+.activity-head, .activity-week {
+  display: grid;
+  grid-template-columns: 4.5rem repeat(7, minmax(0, 1fr));
+  gap: 3px;
+  align-items: center;
+}
+.activity-head span {
+  text-align: center;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1;
+}
+.activity-week-label {
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1.15;
+  color: var(--muted);
+}
+.activity-cell {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  min-height: 28px;
+  border-radius: 6px;
+  background: #efe8db;
+  border: 1px solid transparent;
+}
+.activity-cell.planned { background: transparent; border-color: var(--spruce); }
+.activity-cell.partial { background: #8fbfa6; border-color: #8fbfa6; }
+.activity-cell.done { background: var(--spruce); border-color: var(--spruce); }
+.activity-cell.is-today { box-shadow: inset 0 0 0 2px var(--amber); }
 .phase-jump {
   width: 100%;
   display: flex;
