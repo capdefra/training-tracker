@@ -60,8 +60,15 @@ export function sessionTargetsMet(session: PlanSession, logs: Session[]): boolea
   return targets.every((target) => target.met);
 }
 
+export function runPrescription(session: PlanSession): string {
+  const notes = session.notes.trim();
+  if (notes) return notes;
+  if (session.durationMin) return `${session.durationMin} min`;
+  return 'Do the run';
+}
+
 export function describePlanSession(session: PlanSession): string {
-  if (session.kind === 'run') return 'Do the run';
+  if (session.kind === 'run') return runPrescription(session);
   if (session.exercises.length === 0) return 'Strength';
   return session.exercises.map((exercise) => `${exercise.name} ${exerciseTargetLabel(exercise)}`).join(', ');
 }

@@ -4,65 +4,82 @@
     {
       "id": "goal-ski-2026",
       "name": "Ski season prep",
-      "targetDate": "2026-12-19",
+      "targetDate": "2026-12-15",
       "focus": [
         "Legs",
         "Balance",
-        "Cardio"
+        "Cardio",
+        "Upper"
       ],
-      "notes": "Be ready for the first week on snow: stronger quads and posterior chain, steadier single-leg balance, and an aerobic base that survives a full day on the hill.",
+      "notes": "Downhill skiing through 15 Dec. Single-leg quads and glutes, posterior chain, an aerobic base, and balanced upper strength. Home only: bench at 0/30/45/80 degrees, kettlebells 8/12/16 kg, two adjustable dumbbells (about 22 kg max each). Five days a week, no current injury, modest base. Leave 1-2 reps in the tank. Add load or slow the eccentric when the top of the rep range is clean. If the legs feel heavy the next morning, repeat the same loads.",
       "status": "active",
       "createdAt": "2026-08-01T09:00:00.000Z",
-      "updatedAt": "2026-10-02T00:00:00.000Z"
+      "updatedAt": "2026-10-03T07:51:00.000Z"
     }
   ],
   "plans": [
     {
-      "id": "plan-ski-base",
+      "id": "plan-ski-home",
       "goalId": "goal-ski-2026",
-      "name": "Pre-season base",
-      "startDate": "2026-08-03",
-      "weeks": 20,
+      "name": "Home ski prep",
+      "startDate": "2026-10-06",
+      "weeks": 10,
+      "endDate": "2026-12-13",
       "focus": [
         "Legs",
         "Balance",
-        "Cardio"
+        "Cardio",
+        "Upper"
       ],
-      "notes": "The same week through the start of the season. Strength targets are sets and reps — choose the load yourself. A run counts as soon as you do it.",
-      "status": "active",
-      "updatedAt": "2026-10-02T00:00:00.000Z",
+      "notes": "Mon Lower A, Tue easy run, Wed full upper, Thu off or walk, Fri Lower B, Sat longer run, Sun off. Keep a rest day between the two lower days if the week shifts. Arms stay at 2 sets so they do not steal leg recovery. Leave 1-2 reps in the tank. Phases set the run length, the hills, and the December taper. If he already runs more than this, raise the run days only after he gives usual weekly distance.",
       "sessions": [
         {
-          "id": "ps-lower",
+          "id": "ps-lower-a",
           "dayOfWeek": 1,
           "kind": "strength",
-          "title": "Lower body",
+          "title": "Lower A (quad and ski stance)",
           "focus": "Legs",
-          "notes": "Hit every set and rep. Add load when the sets feel solid — the target is the work, not a weight.",
+          "notes": "About 45 min. Warm up 5 min easy movement plus 2 easy sets of the first exercise. Then two balance finishers. Goblet squat: 16 kg kettlebell, bench at 80 degrees as a depth target. Bulgarian split squat: rear foot on the bench, dumbbells starting around 10-14 kg each. Step-up onto the bench. Side plank is seconds each side.",
           "exercises": [
             {
-              "name": "Back squat",
-              "sets": 5,
-              "reps": "5"
+              "name": "Goblet squat",
+              "sets": 3,
+              "reps": "8-12"
             },
             {
-              "name": "Romanian deadlift",
+              "name": "Bulgarian split squat",
               "sets": 3,
               "reps": "8"
             },
             {
-              "name": "Walking lunge",
+              "name": "Step-up",
               "sets": 3,
               "reps": "8"
             },
             {
-              "name": "Calf raise",
+              "name": "Dumbbell Romanian deadlift",
               "sets": 3,
-              "reps": "12"
+              "reps": "8-12"
+            },
+            {
+              "name": "Side plank",
+              "sets": 3,
+              "reps": "20-30",
+              "count": "seconds"
+            },
+            {
+              "name": "Chest-supported row",
+              "sets": 2,
+              "reps": "10"
+            },
+            {
+              "name": "Standing calf raise",
+              "sets": 3,
+              "reps": "12-15"
             }
           ],
           "distanceKm": null,
-          "durationMin": null
+          "durationMin": 45
         },
         {
           "id": "ps-easy",
@@ -70,201 +87,438 @@
           "kind": "run",
           "title": "Easy run",
           "focus": "Cardio",
-          "notes": "Do the run. Easy enough to talk. Distance and pace are optional in the log.",
+          "notes": "Conversational pace. The phase for this date sets the minutes and any hills.",
           "exercises": [],
           "distanceKm": null,
           "durationMin": null
         },
         {
-          "id": "ps-balance",
+          "id": "ps-upper",
           "dayOfWeek": 3,
           "kind": "strength",
-          "title": "Balance",
-          "focus": "Balance",
-          "notes": "Slow eccentrics. The target is the sets and reps on each side.",
+          "title": "Full upper",
+          "focus": "Upper",
+          "notes": "About 40 min. Bench flat for the press, 30 degrees for incline and rear-delt raise. Arms stay at 2 sets.",
           "exercises": [
             {
-              "name": "Bulgarian split squat",
+              "name": "Flat dumbbell bench press",
+              "sets": 3,
+              "reps": "8-12"
+            },
+            {
+              "name": "One-arm dumbbell row",
+              "sets": 3,
+              "reps": "8-12"
+            },
+            {
+              "name": "Incline press",
+              "sets": 3,
+              "reps": "8-12"
+            },
+            {
+              "name": "Half-kneeling one-arm overhead press",
               "sets": 3,
               "reps": "8"
             },
             {
-              "name": "Single-leg RDL",
+              "name": "Rear-delt raise",
               "sets": 3,
-              "reps": "8"
+              "reps": "12-15"
             },
             {
-              "name": "Step-down",
+              "name": "Dumbbell curl",
+              "sets": 2,
+              "reps": "10-15"
+            },
+            {
+              "name": "Overhead triceps extension",
+              "sets": 2,
+              "reps": "10-15"
+            },
+            {
+              "name": "Dead bug",
               "sets": 3,
               "reps": "8"
             }
           ],
           "distanceKm": null,
-          "durationMin": null
+          "durationMin": 40
         },
         {
-          "id": "ps-posterior",
+          "id": "ps-lower-b",
           "dayOfWeek": 5,
           "kind": "strength",
-          "title": "Posterior chain",
+          "title": "Lower B (posterior chain and single leg)",
           "focus": "Legs",
-          "notes": "Hinge and hips. Stop a nordic if a hamstring feels sharp. Side plank targets are seconds.",
+          "notes": "About 45 min. Swings start at 12 kg and move to 16 kg. Single-leg hip thrust: shoulders on the bench, dumbbell on the hip. Suitcase carry is seconds each side with the 16 kg kettlebell. Push-ups on the bench if the floor is too hard.",
           "exercises": [
             {
-              "name": "Hip thrust",
+              "name": "Kettlebell swing",
+              "sets": 4,
+              "reps": "12"
+            },
+            {
+              "name": "Single-leg Romanian deadlift",
               "sets": 3,
               "reps": "8"
             },
             {
-              "name": "Deadlift",
+              "name": "Reverse lunge",
               "sets": 3,
-              "reps": "5"
+              "reps": "8"
             },
             {
-              "name": "Nordic curl",
+              "name": "Single-leg hip thrust",
               "sets": 3,
-              "reps": "6"
+              "reps": "10"
             },
             {
-              "name": "Side plank",
+              "name": "Dead bug",
               "sets": 3,
+              "reps": "8"
+            },
+            {
+              "name": "Push-up",
+              "sets": 2,
+              "reps": "8-15"
+            },
+            {
+              "name": "Suitcase carry",
+              "sets": 2,
               "reps": "30",
               "count": "seconds"
             }
           ],
           "distanceKm": null,
-          "durationMin": null
+          "durationMin": 45
         },
         {
           "id": "ps-long",
           "dayOfWeek": 6,
           "kind": "run",
-          "title": "Long run",
+          "title": "Longer run",
           "focus": "Cardio",
-          "notes": "Do the run. Steady effort, with a hill if the route has one. Distance and pace are optional in the log.",
+          "notes": "Easy pace. The phase for this date sets the minutes.",
           "exercises": [],
           "distanceKm": null,
           "durationMin": null
         }
-      ]
+      ],
+      "phases": [
+        {
+          "name": "Easy base",
+          "startDate": "2026-10-06",
+          "endDate": "2026-10-18",
+          "sessions": [
+            {
+              "sessionId": "ps-easy",
+              "notes": "20-25 min easy",
+              "durationMin": 25
+            },
+            {
+              "sessionId": "ps-long",
+              "notes": "30-35 min easy",
+              "durationMin": 35
+            }
+          ]
+        },
+        {
+          "name": "Longer easy",
+          "startDate": "2026-10-19",
+          "endDate": "2026-11-01",
+          "sessions": [
+            {
+              "sessionId": "ps-easy",
+              "notes": "25-30 min easy",
+              "durationMin": 30
+            },
+            {
+              "sessionId": "ps-long",
+              "notes": "40 min easy",
+              "durationMin": 40
+            }
+          ]
+        },
+        {
+          "name": "Short hills",
+          "startDate": "2026-11-02",
+          "endDate": "2026-11-15",
+          "sessions": [
+            {
+              "sessionId": "ps-easy",
+              "notes": "30 min easy, plus 6 x 20s hill strides",
+              "durationMin": 30
+            },
+            {
+              "sessionId": "ps-long",
+              "notes": "45-50 min easy",
+              "durationMin": 50
+            }
+          ]
+        },
+        {
+          "name": "Longer hills",
+          "startDate": "2026-11-16",
+          "endDate": "2026-11-29",
+          "sessions": [
+            {
+              "sessionId": "ps-easy",
+              "notes": "30 min easy, plus 8 x 30s hills",
+              "durationMin": 30
+            },
+            {
+              "sessionId": "ps-long",
+              "notes": "55-60 min easy, last 10 min gentle downhill if the route has one",
+              "durationMin": 60
+            }
+          ]
+        },
+        {
+          "name": "Peak hills",
+          "startDate": "2026-11-30",
+          "endDate": "2026-12-06",
+          "sessions": [
+            {
+              "sessionId": "ps-easy",
+              "notes": "25 min easy, plus 6 x 45s hills",
+              "durationMin": 25
+            },
+            {
+              "sessionId": "ps-long",
+              "notes": "45 min easy",
+              "durationMin": 45
+            }
+          ]
+        },
+        {
+          "name": "Taper",
+          "startDate": "2026-12-07",
+          "endDate": "2026-12-13",
+          "sessions": [
+            {
+              "sessionId": "ps-lower-a",
+              "sets": 2
+            },
+            {
+              "sessionId": "ps-easy",
+              "notes": "20 min easy",
+              "durationMin": 20
+            },
+            {
+              "sessionId": "ps-upper",
+              "sets": 2
+            },
+            {
+              "sessionId": "ps-lower-b",
+              "sets": 2
+            },
+            {
+              "sessionId": "ps-long",
+              "notes": "30 min easy",
+              "durationMin": 30
+            }
+          ]
+        }
+      ],
+      "status": "active",
+      "updatedAt": "2026-10-03T08:00:00.000Z"
     }
   ],
   "presets": [
     {
-      "id": "preset-lower",
-      "name": "Lower body",
+      "id": "preset-lower-a",
+      "name": "Lower A (quad and ski stance)",
       "kind": "strength",
       "focus": "Legs",
-      "notes": "Hit every set and rep. Add load when the sets feel solid — the target is the work, not a weight.",
+      "notes": "About 45 min. 16 kg goblet squat to the bench at 80 degrees. Split squats with the rear foot on the bench.",
       "exercises": [
         {
-          "name": "Back squat",
-          "sets": 5,
-          "reps": "5"
-        },
-        {
-          "name": "Romanian deadlift",
+          "name": "Goblet squat",
           "sets": 3,
-          "reps": "8"
+          "reps": "8-12"
         },
-        {
-          "name": "Walking lunge",
-          "sets": 3,
-          "reps": "8"
-        },
-        {
-          "name": "Calf raise",
-          "sets": 3,
-          "reps": "12"
-        }
-      ],
-      "createdAt": "2026-10-02T00:00:00.000Z",
-      "updatedAt": "2026-10-02T00:00:00.000Z"
-    },
-    {
-      "id": "preset-easy",
-      "name": "Easy run",
-      "kind": "run",
-      "focus": "Cardio",
-      "notes": "Do the run. Easy enough to talk. Distance and pace are optional in the log.",
-      "exercises": [],
-      "createdAt": "2026-10-02T00:00:00.000Z",
-      "updatedAt": "2026-10-02T00:00:00.000Z"
-    },
-    {
-      "id": "preset-balance",
-      "name": "Balance",
-      "kind": "strength",
-      "focus": "Balance",
-      "notes": "Slow eccentrics. The target is the sets and reps on each side.",
-      "exercises": [
         {
           "name": "Bulgarian split squat",
           "sets": 3,
           "reps": "8"
         },
         {
-          "name": "Single-leg RDL",
+          "name": "Step-up",
           "sets": 3,
           "reps": "8"
         },
         {
-          "name": "Step-down",
+          "name": "Dumbbell Romanian deadlift",
           "sets": 3,
-          "reps": "8"
-        }
-      ],
-      "createdAt": "2026-10-02T00:00:00.000Z",
-      "updatedAt": "2026-10-02T00:00:00.000Z"
-    },
-    {
-      "id": "preset-posterior",
-      "name": "Posterior chain",
-      "kind": "strength",
-      "focus": "Legs",
-      "notes": "Hinge and hips. Stop a nordic if a hamstring feels sharp. Side plank targets are seconds.",
-      "exercises": [
-        {
-          "name": "Hip thrust",
-          "sets": 3,
-          "reps": "8"
-        },
-        {
-          "name": "Deadlift",
-          "sets": 3,
-          "reps": "5"
-        },
-        {
-          "name": "Nordic curl",
-          "sets": 3,
-          "reps": "6"
+          "reps": "8-12"
         },
         {
           "name": "Side plank",
           "sets": 3,
+          "reps": "20-30",
+          "count": "seconds"
+        },
+        {
+          "name": "Chest-supported row",
+          "sets": 2,
+          "reps": "10"
+        },
+        {
+          "name": "Standing calf raise",
+          "sets": 3,
+          "reps": "12-15"
+        }
+      ],
+      "createdAt": "2026-10-03T07:51:00.000Z",
+      "updatedAt": "2026-10-03T07:51:00.000Z"
+    },
+    {
+      "id": "preset-easy",
+      "name": "Easy run",
+      "kind": "run",
+      "focus": "Cardio",
+      "notes": "Conversational. The plan phase sets the length and any hills.",
+      "exercises": [],
+      "createdAt": "2026-10-03T07:51:00.000Z",
+      "updatedAt": "2026-10-03T07:51:00.000Z"
+    },
+    {
+      "id": "preset-upper",
+      "name": "Full upper",
+      "kind": "strength",
+      "focus": "Upper",
+      "notes": "About 40 min. Arms stay at 2 sets.",
+      "exercises": [
+        {
+          "name": "Flat dumbbell bench press",
+          "sets": 3,
+          "reps": "8-12"
+        },
+        {
+          "name": "One-arm dumbbell row",
+          "sets": 3,
+          "reps": "8-12"
+        },
+        {
+          "name": "Incline press",
+          "sets": 3,
+          "reps": "8-12"
+        },
+        {
+          "name": "Half-kneeling one-arm overhead press",
+          "sets": 3,
+          "reps": "8"
+        },
+        {
+          "name": "Rear-delt raise",
+          "sets": 3,
+          "reps": "12-15"
+        },
+        {
+          "name": "Dumbbell curl",
+          "sets": 2,
+          "reps": "10-15"
+        },
+        {
+          "name": "Overhead triceps extension",
+          "sets": 2,
+          "reps": "10-15"
+        },
+        {
+          "name": "Dead bug",
+          "sets": 3,
+          "reps": "8"
+        }
+      ],
+      "createdAt": "2026-10-03T07:51:00.000Z",
+      "updatedAt": "2026-10-03T07:51:00.000Z"
+    },
+    {
+      "id": "preset-lower-b",
+      "name": "Lower B (posterior chain and single leg)",
+      "kind": "strength",
+      "focus": "Legs",
+      "notes": "About 45 min. Swings 12 kg toward 16 kg. Suitcase carry is timed.",
+      "exercises": [
+        {
+          "name": "Kettlebell swing",
+          "sets": 4,
+          "reps": "12"
+        },
+        {
+          "name": "Single-leg Romanian deadlift",
+          "sets": 3,
+          "reps": "8"
+        },
+        {
+          "name": "Reverse lunge",
+          "sets": 3,
+          "reps": "8"
+        },
+        {
+          "name": "Single-leg hip thrust",
+          "sets": 3,
+          "reps": "10"
+        },
+        {
+          "name": "Dead bug",
+          "sets": 3,
+          "reps": "8"
+        },
+        {
+          "name": "Push-up",
+          "sets": 2,
+          "reps": "8-15"
+        },
+        {
+          "name": "Suitcase carry",
+          "sets": 2,
           "reps": "30",
           "count": "seconds"
         }
       ],
-      "createdAt": "2026-10-02T00:00:00.000Z",
-      "updatedAt": "2026-10-02T00:00:00.000Z"
+      "createdAt": "2026-10-03T07:51:00.000Z",
+      "updatedAt": "2026-10-03T07:51:00.000Z"
     },
     {
       "id": "preset-long",
-      "name": "Long run",
+      "name": "Longer run",
       "kind": "run",
       "focus": "Cardio",
-      "notes": "Do the run. Steady effort, with a hill if the route has one. Distance and pace are optional in the log.",
+      "notes": "Easy. The plan phase sets the length. The last phase is a short taper.",
       "exercises": [],
-      "createdAt": "2026-10-02T00:00:00.000Z",
-      "updatedAt": "2026-10-02T00:00:00.000Z"
+      "createdAt": "2026-10-03T07:51:00.000Z",
+      "updatedAt": "2026-10-03T07:51:00.000Z"
     }
   ],
   "sessions": [],
   "deleted": {
-    "goals": [],
-    "plans": [],
-    "presets": [],
+    "goals": [
+      {
+        "id": "goal-ski-2026",
+        "at": "2026-10-03T07:50:00.000Z"
+      }
+    ],
+    "plans": [
+      {
+        "id": "plan-ski-base",
+        "at": "2026-10-03T07:51:00.000Z"
+      }
+    ],
+    "presets": [
+      {
+        "id": "preset-lower",
+        "at": "2026-10-03T07:51:00.000Z"
+      },
+      {
+        "id": "preset-balance",
+        "at": "2026-10-03T07:51:00.000Z"
+      },
+      {
+        "id": "preset-posterior",
+        "at": "2026-10-03T07:51:00.000Z"
+      }
+    ],
     "sessions": []
   }
 }

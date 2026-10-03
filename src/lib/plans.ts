@@ -1,21 +1,64 @@
-import type { LogPreset, Plan, Session, TrainingData, WorkoutPreset } from '../types';
+import type { LogPreset, Plan, PlanPhase, PlanSession, Session, TrainingData, WorkoutPreset } from '../types';
 import { addDays, formatPretty, startOfWeek, weekdayIndex } from './dates';
-import { exerciseTargets, sessionTargetsMet, type ExerciseTarget } from './targets';
+import { exerciseTargets, runPrescription, sessionTargetsMet, type ExerciseTarget } from './targets';
 
 export interface PlanItem {
   date: string;
   plan: Plan;
-  session: Plan['sessions'][number];
+  phase: PlanPhase | null;
+  session: PlanSession;
   logs: Session[];
   logged: Session | null;
   targets: ExerciseTarget[];
   done: boolean;
 }
 
+export function planLastDay(plan: Plan): string {
+  if (plan.endDate) return plan.endDate;
+  if (!plan.startDate) return '';
+  return addDays(plan.startDate, Math.max(plan.weeks, 1) * 7 - 1);
+}
+
 export function planCovers(plan: Plan, date: string): boolean {
   if (plan.status !== 'active' || !plan.startDate) return false;
-  const end = addDays(plan.startDate, plan.weeks * 7);
-  return date >= plan.startDate && date < end;
+  const last = planLastDay(plan);
+  return date >= plan.startDate && date <= last;
+}
+
+/** The phase whose window contains the date. A later start wins if two windows overlap. */
+export function phaseOn(plan: Plan, date: string): PlanPhase | null {
+  let match: PlanPhase | null = null;
+  for (const phase of plan.phases ?? []) {
+    if (date < phase.startDate || date > phase.endDate) continue;
+    if (!match || phase.startDate >= match.startDate) match = phase;
+  }
+  return match;
+}
+
+/** The repeating session, with this date's phase applied. */
+export function sessionForDate(plan: Plan, session: PlanSession, date: string): PlanSession {
+  const phase = phaseOn(plan, date);
+  if (!phase) return session;
+  const change = phase.sessions.find((item) => item.sessionId === session.id);
+  if (!change) return session;
+  const sets = change.sets;
+  return {
+    ...session,
+    notes: change.notes ?? session.notes,
+    durationMin: change.durationMin === undefined ? session.durationMin : change.durationMin,
+    exercises: sets === undefined ? session.exercises : session.exercises.map((exercise) => ({ ...exercise, sets })),
+  };
+}
+
+export function describePhase(plan: Plan, phase: PlanPhase): string {
+  const parts: string[] = [];
+  for (const change of phase.sessions) {
+    const session = plan.sessions.find((item) => item.id === change.sessionId);
+    const title = session?.title ?? 'Session';
+    if (change.notes) parts.push(`${title}: ${change.notes}`);
+    else if (change.sets) parts.push(`${title}: ${change.sets} sets`);
+  }
+  return parts.join('. ');
 }
 
 export function activeGoal(data: TrainingData) {
@@ -37,16 +80,18 @@ export function planItemsForWeek(data: TrainingData, plans: Plan[], anchor: stri
       if (!planCovers(plan, date)) continue;
       for (const session of plan.sessions) {
         if (session.dayOfWeek !== day) continue;
+        const resolved = sessionForDate(plan, session, date);
         const logs = weekSessions.filter((entry) => entry.planSessionId === session.id);
-        const targets = exerciseTargets(session, logs);
+        const targets = exerciseTargets(resolved, logs);
         items.push({
           date,
           plan,
-          session,
+          phase: phaseOn(plan, date),
+          session: resolved,
           logs,
           logged: logs[0] ?? null,
           targets,
-          done: sessionTargetsMet(session, logs),
+          done: sessionTargetsMet(resolved, logs),
         });
       }
     }
@@ -81,11 +126,11 @@ export function logFromPreset(preset: WorkoutPreset, data: TrainingData, date: s
     goalId: match?.plan.goalId ?? activeGoal(data)?.id ?? null,
     planId: match?.plan.id ?? null,
     planSessionId: match?.session.id ?? null,
-    templateExercises: preset.exercises,
+    templateExercises: match ? match.session.exercises : preset.exercises,
     distanceKm: null,
-    durationMin: null,
+    durationMin: match?.session.kind === 'run' ? match.session.durationMin : null,
     prompt: match
-      ? `Preset · ${preset.name} · counts for ${when}`
+      ? `Preset · ${preset.name} · counts for ${when}${match.session.kind === 'run' && match.session.notes ? ` · ${runPrescription(match.session)}` : ''}`
       : preset.kind === 'run'
         ? `Preset · ${preset.name} · doing the run is the target`
         : `Preset · ${preset.name} · target is sets and reps`,
@@ -115,15 +160,15 @@ export function buildPreset(plan: Plan, session: Plan['sessions'][number], sched
     durationMin: session.durationMin,
     prompt:
       session.kind === 'run'
-        ? `From the plan · ${session.title} · ${when} · doing the run is enough`
+        ? `From the plan · ${session.title} · ${when} · ${runPrescription(session)} · doing the run is enough`
         : `From the plan · ${session.title} · ${when} · target is sets and reps`,
   };
 }
 
-export function findPlanSession(data: TrainingData, planSessionId: string) {
+export function findPlanSession(data: TrainingData, planSessionId: string, date?: string) {
   for (const plan of data.plans) {
     const session = plan.sessions.find((item) => item.id === planSessionId);
-    if (session) return { plan, session };
+    if (session) return { plan, session: date ? sessionForDate(plan, session, date) : session };
   }
   return null;
 }
@@ -147,17 +192,18 @@ export function planChoices(data: TrainingData, date: string, currentId: string 
       for (const session of plan.sessions) {
         if (session.dayOfWeek !== weekday || seen.has(session.id)) continue;
         seen.add(session.id);
+        const resolved = sessionForDate(plan, session, day);
         choices.push({
           id: session.id,
-          label: `${formatPretty(day)} · ${session.title}`,
+          label: `${formatPretty(day)} · ${resolved.title}`,
           plan,
-          session,
+          session: resolved,
         });
       }
     }
   }
   if (currentId && !seen.has(currentId)) {
-    const found = findPlanSession(data, currentId);
+    const found = findPlanSession(data, currentId, date);
     if (found) {
       choices.push({
         id: found.session.id,

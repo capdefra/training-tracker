@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "sample-data": "node scripts/sample-data.mjs",
+    "sample-data": "node --experimental-strip-types scripts/sample-data.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

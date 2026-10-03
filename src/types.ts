@@ -33,15 +33,37 @@ export interface PlanSession {
   durationMin: number | null;
 }
 
+/**
+ * A change to one repeating session while a phase is in effect.
+ * Omitted fields stay as written on the week. `sets` replaces every exercise's set count.
+ */
+export interface PhaseChange {
+  sessionId: string;
+  notes?: string;
+  durationMin?: number | null;
+  sets?: number;
+}
+
+/** Inclusive dates. The week still repeats; a phase only replaces the fields it lists. */
+export interface PlanPhase {
+  name: string;
+  startDate: string;
+  endDate: string;
+  sessions: PhaseChange[];
+}
+
 export interface Plan {
   id: string;
   goalId: string;
   name: string;
   startDate: string;
+  /** Length label. Coverage uses `endDate` when that is set, otherwise this many weeks. */
   weeks: number;
+  endDate?: string;
   focus: string[];
   notes: string;
   sessions: PlanSession[];
+  phases?: PlanPhase[];
   status: GoalStatus;
   updatedAt?: string;
 }

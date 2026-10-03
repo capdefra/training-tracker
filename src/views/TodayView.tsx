@@ -18,6 +18,75 @@ export function TodayView({ data, onLog }: { data: TrainingData; onLog: (preset?
         <h1>{formatLong(today)}</h1>
       </header>
 
+      <section className="stack">
+        {plans.length > 0 ? (
+          <WeekBoard
+            data={data}
+            plans={plans}
+            onLog={(preset) => onLog(preset)}
+            actions={
+              <div className="quick">
+                <button type="button" className="btn ghost small" onClick={() => onLog()}>
+                  Log strength
+                </button>
+                <button
+                  type="button"
+                  className="btn ghost small"
+                  onClick={() =>
+                    onLog({
+                      date: today,
+                      kind: 'run',
+                      title: 'Easy run',
+                      goalId: goal?.id ?? null,
+                      planId: null,
+                      planSessionId: null,
+                      templateExercises: [],
+                      distanceKm: null,
+                      durationMin: null,
+                      prompt: '',
+                    })
+                  }
+                >
+                  Log a run
+                </button>
+              </div>
+            }
+          />
+        ) : (
+          <>
+            <div className="split">
+              <h2>This week</h2>
+              <div className="quick">
+                <button type="button" className="btn ghost small" onClick={() => onLog()}>
+                  Log strength
+                </button>
+                <button
+                  type="button"
+                  className="btn ghost small"
+                  onClick={() =>
+                    onLog({
+                      date: today,
+                      kind: 'run',
+                      title: 'Easy run',
+                      goalId: goal?.id ?? null,
+                      planId: null,
+                      planSessionId: null,
+                      templateExercises: [],
+                      distanceKm: null,
+                      durationMin: null,
+                      prompt: '',
+                    })
+                  }
+                >
+                  Log a run
+                </button>
+              </div>
+            </div>
+            <p className="muted">Add a plan to see the week laid out, or log a session on its own.</p>
+          </>
+        )}
+      </section>
+
       {goal ? (
         <section className="hero">
           <p className="kicker light">{goal.status === 'active' ? 'Active goal' : goal.status}</p>
@@ -45,42 +114,6 @@ export function TodayView({ data, onLog }: { data: TrainingData; onLog: (preset?
           </a>
         </section>
       )}
-
-      <section className="stack">
-        <div className="split">
-          <h2>This week</h2>
-          <div className="quick">
-            <button type="button" className="btn ghost small" onClick={() => onLog()}>
-              Log strength
-            </button>
-            <button
-              type="button"
-              className="btn ghost small"
-              onClick={() =>
-                onLog({
-                  date: today,
-                  kind: 'run',
-                  title: 'Easy run',
-                  goalId: goal?.id ?? null,
-                  planId: null,
-                  planSessionId: null,
-                  templateExercises: [],
-                  distanceKm: null,
-                  durationMin: null,
-                  prompt: '',
-                })
-              }
-            >
-              Log a run
-            </button>
-          </div>
-        </div>
-        {plans.length > 0 ? (
-          <WeekBoard data={data} plans={plans} onLog={(preset) => onLog(preset)} />
-        ) : (
-          <p className="muted">Add a plan to see the week laid out, or log a session on its own.</p>
-        )}
-      </section>
 
       <PresetList data={data} onLog={(preset) => onLog(preset)} />
 

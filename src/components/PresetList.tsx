@@ -20,6 +20,7 @@ export function PresetList({ data, onLog }: { data: TrainingData; onLog: (preset
       <ul className="preset-list">
         {data.presets.map((preset) => {
           const open = openId === preset.id;
+          const summary = presetSummary(preset);
           return (
             <li key={preset.id} className="card preset-card">
               <div>
@@ -28,9 +29,9 @@ export function PresetList({ data, onLog }: { data: TrainingData; onLog: (preset
                   {preset.kind === 'run' ? 'Run' : 'Strength'}
                 </p>
                 <h3>{preset.name}</h3>
-                <p className="muted">{presetSummary(preset)}</p>
+                <p className="muted">{summary}</p>
               </div>
-              {preset.notes ? <p>{preset.notes}</p> : null}
+              {preset.notes && preset.notes !== summary ? <p>{preset.notes}</p> : null}
               <div className="preset-actions">
                 <button type="button" className="btn primary" onClick={() => onLog(logFromPreset(preset, data, todayISO()))}>
                   Start
