@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PresetList } from '../components/PresetList';
 import { WeekBoard } from '../components/WeekBoard';
 import { cx } from '../lib/cx';
-import { formatCountdown, formatLong, formatPretty, startOfWeek, todayISO } from '../lib/dates';
+import { addDays, formatCountdown, formatLong, formatPretty, startOfWeek, todayISO } from '../lib/dates';
 import { activeGoal, planItemsForWeek, recentSessions, type PlanItem } from '../lib/plans';
 import { sessionSummary } from '../lib/stats';
 import type { LogPreset, TrainingData } from '../types';
@@ -14,6 +14,8 @@ export function TodayView({ data, onLog }: { data: TrainingData; onLog: (preset?
   const plans = goal ? data.plans.filter((plan) => plan.goalId === goal.id && plan.status === 'active') : [];
   const recent = recentSessions(data, 5);
   const weekItems = plans.length > 0 ? planItemsForWeek(data, plans, focus) : [];
+  const weekStart = startOfWeek(focus);
+  const loggedCount = data.sessions.filter((session) => session.date >= weekStart && session.date <= addDays(weekStart, 6)).length;
   const onToday = focus === today;
   const goalLine = goal ? (goal.targetDate ? `${goal.name} · ${formatCountdown(today, goal.targetDate)}` : goal.name) : '';
 
@@ -39,7 +41,7 @@ export function TodayView({ data, onLog }: { data: TrainingData; onLog: (preset?
           showTodayLink={false}
           beforeDay={
             <details className="card more-fold">
-              <summary>{weekSummary(weekItems, startOfWeek(focus) === startOfWeek(today))}</summary>
+              <summary>{weekSummary(weekItems, weekStart === startOfWeek(today), loggedCount)}</summary>
               <div className="stack more-body">
                 {goal ? (
                   <section className="stack">
@@ -107,7 +109,7 @@ export function TodayView({ data, onLog }: { data: TrainingData; onLog: (preset?
           )}
         </section>
         <details className="card more-fold">
-          <summary>{weekSummary(weekItems, startOfWeek(focus) === startOfWeek(today))}</summary>
+          <summary>{weekSummary(weekItems, weekStart === startOfWeek(today), loggedCount)}</summary>
           <div className="stack more-body">
             {goal ? (
               <section className="stack">
@@ -159,9 +161,9 @@ export function TodayView({ data, onLog }: { data: TrainingData; onLog: (preset?
   );
 }
 
-function weekSummary(items: PlanItem[], isThisWeek: boolean): string {
+function weekSummary(items: PlanItem[], isThisWeek: boolean, loggedCount: number): string {
   const prefix = isThisWeek ? 'This week' : 'That week';
-  if (items.length === 0) return `${prefix} · nothing planned`;
+  if (items.length === 0) return loggedCount > 0 ? `${prefix} · ${loggedCount} logged` : `${prefix} · nothing planned`;
   let setDone = 0;
   let setTarget = 0;
   let runDone = 0;
