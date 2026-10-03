@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { effortLabel, formatPace } from '../src/lib/format';
 import { mergeTraining } from '../src/lib/merge';
-import { extraLogsForDay, planCovers, planItemsForWeek } from '../src/lib/plans';
+import { activityMondays, dayProgress, extraLogsForDay, planCovers, planItemsForWeek } from '../src/lib/plans';
 import { sessionSummary } from '../src/lib/stats';
 import { normalize, serialize } from '../src/lib/storage';
 import { starterDocument } from '../src/lib/templates';
@@ -153,6 +153,9 @@ check('an extra log on that day stays separate', tuesdayExtras.some((entry) => e
 const wednesday = planItemsForWeek(data, data.plans, '2026-10-07').filter((entry) => entry.date === '2026-10-07');
 check('a planned day with no log is not done', wednesday.length === 1 && wednesday[0]?.done === false);
 check('a planned day with no log has nothing else', extraLogsForDay(data.sessions, wednesday, '2026-10-07').length === 0);
+check('nothing planned and nothing logged is empty', dayProgress([], []) === 'empty');
+check('an unplanned log counts as done', dayProgress(oct3, beforePlan.sessions) === 'done');
+check('a planned day with no log is only planned', dayProgress(wednesday, []) === 'planned');
 
 const lower = plan.sessions.find((session) => session.id === 'ps-lower-a');
 if (!lower) throw new Error('missing lower A');
@@ -162,6 +165,14 @@ const taperTarget = { ...data, sessions: [loggedStrength('2026-12-07', lower, 2)
 check('two sets do not finish a 3-set week', planItemsForWeek(shortOfTarget, shortOfTarget.plans, '2026-10-12').find((entry) => entry.session.id === 'ps-lower-a')?.done === false);
 check('three sets finish the full week', planItemsForWeek(fullTarget, fullTarget.plans, '2026-10-12').find((entry) => entry.session.id === 'ps-lower-a')?.done === true);
 check('two sets finish the taper', planItemsForWeek(taperTarget, taperTarget.plans, '2026-12-07').find((entry) => entry.session.id === 'ps-lower-a')?.done === true);
+const partialDay = planItemsForWeek(shortOfTarget, shortOfTarget.plans, '2026-10-12').filter((entry) => entry.date === '2026-10-12');
+const finishedDay = planItemsForWeek(fullTarget, fullTarget.plans, '2026-10-12').filter((entry) => entry.date === '2026-10-12');
+check('a started plan day is partial', dayProgress(partialDay, []) === 'partial');
+check('a finished plan day is done', dayProgress(finishedDay, []) === 'done');
+const mondays = activityMondays('2026-10-03');
+check('activity starts on the week that contains today', mondays[0] === '2026-09-28');
+check('activity stacks older weeks under the current one', mondays[1] === '2026-09-21' && mondays.length === 16);
+check('activity has no week after today', mondays.every((monday) => monday <= '2026-09-28'));
 
 const olderPlan = {
   ...plan,

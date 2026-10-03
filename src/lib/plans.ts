@@ -1,5 +1,8 @@
 import type { LogPreset, Plan, PlanPhase, PlanSession, Session, TrainingData, WorkoutPreset } from '../types';
 import { addDays, formatPretty, startOfWeek, weekdayIndex } from './dates';
+
+/** Weeks shown on the activity tab, ending with the week that contains today. */
+export const ACTIVITY_WEEKS = 16;
 import { exerciseTargets, runPrescription, sessionTargetsMet, type ExerciseTarget } from './targets';
 
 export interface PlanItem {
@@ -126,6 +129,24 @@ export function weekSentence(items: PlanItem[], today: string): string {
   if (!next) return `${done} of ${items.length} done.`;
   const when = next.date === today ? 'today' : next.date < today ? `still open from ${formatPretty(next.date)}` : `up on ${formatPretty(next.date)}`;
   return `${done} of ${items.length} done. Next is ${next.session.title}, ${when}.`;
+}
+
+/** Mondays from the current week backward. Index 0 is the week that contains today. */
+export function activityMondays(today: string, weeks = ACTIVITY_WEEKS): string[] {
+  const end = startOfWeek(today);
+  return Array.from({ length: weeks }, (_, index) => addDays(end, -7 * index));
+}
+
+export type DayProgress = 'empty' | 'planned' | 'partial' | 'done';
+
+/** Progress of one day: nothing, planned and untouched, partly done, or done. An unplanned log still counts. */
+export function dayProgress(planned: PlanItem[], extras: Session[]): DayProgress {
+  if (planned.length === 0) return extras.length > 0 ? 'done' : 'empty';
+  const finished = planned.filter((item) => item.done).length;
+  const started = planned.some((item) => !item.done && item.logs.length > 0);
+  if (finished === planned.length) return 'done';
+  if (finished > 0 || started || extras.length > 0) return 'partial';
+  return 'planned';
 }
 
 export function recentSessions(data: TrainingData, limit = 6): Session[] {

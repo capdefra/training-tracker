@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { PresetList } from '../components/PresetList';
 import { WeekBoard } from '../components/WeekBoard';
 import { cx } from '../lib/cx';
-import { addDays, formatCountdown, formatLong, formatPretty, startOfWeek, todayISO } from '../lib/dates';
+import { addDays, formatCountdown, formatLong, formatPretty, isISODate, startOfWeek, todayISO } from '../lib/dates';
 import { activeGoal, planItemsForWeek, recentSessions, type PlanItem } from '../lib/plans';
 import { sessionSummary } from '../lib/stats';
 import type { LogPreset, TrainingData } from '../types';
 
-export function TodayView({ data, onLog }: { data: TrainingData; onLog: (preset?: LogPreset) => void }) {
+export function TodayView({ data, onLog, date }: { data: TrainingData; onLog: (preset?: LogPreset) => void; date?: string }) {
   const today = todayISO();
-  const [focus, setFocus] = useState(today);
+  const [focus, setFocus] = useState(date && isISODate(date) ? date : today);
   const goal = activeGoal(data);
   const plans = goal ? data.plans.filter((plan) => plan.goalId === goal.id && plan.status === 'active') : [];
   const recent = recentSessions(data, 5);
@@ -39,6 +39,7 @@ export function TodayView({ data, onLog }: { data: TrainingData; onLog: (preset?
           onAnchor={setFocus}
           showDate={false}
           showTodayLink={false}
+          summary
           beforeDay={
             <details className="card more-fold">
               <summary>{weekSummary(weekItems, weekStart === startOfWeek(today), loggedCount)}</summary>

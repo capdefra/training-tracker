@@ -4,7 +4,8 @@ import { WatchSummary } from './WatchSummary';
 import { findDemo, FORM_LIBRARY } from '../lib/demos';
 import { addDays, formatDayMonth, formatPretty, formatWeekday, startOfWeek, todayISO } from '../lib/dates';
 import { cx } from '../lib/cx';
-import { buildPreset, extraLogsForDay, planItemsForWeek, planLastDay, type PlanItem } from '../lib/plans';
+import { activityMondays, buildPreset, extraLogsForDay, planItemsForWeek, planLastDay, type PlanItem } from '../lib/plans';
+import { formatDuration, formatKm } from '../lib/format';
 import { sessionSummary } from '../lib/stats';
 import { runPrescription } from '../lib/targets';
 import { hasDisplayedMetrics } from '../lib/watch';
@@ -19,6 +20,7 @@ export function WeekBoard({
   onAnchor,
   showDate = true,
   showTodayLink = true,
+  summary = false,
   beforeDay,
 }: {
   data: TrainingData;
@@ -30,6 +32,8 @@ export function WeekBoard({
   showDate?: boolean;
   /** When false, the page heading is the way back to today, so this board does not add another. */
   showTodayLink?: boolean;
+  /** Short always-visible cards. Sets, watch metrics, and form links stay on the session page. */
+  summary?: boolean;
   /** Stable content rendered under the week and above the selected day. */
   beforeDay?: ReactNode;
 }) {
@@ -94,9 +98,11 @@ export function WeekBoard({
                 aria-label={`${formatPretty(date)}${names.length > 0 ? `, ${names.join(', ')}` : ', nothing planned'}`}
                 onClick={() => goTo(date)}
               >
-                <span>{formatWeekday(date)}</span>
-                <strong>{Number(date.slice(8))}</strong>
-                <i className="mark" />
+                <span className="day-label">
+                  <span>{formatWeekday(date)}</span>
+                  <strong>{Number(date.slice(8))}</strong>
+                  <i className="mark" />
+                </span>
               </button>
             );
           })}
@@ -120,6 +126,7 @@ export function WeekBoard({
           next={next}
           onLog={onLog}
           onOpen={goTo}
+          summary={summary}
         />
       </div>
     </section>
@@ -136,6 +143,7 @@ function DayPlan({
   next,
   onLog,
   onOpen,
+  summary,
 }: {
   date: string;
   items: PlanItem[];
@@ -146,6 +154,7 @@ function DayPlan({
   next: PlanItem | null;
   onLog: (preset: LogPreset) => void;
   onOpen: (date: string) => void;
+  summary: boolean;
 }) {
   const open = items.filter((item) => !item.done);
   const done = items.filter((item) => item.done);
@@ -176,7 +185,7 @@ function DayPlan({
         <section className="day-list" aria-label="Planned">
           <p className="kicker">Planned</p>
           {open.map((item) => (
-            <SessionCard key={`${item.plan.id}-${item.session.id}`} item={item} showPlan={showPlan} showDate={showDate} today={today} onLog={onLog} />
+            <SessionCard key={`${item.plan.id}-${item.session.id}`} item={item} showPlan={showPlan} showDate={showDate} today={today} onLog={onLog} summary={summary} />
           ))}
         </section>
       ) : null}
@@ -184,10 +193,10 @@ function DayPlan({
         <section className="day-list" aria-label="Done">
           <p className="kicker">Done</p>
           {done.map((item) => (
-            <SessionCard key={`${item.plan.id}-${item.session.id}`} item={item} showPlan={showPlan} showDate={showDate} today={today} onLog={onLog} />
+            <SessionCard key={`${item.plan.id}-${item.session.id}`} item={item} showPlan={showPlan} showDate={showDate} today={today} onLog={onLog} summary={summary} />
           ))}
           {extras.map((session) => (
-            <LoggedCard key={session.id} session={session} showDate={showDate} today={today} />
+            <LoggedCard key={session.id} session={session} showDate={showDate} today={today} summary={summary} />
           ))}
         </section>
       ) : null}
@@ -201,15 +210,18 @@ function SessionCard({
   showDate,
   today,
   onLog,
+  summary,
 }: {
   item: PlanItem;
   showPlan: boolean;
   showDate: boolean;
   today: string;
   onLog: (preset: LogPreset) => void;
+  summary: boolean;
 }) {
   const action = sessionAction(item);
   const hasForm = item.targets.some((target) => findDemo(target.name));
+  const line = summary ? summaryLine(item) : null;
   return (
     <article className="session-card">
       <div className="split">
@@ -222,13 +234,16 @@ function SessionCard({
             {showPlan ? ` · ${item.plan.name}` : ''}
           </p>
           <h2>{item.session.title}</h2>
-          {item.session.kind === 'strength' && item.session.durationMin ? <p className="muted">{item.session.durationMin} min</p> : null}
+          {!summary && item.session.kind === 'strength' && item.session.durationMin ? <p className="muted">{item.session.durationMin} min</p> : null}
         </div>
         {item.done ? <span className="badge good">Done</span> : null}
         {item.logs.length > 0 && !item.done ? <span className="badge mid">In progress</span> : null}
         {item.logs.length === 0 && !item.done ? <span className="badge warn">Not done</span> : null}
       </div>
-      {item.session.kind === 'run' ? <p className="lead">{item.done ? `Run done · ${runPrescription(item.session)}` : runPrescription(item.session)}</p> : null}
+      {summary && line ? <p className="lead">{line}</p> : null}
+      {!summary && item.session.kind === 'run' ? (
+        <p className="lead">{item.done ? `Run done · ${runPrescription(item.session)}` : runPrescription(item.session)}</p>
+      ) : null}
       <div className="session-action">
         {action === 'view' && item.logged ? (
           <a className="btn primary" href={`#/log/${item.logged.id}`}>
@@ -251,7 +266,7 @@ function SessionCard({
           </button>
         ) : null}
       </div>
-      {item.session.kind === 'strength' ? (
+      {!summary && item.session.kind === 'strength' ? (
         <>
           <ul className="targets">
             {item.targets.map((target) => {
@@ -284,8 +299,8 @@ function SessionCard({
           ) : null}
         </>
       ) : null}
-      {item.logged && hasDisplayedMetrics(item.logged) ? <WatchSummary session={item.logged} /> : null}
-      {item.session.kind === 'strength' && item.session.notes ? (
+      {!summary && item.logged && hasDisplayedMetrics(item.logged) ? <WatchSummary session={item.logged} /> : null}
+      {!summary && item.session.kind === 'strength' && item.session.notes ? (
         <details className="session-notes">
           <summary>Session notes</summary>
           <p>{item.session.notes}</p>
@@ -295,9 +310,9 @@ function SessionCard({
   );
 }
 
-function LoggedCard({ session, showDate, today }: { session: Session; showDate: boolean; today: string }) {
-  const summary = sessionSummary(session);
-  const showSummary = summary !== 'Run' && summary !== 'Strength' && !hasDisplayedMetrics(session);
+function LoggedCard({ session, showDate, today, summary }: { session: Session; showDate: boolean; today: string; summary: boolean }) {
+  const line = summary ? loggedLine(session) : sessionSummary(session);
+  const showSummary = Boolean(line) && line !== 'Run' && line !== 'Strength' && (summary || !hasDisplayedMetrics(session));
   return (
     <article className="session-card">
       <div className="split">
@@ -308,7 +323,7 @@ function LoggedCard({ session, showDate, today }: { session: Session; showDate: 
             {session.kind === 'run' ? 'Run' : 'Strength'}
           </p>
           <h2>{session.title}</h2>
-          {showSummary ? <p className="lead">{summary}</p> : null}
+          {showSummary ? <p className="lead">{line}</p> : null}
         </div>
         <span className="badge good">Done</span>
       </div>
@@ -317,7 +332,7 @@ function LoggedCard({ session, showDate, today }: { session: Session; showDate: 
           View session
         </a>
       </div>
-      {hasDisplayedMetrics(session) ? <WatchSummary session={session} /> : null}
+      {!summary && hasDisplayedMetrics(session) ? <WatchSummary session={session} /> : null}
     </article>
   );
 }
@@ -340,9 +355,31 @@ function dayLabel(planned: PlanItem[], extras: Session[]): string {
   return titles.join(', ');
 }
 
+function loggedLine(session: Session): string | null {
+  if (session.kind === 'run') {
+    const bits: string[] = [];
+    if (session.distanceKm) bits.push(`${formatKm(session.distanceKm)} km`);
+    if (session.durationSec) bits.push(formatDuration(session.durationSec));
+    return bits.length > 0 ? bits.join(' · ') : null;
+  }
+  const count = session.exercises.filter((exercise) => exercise.name || exercise.sets.length > 0).length;
+  if (count === 0) return null;
+  return count === 1 ? '1 exercise' : `${count} exercises`;
+}
+
+function summaryLine(item: PlanItem): string | null {
+  if (item.logged) {
+    const logged = loggedLine(item.logged);
+    if (logged) return logged;
+  }
+  if (item.session.kind === 'run') return runPrescription(item.session);
+  if (item.session.durationMin) return `${item.session.durationMin} min`;
+  return null;
+}
+
 function weekBounds(plans: Plan[], today: string): { first: string; last: string } {
-  let first = startOfWeek(today);
-  let last = first;
+  let first = activityMondays(today).at(-1) ?? startOfWeek(today);
+  let last = startOfWeek(today);
   for (const plan of plans) {
     if (plan.startDate) {
       const start = startOfWeek(plan.startDate);
