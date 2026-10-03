@@ -25,11 +25,11 @@ Use the dev server (or `npm run preview` after a build). Opening `index.html` as
 
 ## What you can do
 
-**Today** shows the active goal, this week’s targets, workout presets, and recent sessions. The week is a calendar: swipe or scroll sideways between weeks, and tap a day to open what is planned (the session, the exercises or the run, and whether it is done). A today glance stays on screen on a phone, including while you are looking at another week. Open a planned session or start a preset. The layout is meant for a phone: large tap targets, the page itself does not scroll sideways, and the save button stays above the tab bar while you log.
+**Today** is the phone screen for the plan. It opens on today’s session: the exercises or the run, and the action for it. Strength uses Start, a run uses Log, an unfinished entry uses Continue, and a finished one uses View session. A logged run keeps its watch summary on that card: distance, time, pace, heart rate, calories, elevation, cadence, power, effort, place, source, start and finish, weather, and per-kilometre splits. The week sits in the page under that card. Move one week at a time and tap a day to open that day’s plan. While you are on another day, today’s session stays one tap away at the top of the page. Sets, the goal, presets, and recent sessions stay folded until you open them.
 
-**Workouts** are reusable presets. The starter set is Lower A, an easy run, full upper, Lower B, and a longer run. Strength presets include a short demo when one exists for that exercise (the movement, the steps, and what to watch). Starting a preset fills the log. If that workout is still open on this week’s plan, the entry counts toward it, including the phase for that date.
+**Workouts** are reusable presets. The starter set is Lower A, an easy run, full upper, Lower B, and a longer run. Each strength exercise links to the same form guide in the [wger](https://wger.de/) exercise library. Starting a strength preset fills the log. Logging a run preset does too, after the run. If that workout is still open on this week’s plan, the entry counts toward it, including the phase for that date.
 
-**Log** takes a strength workout or a run. Strength targets are sets and reps (or seconds for a hold such as a side plank). Kilograms are optional and are not the weekly target. A run counts as soon as you save it. Runs are logged after the fact: distance, workout time, pace, heart rate, active and total calories, elevation, cadence, power, effort, weather, and per-kilometre splits (time, pace, heart rate) are all optional. A strength session can also store workout time, heart rate, calories, and effort when a watch recorded them. Each strength exercise can open its demo while you train.
+**Log** takes a strength workout or a run. Strength targets are sets and reps (or seconds for a hold such as a side plank). Kilograms are optional and are not the weekly target. A run counts as soon as you save it. Runs are logged after the fact: distance, workout time, pace, heart rate, active and total calories, elevation, cadence, power, effort, place, source, start and finish, weather, and per-kilometre splits (time, pace, heart rate) are all optional. A strength session can also store workout time, heart rate, calories, and effort when a watch recorded them. Each strength exercise can open its wger form guide while you train. Save sits at the end of the form.
 
 **Plans** is where goals and the repeating week live. A goal has a name, a target date, and focus tags. A plan has a start date, a length in weeks, and sessions on chosen days. Phases are inclusive date windows that replace a session’s notes, duration, or set count. The home ski plan uses them for the run phases and the 2-set taper. “Start with the home ski plan” fills that week. Editing a strength session sets sets and reps, not a weight. A run counts when it is logged; the phase says how long it should be.
 
@@ -98,7 +98,7 @@ https://capdefra.github.io/training-tracker/
 ```
 public/data/training.json     starter goal, plan, and presets (no sessions)
 src/views                     Today, Log, Plans, Progress, Data
-src/lib                       dates, targets, gist sync, storage, exercise demos
+src/lib                       dates, targets, gist sync, storage, wger form links
 .github/workflows/deploy.yml  Pages deploy
 scripts/sample-data.mjs       rewrites the starter file
 ```

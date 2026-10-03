@@ -1,22 +1,32 @@
 import { useState } from 'react';
 import { ExerciseDemo } from './ExerciseDemo';
 import { todayISO } from '../lib/dates';
-import { findDemo } from '../lib/demos';
 import { logFromPreset } from '../lib/plans';
 import { describePlanSession } from '../lib/targets';
 import type { LogPreset, PlanSession, TrainingData, WorkoutPreset } from '../types';
 
-export function PresetList({ data, onLog }: { data: TrainingData; onLog: (preset: LogPreset) => void }) {
+export function PresetList({
+  data,
+  onLog,
+  embedded = false,
+}: {
+  data: TrainingData;
+  onLog: (preset: LogPreset) => void;
+  embedded?: boolean;
+}) {
   const [openId, setOpenId] = useState<string | null>(null);
-  const [demoName, setDemoName] = useState<string | null>(null);
   if (data.presets.length === 0) return null;
 
   return (
     <section className="stack">
-      <div>
-        <h2>Workouts</h2>
-        <p className="muted">Presets you can start on any day. Strength targets are sets and reps. A run counts when you do it.</p>
-      </div>
+      {embedded ? (
+        <p className="muted">Strength starts a session. A run is logged when you have done it.</p>
+      ) : (
+        <div>
+          <h2>Workouts</h2>
+          <p className="muted">Strength starts a session. A run is logged when you have done it.</p>
+        </div>
+      )}
       <ul className="preset-list">
         {data.presets.map((preset) => {
           const open = openId === preset.id;
@@ -34,46 +44,23 @@ export function PresetList({ data, onLog }: { data: TrainingData; onLog: (preset
               {preset.notes && preset.notes !== summary ? <p>{preset.notes}</p> : null}
               <div className="preset-actions">
                 <button type="button" className="btn primary" onClick={() => onLog(logFromPreset(preset, data, todayISO()))}>
-                  Start
+                  {preset.kind === 'run' ? 'Log' : 'Start'}
                 </button>
                 {preset.kind === 'strength' ? (
-                  <button
-                    type="button"
-                    className="btn ghost"
-                    aria-expanded={open}
-                    onClick={() => {
-                      setOpenId(open ? null : preset.id);
-                      setDemoName(null);
-                    }}
-                  >
-                    {open ? 'Hide demos' : 'How to'}
+                  <button type="button" className="btn ghost" aria-expanded={open} onClick={() => setOpenId(open ? null : preset.id)}>
+                    {open ? 'Hide exercises' : 'Exercises'}
                   </button>
                 ) : null}
               </div>
               {open ? (
-                <div className="stack">
-                  {preset.exercises.map((exercise) => {
-                    const shown = demoName === exercise.name;
-                    const demo = findDemo(exercise.name);
-                    return (
-                      <div key={exercise.name}>
-                        {demo ? (
-                          <button
-                            type="button"
-                            className="btn ghost small"
-                            aria-expanded={shown}
-                            onClick={() => setDemoName(shown ? null : exercise.name)}
-                          >
-                            {exercise.name}
-                          </button>
-                        ) : (
-                          <p>{exercise.name}</p>
-                        )}
-                        {shown ? <ExerciseDemo name={exercise.name} /> : null}
-                      </div>
-                    );
-                  })}
-                </div>
+                <ul className="targets">
+                  {preset.exercises.map((exercise) => (
+                    <li key={exercise.name}>
+                      <span className="target-name">{exercise.name}</span>
+                      <ExerciseDemo name={exercise.name} />
+                    </li>
+                  ))}
+                </ul>
               ) : null}
             </li>
           );

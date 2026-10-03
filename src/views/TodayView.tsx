@@ -1,149 +1,134 @@
+import { useState } from 'react';
 import { PresetList } from '../components/PresetList';
 import { WeekBoard } from '../components/WeekBoard';
-import { formatCountdown, formatLong, formatPretty, formatWeekday, todayISO } from '../lib/dates';
-import { activeGoal, recentSessions } from '../lib/plans';
+import { formatCountdown, formatLong, formatPretty, todayISO } from '../lib/dates';
+import { activeGoal, planItemsForWeek, recentSessions, type PlanItem } from '../lib/plans';
 import { sessionSummary } from '../lib/stats';
 import type { LogPreset, TrainingData } from '../types';
 
 export function TodayView({ data, onLog }: { data: TrainingData; onLog: (preset?: LogPreset) => void }) {
   const today = todayISO();
+  const [focus, setFocus] = useState(today);
   const goal = activeGoal(data);
   const plans = goal ? data.plans.filter((plan) => plan.goalId === goal.id && plan.status === 'active') : [];
   const recent = recentSessions(data, 5);
+  const weekItems = plans.length > 0 ? planItemsForWeek(data, plans, focus) : [];
 
   return (
     <div className="stack page">
       <header className="page-head">
-        <p className="kicker">{formatWeekday(today, 'long')}</p>
-        <h1>{formatLong(today)}</h1>
+        <p className="kicker">{focus === today ? 'Today' : formatPretty(focus)}</p>
+        <h1>{formatLong(focus)}</h1>
+        {goal && focus === today ? (
+          <p className="muted">{goal.targetDate ? `${goal.name} · ${formatCountdown(today, goal.targetDate)}` : goal.name}</p>
+        ) : null}
       </header>
 
-      <section className="stack">
-        {plans.length > 0 ? (
-          <WeekBoard
-            data={data}
-            plans={plans}
-            onLog={(preset) => onLog(preset)}
-            actions={
-              <div className="quick">
-                <button type="button" className="btn ghost small" onClick={() => onLog()}>
-                  Log strength
-                </button>
-                <button
-                  type="button"
-                  className="btn ghost small"
-                  onClick={() =>
-                    onLog({
-                      date: today,
-                      kind: 'run',
-                      title: 'Easy run',
-                      goalId: goal?.id ?? null,
-                      planId: null,
-                      planSessionId: null,
-                      templateExercises: [],
-                      distanceKm: null,
-                      durationMin: null,
-                      prompt: '',
-                    })
-                  }
-                >
-                  Log a run
-                </button>
-              </div>
-            }
-          />
-        ) : (
-          <>
-            <div className="split">
-              <h2>This week</h2>
-              <div className="quick">
-                <button type="button" className="btn ghost small" onClick={() => onLog()}>
-                  Log strength
-                </button>
-                <button
-                  type="button"
-                  className="btn ghost small"
-                  onClick={() =>
-                    onLog({
-                      date: today,
-                      kind: 'run',
-                      title: 'Easy run',
-                      goalId: goal?.id ?? null,
-                      planId: null,
-                      planSessionId: null,
-                      templateExercises: [],
-                      distanceKm: null,
-                      durationMin: null,
-                      prompt: '',
-                    })
-                  }
-                >
-                  Log a run
-                </button>
-              </div>
-            </div>
-            <p className="muted">Add a plan to see the week laid out, or log a session on its own.</p>
-          </>
-        )}
-      </section>
-
-      {goal ? (
-        <section className="hero">
-          <p className="kicker light">{goal.status === 'active' ? 'Active goal' : goal.status}</p>
-          <h2>{goal.name}</h2>
-          <p>
-            {goal.targetDate ? `${formatLong(goal.targetDate)} · ${formatCountdown(today, goal.targetDate)}` : 'No target date'}
-          </p>
-          {goal.focus.length > 0 ? (
-            <div className="tags">
-              {goal.focus.map((tag) => (
-                <span key={tag} className="tag">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          ) : null}
-          {goal.notes ? <p className="hero-notes">{goal.notes}</p> : null}
-        </section>
+      {plans.length > 0 ? (
+        <WeekBoard data={data} plans={plans} onLog={onLog} anchor={focus} onAnchor={setFocus} showDate={false} />
       ) : (
-        <section className="card empty">
-          <h2>No goal yet</h2>
-          <p>A goal is the season or race the plan is building toward.</p>
-          <a className="btn primary" href="#/plans">
-            Create a goal
-          </a>
+        <section className="session-card">
+          <h2>No plan yet</h2>
+          <p className="muted">Add a plan to see the week, or log a session on its own.</p>
+          <div className="session-action">
+            <button type="button" className="btn primary" onClick={() => onLog()}>
+              Log
+            </button>
+            <button type="button" className="btn ghost" onClick={() => onLog(blankRun(today, goal?.id ?? null))}>
+              Log a run
+            </button>
+          </div>
+          {goal ? null : (
+            <a className="btn ghost" href="#/plans">
+              Create a goal
+            </a>
+          )}
         </section>
       )}
 
-      <PresetList data={data} onLog={(preset) => onLog(preset)} />
-
-      <section className="stack">
-        <div className="split">
-          <h2>Recent</h2>
-          <a className="text-link" href="#/progress">
-            Progress
-          </a>
+      <details className="card more-fold">
+        <summary>{weekSummary(weekItems, focus === today)}</summary>
+        <div className="stack more-body">
+          {goal ? (
+            <section className="stack">
+              <h2>{goal.name}</h2>
+              <p className="muted">{goal.targetDate ? `${formatLong(goal.targetDate)} · ${formatCountdown(today, goal.targetDate)}` : 'No target date'}</p>
+              {goal.focus.length > 0 ? (
+                <div className="tags">
+                  {goal.focus.map((tag) => (
+                    <span key={tag} className="tag light">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+              {goal.notes ? <p>{goal.notes}</p> : null}
+            </section>
+          ) : null}
+          <PresetList data={data} onLog={onLog} embedded />
+          <section className="stack">
+            <h2>Recent</h2>
+            {recent.length === 0 ? (
+              <p className="muted">Nothing logged yet.</p>
+            ) : (
+              <ul className="session-list">
+                {recent.map((session) => (
+                  <li key={session.id}>
+                    <a className="session-link" href={`#/log/${session.id}`}>
+                      <span>
+                        <strong>{session.title}</strong>
+                        <small>
+                          {formatPretty(session.date)} · {session.kind === 'run' ? 'Run' : 'Strength'}
+                        </small>
+                      </span>
+                      <em>{sessionSummary(session)}</em>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <button type="button" className="btn ghost" onClick={() => onLog()}>
+              Log something else
+            </button>
+          </section>
         </div>
-        {recent.length === 0 ? (
-          <p className="muted">Nothing logged yet.</p>
-        ) : (
-          <ul className="session-list">
-            {recent.map((session) => (
-              <li key={session.id}>
-                <a className="session-link" href={`#/log/${session.id}`}>
-                  <span>
-                    <strong>{session.title}</strong>
-                    <small>
-                      {formatPretty(session.date)} · {session.kind === 'run' ? 'Run' : 'Strength'}
-                    </small>
-                  </span>
-                  <em>{sessionSummary(session)}</em>
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      </details>
     </div>
   );
+}
+
+function weekSummary(items: PlanItem[], isThisWeek: boolean): string {
+  const prefix = isThisWeek ? 'This week' : 'That week';
+  if (items.length === 0) return `${prefix} · nothing planned`;
+  let setDone = 0;
+  let setTarget = 0;
+  let runDone = 0;
+  let runTarget = 0;
+  for (const item of items) {
+    if (item.session.kind === 'run') {
+      runTarget += 1;
+      if (item.done) runDone += 1;
+    } else {
+      for (const target of item.targets) {
+        setTarget += target.targetSets;
+        setDone += Math.min(target.completedSets, target.targetSets);
+      }
+    }
+  }
+  return `${prefix} · ${setDone}/${setTarget} sets · ${runDone}/${runTarget} runs`;
+}
+
+function blankRun(date: string, goalId: string | null): LogPreset {
+  return {
+    date,
+    kind: 'run',
+    title: 'Easy run',
+    goalId,
+    planId: null,
+    planSessionId: null,
+    templateExercises: [],
+    distanceKm: null,
+    durationMin: null,
+    prompt: '',
+  };
 }

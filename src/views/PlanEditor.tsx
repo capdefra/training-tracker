@@ -127,7 +127,7 @@ export function PlanEditor({
         </form>
       ) : null}
 
-      <WeekBoard data={data} plans={[plan]} onLog={onLog} variant="list" heading="h3" anchor={anchor} onAnchor={setAnchor} />
+      <WeekBoard data={data} plans={[plan]} onLog={onLog} heading="h3" anchor={anchor} onAnchor={setAnchor} />
 
       {plan.phases && plan.phases.length > 0 ? (
         <div className="stack">
