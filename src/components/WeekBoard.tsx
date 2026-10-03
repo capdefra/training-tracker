@@ -62,11 +62,14 @@ export function WeekBoard({
     <section className="stack week-board">
       <div className="week-stack">
         <div className="week-controls">
-          <button type="button" className="btn ghost" disabled={!canPrev} onClick={() => goTo(addDays(selected, -7))}>
-            Previous week
+          <button type="button" className="icon-btn" aria-label="Previous week" disabled={!canPrev} onClick={() => goTo(addDays(selected, -7))}>
+            ‹
           </button>
-          <button type="button" className="btn ghost" disabled={!canNext} onClick={() => goTo(addDays(selected, 7))}>
-            Next week
+          <button type="button" className="btn ghost" aria-current={selected === today ? 'date' : undefined} onClick={() => goTo(today)}>
+            Today
+          </button>
+          <button type="button" className="icon-btn" aria-label="Next week" disabled={!canNext} onClick={() => goTo(addDays(selected, 7))}>
+            ›
           </button>
         </div>
         <div className="week-heading">
