@@ -88,8 +88,9 @@ export function ProgressView({ data, onLog }: { data: TrainingData; onLog: (pres
           <>
             {first && last && loaded ? (
               <p className="callout">
-                Top set moved from <strong>{trimNum(first.weightKg)}×{first.reps}</strong> to <strong>{trimNum(last.weightKg)}×{last.reps}</strong>.
-                Estimated 1RM {trimNum(first.e1rm)} → {trimNum(last.e1rm)} kg.
+                Top set moved from <strong>{first.loadLabel || `${trimNum(first.weightKg)} kg total`} × {first.reps}</strong> to{' '}
+                <strong>{last.loadLabel || `${trimNum(last.weightKg)} kg total`} × {last.reps}</strong>. Estimated 1RM {trimNum(first.e1rm)} →{' '}
+                {trimNum(last.e1rm)} kg.
               </p>
             ) : null}
             {first && last && !loaded ? (
@@ -101,7 +102,11 @@ export function ProgressView({ data, onLog }: { data: TrainingData; onLog: (pres
             <div className="chart-box">
               <LiftChart points={points} mode={loaded ? 'load' : 'reps'} />
             </div>
-            {loaded ? <p className="muted fine">Estimated 1RM uses Epley: weight × (1 + reps / 30). A heavy set of 5 sits above the weight on the bar.</p> : null}
+            {loaded ? (
+              <p className="muted fine">
+                The line is total kilograms. When a set stored pieces, the label reads kg per piece and the total under it. Estimated 1RM uses Epley on the total: weight × (1 + reps / 30).
+              </p>
+            ) : null}
           </>
         )}
       </section>
