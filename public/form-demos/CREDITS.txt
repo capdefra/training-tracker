@@ -1,0 +1,26 @@
+Form clips in this folder.
+
+Filmed clips are trimmed, muted, and scaled from the wger exercise library.
+License: Creative Commons Attribution-ShareAlike 4.0
+https://creativecommons.org/licenses/by-sa/4.0/
+
+goblet-squat.webm
+  Dumbbell Goblet Squat, wger exercise 203, the library GIF.
+  https://wger.de/en/exercise/203/view
+
+flat-dumbbell-bench-press.webm
+  Benchpress Dumbbells, wger exercise 75, video by Goulart.
+  https://wger.de/en/exercise/75/view
+
+incline-press.webm
+  Incline Bench Press - Dumbbell, wger exercise 537, video by Goulart.
+  https://wger.de/en/exercise/537/view
+
+dumbbell-curl.webm
+  Biceps Curls With Dumbbell, wger exercise 92, video by Goulart.
+  https://wger.de/en/exercise/92/view
+
+Every other WebM here is an original placeholder animation (a stick figure
+labeled PLACEHOLDER). It is not from wger and it is not a filmed demonstration.
+Replace the file to show a real clip, then update the matching entry in
+src/lib/demos.ts. See the Form clips section of the README.

@@ -29,9 +29,9 @@ Use the dev server (or `npm run preview` after a build). Opening `index.html` as
 
 **Activity** is its own tab. Weeks stack from top to bottom, and the week that contains today is the top row. Older weeks sit under it. There are no weeks after the current one. Each day is empty, planned and not done, partly done, or done. A day with only an unplanned log still counts. Tapping a day opens that day on Today.
 
-**Workouts** are reusable presets. The starter set is Lower A, an easy run, full upper, Lower B, and a longer run. Each strength exercise links to the same form guide in the [wger](https://wger.de/) exercise library. Starting a strength preset fills the log. Logging a run preset does too, after the run. If that workout is still open on this week’s plan, the entry counts toward it, including the phase for that date.
+**Workouts** are reusable presets. The starter set is Lower A, an easy run, full upper, Lower B, and a longer run. Each strength exercise plays a short form clip in the app. Starting a strength preset fills the log. Logging a run preset does too, after the run. If that workout is still open on this week’s plan, the entry counts toward it, including the phase for that date.
 
-**Log** takes a strength workout or a run. Strength targets are sets and reps (or seconds for a hold such as a side plank). Kilograms are optional and are not the weekly target. A run counts as soon as you save it. Runs are logged after the fact: distance, workout time, pace, heart rate, active and total calories, elevation, cadence, power, effort, place, source, start and finish, weather, and per-kilometre splits (time, pace, heart rate) are all optional. A strength session can also store workout time, heart rate, calories, and effort when a watch recorded them. Each strength exercise can open its wger form guide while you train. Save sits at the end of the form.
+**Log** takes a strength workout or a run. Strength targets are sets and reps (or seconds for a hold such as a side plank). Kilograms are optional and are not the weekly target. A run counts as soon as you save it. Runs are logged after the fact: distance, workout time, pace, heart rate, active and total calories, elevation, cadence, power, effort, place, source, start and finish, weather, and per-kilometre splits (time, pace, heart rate) are all optional. A strength session can also store workout time, heart rate, calories, and effort when a watch recorded them. Each strength exercise can play a short form clip while you train, without leaving the page. Save sits at the end of the form.
 
 **Plans** is where goals and the repeating week live. A goal has a name, a target date, and focus tags. A plan has a start date, a length in weeks, and sessions on chosen days. Phases are inclusive date windows that replace a session’s notes, duration, or set count. The home ski plan uses them for the run phases and the 2-set taper. “Start with the home ski plan” fills that week. Editing a strength session sets sets and reps, not a weight. A run counts when it is logged; the phase says how long it should be.
 
@@ -99,11 +99,25 @@ https://capdefra.github.io/training-tracker/
 
 ```
 public/data/training.json     starter goal, plan, and presets (no sessions)
+public/form-demos/            short form clips, one per strength exercise
 src/views                     Today, Log, Plans, Progress, Data
-src/lib                       dates, targets, gist sync, storage, wger form links
+src/lib                       dates, targets, gist sync, storage, form clips
 .github/workflows/deploy.yml  Pages deploy
 scripts/sample-data.mjs       rewrites the starter file
+scripts/form-placeholders.py  redraws the placeholder clips
 ```
+
+## Form clips
+
+Form on a strength exercise opens a sheet and plays a short loop. The week controls and the log stay where they are. Nothing about that button opens a new tab.
+
+Clips live in `public/form-demos/`, one file per exercise on the presets and the ski plan. `src/lib/demos.ts` maps the exercise name to that file. WebM is what the files use now. A GIF with the same name also plays.
+
+Goblet squat, flat dumbbell bench press, incline press, and dumbbell curl are short trims from the [wger](https://wger.de/) library under CC BY-SA 4.0. Credits are in `public/form-demos/CREDITS.txt` and on the sheet. The other exercises are placeholder stick figures, labeled Placeholder, so a demo still plays with the phone offline. They are not filmed form.
+
+To drop in a real clip, replace the WebM at that exercise’s path with a short, muted file about 480px wide. A GIF named the same way works too. Then set that exercise’s `source` to `wger` and add a `credit` line in `src/lib/demos.ts`. `python3 scripts/form-placeholders.py` redraws only the placeholders, and only if ffmpeg is installed. It does not touch the four filmed files.
+
+Learn more, at the bottom of the sheet, still opens the wger page for that exercise.
 
 ## Data model
 
