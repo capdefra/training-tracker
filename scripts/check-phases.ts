@@ -1,10 +1,11 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { effortLabel, formatPace } from '../src/lib/format';
 import { mergeTraining } from '../src/lib/merge';
 import { activityMondays, dayProgress, extraLogsForDay, planCovers, planItemsForWeek } from '../src/lib/plans';
 import { sessionSummary } from '../src/lib/stats';
 import { normalize, serialize } from '../src/lib/storage';
+import { demoAssetUrl, findDemo, listDemos } from '../src/lib/demos';
 import { starterDocument } from '../src/lib/templates';
 import type { PlanSession, Session, TrainingData } from '../src/types';
 
@@ -305,6 +306,24 @@ check('summary lists the watch metrics', sessionSummary(watch!) === '5.07 km · 
 check('older run without new fields still loads', oldRun?.distanceKm === 4 && oldRun?.heartRate === null && oldRun?.splits.length === 0 && oldRun?.paceSec === null && oldRun?.notes === 'felt fine');
 check('older run pace still comes from time and distance', sessionSummary(oldRun!).includes('6:15'));
 check('watch import does not tombstone the ski goal', again.deleted.goals.length === 0);
+
+check('demo asset urls keep the site base', demoAssetUrl('form-demos/goblet-squat.webm', './') === './form-demos/goblet-squat.webm');
+check('demo asset urls join an absolute base', demoAssetUrl('form-demos/goblet-squat.webm', '/training-tracker/') === '/training-tracker/form-demos/goblet-squat.webm');
+const strengthNames = new Set<string>();
+for (const preset of data.presets) {
+  if (preset.kind !== 'strength') continue;
+  for (const exercise of preset.exercises) strengthNames.add(exercise.name);
+}
+for (const session of data.plans.flatMap((plan) => plan.sessions)) {
+  if (session.kind !== 'strength') continue;
+  for (const exercise of session.exercises) strengthNames.add(exercise.name);
+}
+check('every strength exercise on the plan has a form clip', [...strengthNames].every((name) => findDemo(name)?.clip));
+for (const demo of listDemos()) {
+  check(`form clip file for ${demo.name}`, existsSync(join('public', demo.clip)));
+  check(`form clip is webm or gif for ${demo.name}`, /\.(webm|gif)$/i.test(demo.clip));
+  check(`form clip matches ${demo.name}`, Boolean(findDemo(demo.name)));
+}
 
 if (failures.length > 0) {
   console.error(failures.map((failure) => `- ${failure}`).join('\n'));

@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { ExerciseDemo } from './ExerciseDemo';
 import { WatchSummary } from './WatchSummary';
-import { findDemo, FORM_LIBRARY } from '../lib/demos';
+import { findDemo } from '../lib/demos';
 import { addDays, formatDayMonth, formatPretty, formatWeekday, startOfWeek, todayISO } from '../lib/dates';
 import { cx } from '../lib/cx';
 import { activityMondays, buildPreset, extraLogsForDay, planItemsForWeek, planLastDay, type PlanItem } from '../lib/plans';
@@ -288,15 +288,7 @@ function SessionCard({
               );
             })}
           </ul>
-          {hasForm ? (
-            <p className="muted fine">
-              Form opens the{' '}
-              <a className="text-link" href={FORM_LIBRARY.href} target="_blank" rel="noopener noreferrer">
-                {FORM_LIBRARY.name}
-              </a>{' '}
-              exercise library.
-            </p>
-          ) : null}
+          {hasForm ? <p className="muted fine">Form plays a short clip on this page.</p> : null}
         </>
       ) : null}
       {!summary && item.logged && hasDisplayedMetrics(item.logged) ? <WatchSummary session={item.logged} /> : null}
