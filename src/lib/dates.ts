@@ -36,6 +36,12 @@ export function isISODate(iso: string): boolean {
   return !Number.isNaN(parseISODate(iso).getTime());
 }
 
+/** True only when `iso` is a real calendar day. `2026-02-31` is not. */
+export function isRealISODate(iso: string): boolean {
+  if (!isISODate(iso)) return false;
+  return toISODate(parseISODate(iso)) === iso;
+}
+
 export function toISODate(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');

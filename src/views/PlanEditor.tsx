@@ -184,7 +184,8 @@ export function PlanEditor({
                     onChange({ ...plan, sessions: plan.sessions.map((item) => (item.id === session.id ? next : item)) });
                     setEditingId(null);
                   }}
-                  onDelete={() =>
+                  onDelete={() => {
+                    const moves = plan.moves?.filter((move) => move.sessionId !== session.id);
                     onChange({
                       ...plan,
                       sessions: plan.sessions.filter((item) => item.id !== session.id),
@@ -194,8 +195,9 @@ export function PlanEditor({
                           sessions: phase.sessions.filter((change) => change.sessionId !== session.id),
                         }))
                         .filter((phase) => phase.sessions.length > 0),
-                    })
-                  }
+                      moves: moves && moves.length > 0 ? moves : undefined,
+                    });
+                  }}
                 />
               ) : null}
             </li>

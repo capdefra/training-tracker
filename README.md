@@ -25,7 +25,7 @@ Use the dev server (or `npm run preview` after a build). Opening `index.html` as
 
 ## What you can do
 
-**Today** is the phone screen for the plan. It opens on a short card for the selected day: what was planned, what was logged, and whether that is done. That card stays open. Sets, watch metrics, form links, and the rest of the session open from View session, Start, Continue, or Log. The week and its controls stay put above that card, so choosing another day does not move them. Previous and next are arrows above the week and each move one week. Today sits between them and opens the current week with today selected. Tapping a day opens that day under the week. While another day is open, today stays one tap away at the top of the page. A day shows what was planned, marked not done until a log fulfills it, and what was done that day, including a session that was never on the plan. A planned session that was logged reads as done once, not as a second card. Strength uses Start, a run uses Log, an unfinished entry uses Continue, and a finished one uses View session. Runs are logged after the fact. Sets, the goal, presets, and recent sessions stay folded until you open them.
+**Today** is the phone screen for the plan. It opens on a short card for the selected day: what was planned, what was logged, and whether that is done. That card stays open. Sets, watch metrics, form links, and the rest of the session open from View session, Start, Continue, or Log. The week and its controls stay put above that card, so choosing another day does not move them. Previous and next are arrows above the week and each move one week. Today sits between them and opens the current week with today selected. Tapping a day opens that day under the week. While another day is open, today stays one tap away at the top of the page. A day shows what was planned, marked not done until a log fulfills it, and what was done that day, including a session that was never on the plan. A planned session that was logged reads as done once, not as a second card. A session can move to another day for one week. The card sits on the new day, and its label says which weekday it left, such as “Moved from Wed”. A log linked to that plan session still marks the moved card done. Strength uses Start, a run uses Log, an unfinished entry uses Continue, and a finished one uses View session. Runs are logged after the fact. Sets, the goal, presets, and recent sessions stay folded until you open them.
 
 **Activity** is its own tab. Weeks stack from top to bottom, and the week that contains today is the top row. Older weeks sit under it. There are no weeks after the current one. Each day is empty, planned and not done, partly done, or done. A day with only an unplanned log still counts. Tapping a day opens that day on Today.
 
@@ -124,12 +124,50 @@ Learn more, at the bottom of the sheet, still opens the wger page for that exerc
 `training.json` is version 1:
 
 - **goals** — name, target date, focus tags, notes, status (`active`, `paused`, `done`)
-- **plans** — linked to a goal, with a start date, a number of weeks, an optional end date, a weekly template, and optional phases (inclusive dates that change a session’s notes, minutes, or set count)
+- **plans** — linked to a goal, with a start date, a number of weeks, an optional end date, a weekly template, optional phases (inclusive dates that change a session’s notes, minutes, or set count), and optional one-off `moves` (see below)
 - **presets** — reusable workouts you can start from Today or the log
 - **sessions** — a strength workout or a run, optionally linked to a plan session. A run can hold a watch summary: pace, heart rate, active and total calories, cadence, power, elevation, effort, place, source, activity, start and finish, weather, and splits. Older sessions that lack those fields still load. Strength uses the same time, heart rate, calorie, and effort fields when they are present. A strength exercise can also store how the load was held.
 - **deleted** — ids removed on one device, so a sync does not bring them back
 
 A strength target is sets and reps of an exercise (seconds for a hold). It does not include weight. A run on the plan is done when a run is logged against it that week. Logged kilograms, distance, and pace are history, not the target.
+
+### One-off moves
+
+The repeating week stays on `dayOfWeek`. To show one occurrence on another date, the planner adds `moves` on that plan. Leave `moves` off and the week is unchanged. The site does not edit this list.
+
+```json
+"moves": [
+  {
+    "sessionId": "ps-upper",
+    "fromDate": "2026-10-07",
+    "toDate": "2026-10-08",
+    "updatedAt": "2026-10-07T08:00:00.000Z"
+  }
+]
+```
+
+`fromDate` is the day that occurrence would have used. `toDate` is where the card shows. Both are `YYYY-MM-DD`. `updatedAt` can be omitted. When the same session and `fromDate` appear twice, the later stamp wins, and an equal stamp keeps the later entry.
+
+The site does not shift any other session. If the new day already has a workout, the planner writes a move for that workout too. Thursday 8 October 2026 is empty, so Full upper needs only the entry above. Moving the Tuesday easy run onto Wednesday, which already has Full upper, needs both of these:
+
+```json
+"moves": [
+  {
+    "sessionId": "ps-easy",
+    "fromDate": "2026-10-06",
+    "toDate": "2026-10-07",
+    "updatedAt": "2026-10-06T09:00:00.000Z"
+  },
+  {
+    "sessionId": "ps-upper",
+    "fromDate": "2026-10-07",
+    "toDate": "2026-10-08",
+    "updatedAt": "2026-10-06T09:00:00.000Z"
+  }
+]
+```
+
+A move is ignored when `moves` is missing or not an array, the session id is unknown, a date is not a real calendar day, `fromDate` is not that session’s weekday, `fromDate` equals `toDate`, or `fromDate` falls outside the plan. Other weeks stay on their usual days. The phase stays the one that covers `fromDate`. The card label reads “Moved from Wed”.
 
 ### Kilograms
 

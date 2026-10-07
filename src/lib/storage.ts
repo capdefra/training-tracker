@@ -1,4 +1,5 @@
 import { migrateExercise, roundKg } from './load';
+import { normalizeMoves } from './plan-moves';
 import type {
   Deletion,
   Deletions,
@@ -196,6 +197,10 @@ function normalizePlan(value: unknown): Plan | null {
     ? record.phases.map(normalizePhase).filter((item) => item !== null)
     : [];
   phases.sort((a, b) => a.startDate.localeCompare(b.startDate) || a.endDate.localeCompare(b.endDate) || a.name.localeCompare(b.name));
+  const sessions = Array.isArray(record.sessions)
+    ? record.sessions.map(normalizePlanSession).filter((item) => item !== null)
+    : [];
+  const moves = normalizeMoves(record.moves, sessions);
   const updatedAt = optionalStamp(record.updatedAt);
   const plan: Plan = {
     id: text(record.id) || `plan-${Math.random().toString(36).slice(2, 8)}`,
@@ -206,10 +211,9 @@ function normalizePlan(value: unknown): Plan | null {
     ...(endDate ? { endDate } : {}),
     focus: focusList(record.focus),
     notes: text(record.notes),
-    sessions: Array.isArray(record.sessions)
-      ? record.sessions.map(normalizePlanSession).filter((item) => item !== null)
-      : [],
+    sessions,
     ...(phases.length > 0 ? { phases } : {}),
+    ...(moves.length > 0 ? { moves } : {}),
     status: status(record.status),
     ...(updatedAt ? { updatedAt } : {}),
   };
