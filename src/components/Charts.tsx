@@ -37,7 +37,7 @@ export function LiftChart({ points, mode }: { points: LiftPoint[]; mode: 'load' 
             if (!point) return '';
             if (mode === 'reps') return `${point.reps} reps`;
             if (context.dataset.label === 'Estimated 1RM') return `e1RM ${point.e1rm} kg`;
-            return `Top set ${point.weightKg}×${point.reps}`;
+            return point.loadLabel ? `Top set ${point.loadLabel} × ${point.reps}` : `Top set ${point.weightKg} kg total × ${point.reps}`;
           },
         },
       },

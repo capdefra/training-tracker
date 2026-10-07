@@ -1,6 +1,7 @@
 import type { ExerciseEntry, Session, SetEntry } from '../types';
 import { addDays, formatDayMonth, startOfWeek } from './dates';
-import { formatDuration, formatKm, formatPace, trimNum } from './format';
+import { formatDuration, formatKm, formatPace } from './format';
+import { formatLoggedLoad } from './load';
 
 export function epley(weightKg: number, reps: number): number {
   if (weightKg <= 0 || reps <= 0) return 0;
@@ -29,6 +30,8 @@ export interface LiftPoint {
   weightKg: number;
   e1rm: number;
   volume: number;
+  /** Per piece and total when the set stored pieces, otherwise the bare total. */
+  loadLabel: string;
 }
 
 export function liftSeries(sessions: Session[], name: string, start: string | null, end: string): LiftPoint[] {
@@ -52,6 +55,7 @@ export function liftSeries(sessions: Session[], name: string, start: string | nu
         weightKg: best.set.weightKg,
         e1rm: Math.round(best.e1rm * 10) / 10,
         volume,
+        loadLabel: formatLoggedLoad(exercise, best.set),
       };
       if (!chosen || point.e1rm > chosen.e1rm || (point.e1rm === chosen.e1rm && point.weightKg > chosen.weightKg)) {
         chosen = point;
@@ -179,14 +183,20 @@ export function summarize(sessions: Session[], start: string | null, end: string
   );
 }
 
-export function bestLift(session: Session): { name: string; reps: number; weightKg: number } | null {
-  let best: { name: string; reps: number; weightKg: number; score: number } | null = null;
+export function bestLift(session: Session): { name: string; reps: number; weightKg: number; loadLabel: string } | null {
+  let best: { name: string; reps: number; weightKg: number; loadLabel: string; score: number } | null = null;
   for (const exercise of session.exercises) {
     const top = bestSet(exercise);
     if (!top) continue;
     const score = top.set.weightKg > 0 ? top.e1rm : top.set.reps / 100;
     if (!best || score > best.score) {
-      best = { name: exercise.name, reps: top.set.reps, weightKg: top.set.weightKg, score };
+      best = {
+        name: exercise.name,
+        reps: top.set.reps,
+        weightKg: top.set.weightKg,
+        loadLabel: formatLoggedLoad(exercise, top.set),
+        score,
+      };
     }
   }
   return best;
@@ -214,7 +224,7 @@ export function sessionSummary(session: Session): string {
   const top = bestLift(session);
   const count = session.exercises.length;
   if (!top) return count ? `${count} exercises` : 'Strength';
-  const load = top.weightKg > 0 ? `${trimNum(top.weightKg)}×${top.reps}` : `${top.reps} reps`;
+  const load = top.weightKg > 0 && top.loadLabel ? `${top.loadLabel} × ${top.reps}` : `${top.reps} reps`;
   const extra = count > 1 ? ` · ${count} exercises` : '';
   const watch: string[] = [];
   if (session.durationSec) watch.push(formatDuration(session.durationSec));

@@ -68,9 +68,19 @@ export interface Plan {
   updatedAt?: string;
 }
 
+/** One dumbbell or kettlebell, or a pair of dumbbells. Two pieces are always dumbbells. */
+export type LoadPieces = 1 | 2;
+export type LoadImplement = 'dumbbell' | 'kettlebell';
+
 export interface SetEntry {
   reps: number;
+  /**
+   * Total kilograms for the set. Older sessions stored only this number.
+   * When `kgPerPiece` is set, this is `kgPerPiece × pieces`.
+   */
   weightKg: number;
+  /** Kilograms printed on one dumbbell or kettlebell. Omitted when the set only has a total. */
+  kgPerPiece?: number;
 }
 
 /** One kilometre from a watch split. Time and pace are both stored because the last split can be short of a full kilometre. */
@@ -95,6 +105,13 @@ export interface SessionWeather {
 export interface ExerciseEntry {
   name: string;
   sets: SetEntry[];
+  /**
+   * 1 = one dumbbell or kettlebell. 2 = a pair of dumbbells.
+   * Omitted on older exercises that only stored a total kilogram number.
+   */
+  pieces?: LoadPieces;
+  /** Set with `pieces`. Two pieces are always dumbbells. */
+  implement?: LoadImplement;
 }
 
 export interface Session {

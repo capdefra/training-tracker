@@ -31,11 +31,11 @@ Use the dev server (or `npm run preview` after a build). Opening `index.html` as
 
 **Workouts** are reusable presets. The starter set is Lower A, an easy run, full upper, Lower B, and a longer run. Each strength exercise plays a short form clip in the app. Starting a strength preset fills the log. Logging a run preset does too, after the run. If that workout is still open on this week’s plan, the entry counts toward it, including the phase for that date.
 
-**Log** takes a strength workout or a run. Strength targets are sets and reps (or seconds for a hold such as a side plank). Kilograms are optional and are not the weekly target. A run counts as soon as you save it. Runs are logged after the fact: distance, workout time, pace, heart rate, active and total calories, elevation, cadence, power, effort, place, source, start and finish, weather, and per-kilometre splits (time, pace, heart rate) are all optional. A strength session can also store workout time, heart rate, calories, and effort when a watch recorded them. Each strength exercise can play a short form clip while you train, without leaving the page. Save sits at the end of the form.
+**Log** takes a strength workout or a run. A strength session shows one exercise at a time: pick one dumbbell, one kettlebell, or two dumbbells, then tap the weight and the reps. The large number is kilograms per piece. The line under it is the total. Log each set, then move to the next exercise. Form still plays that exercise’s clip on this page, and the week controls stay put when Form is opened from Today. Save sits on the review after the last exercise. Strength targets are sets and reps (or seconds for a hold such as a side plank). Kilograms are optional and are not the weekly target. A run counts as soon as you save it. Runs are logged after the fact: distance, workout time, pace, heart rate, active and total calories, elevation, cadence, power, effort, place, source, start and finish, weather, and per-kilometre splits (time, pace, heart rate) are all optional. A strength session can also store workout time, heart rate, calories, and effort when a watch recorded them.
 
 **Plans** is where goals and the repeating week live. A goal has a name, a target date, and focus tags. A plan has a start date, a length in weeks, and sessions on chosen days. Phases are inclusive date windows that replace a session’s notes, duration, or set count. The home ski plan uses them for the run phases and the 2-set taper. “Start with the home ski plan” fills that week. Editing a strength session sets sets and reps, not a weight. A run counts when it is logged; the phase says how long it should be.
 
-**Progress** leads with this week: sets completed against the target, and runs done. After you have logged load or distance, the charts still show one lift at a time (top set and an estimated 1RM) and weekly running distance plus pace. Estimated 1RM uses the Epley formula: `weight × (1 + reps / 30)`.
+**Progress** leads with this week: sets completed against the target, and runs done. After you have logged load or distance, the charts still show one lift at a time (top set as total kilograms, and an estimated 1RM) and weekly running distance plus pace. Estimated 1RM uses the Epley formula on that total: `weight × (1 + reps / 30)`. A set that knows its pieces also reads as kilograms per piece.
 
 **Data** syncs the log to a private GitHub gist so the phone and laptop share one copy. See below.
 
@@ -126,7 +126,18 @@ Learn more, at the bottom of the sheet, still opens the wger page for that exerc
 - **goals** — name, target date, focus tags, notes, status (`active`, `paused`, `done`)
 - **plans** — linked to a goal, with a start date, a number of weeks, an optional end date, a weekly template, and optional phases (inclusive dates that change a session’s notes, minutes, or set count)
 - **presets** — reusable workouts you can start from Today or the log
-- **sessions** — a strength workout or a run, optionally linked to a plan session. A run can hold a watch summary: pace, heart rate, active and total calories, cadence, power, elevation, effort, place, source, activity, start and finish, weather, and splits. Older sessions that lack those fields still load. Strength uses the same time, heart rate, calorie, and effort fields when they are present.
+- **sessions** — a strength workout or a run, optionally linked to a plan session. A run can hold a watch summary: pace, heart rate, active and total calories, cadence, power, elevation, effort, place, source, activity, start and finish, weather, and splits. Older sessions that lack those fields still load. Strength uses the same time, heart rate, calorie, and effort fields when they are present. A strength exercise can also store how the load was held.
 - **deleted** — ids removed on one device, so a sync does not bring them back
 
 A strength target is sets and reps of an exercise (seconds for a hold). It does not include weight. A run on the plan is done when a run is logged against it that week. Logged kilograms, distance, and pace are history, not the target.
+
+### Kilograms
+
+`weightKg` on a set is always the **total** load. When the set used a bell, the exercise also stores `pieces` (`1` or `2`) and `implement` (`dumbbell` or `kettlebell`), and each weighted set stores `kgPerPiece`. Two pieces are always dumbbells. One piece is a dumbbell or a kettlebell. The logger shows kilograms per piece as the large number and the total underneath. Those two never swap.
+
+Older sets stored only `weightKg`. That number stays the total. On load, the app fills a one-piece choice only when the total and the per-piece weight are the same number:
+
+- a name containing “kettlebell”, plus Goblet squat and Suitcase carry → one kettlebell (those two names follow the home plan notes)
+- a name containing “one-arm” or “single-arm” → one dumbbell
+
+A pair of dumbbells is not guessed, because the old number does not say whether it was one bell or both. Those sets stay labeled as a total until you pick pieces while editing.

@@ -1,3 +1,4 @@
+import { migrateExercise, roundKg } from './load';
 import type {
   Deletion,
   Deletions,
@@ -89,10 +90,12 @@ function normalizeSet(value: unknown): SetEntry | null {
   if (!record) return null;
   const reps = numberOrNull(record.reps);
   if (reps === null || reps <= 0) return null;
-  return {
-    reps: Math.round(reps),
-    weightKg: Math.max(0, numberOr(record.weightKg, 0)),
-  };
+  let weightKg = Math.max(0, numberOr(record.weightKg, 0));
+  const per = numberOrNull(record.kgPerPiece);
+  if (weightKg <= 0 && per !== null && per > 0) weightKg = per;
+  const set: SetEntry = { reps: Math.round(reps), weightKg: roundKg(weightKg) };
+  if (per !== null && per > 0) set.kgPerPiece = roundKg(per);
+  return set;
 }
 
 function normalizeLoggedExercise(value: unknown): ExerciseEntry | null {
@@ -101,7 +104,7 @@ function normalizeLoggedExercise(value: unknown): ExerciseEntry | null {
   const name = text(record.name);
   const sets = Array.isArray(record.sets) ? record.sets.map(normalizeSet).filter((set) => set !== null) : [];
   if (!name || sets.length === 0) return null;
-  return { name, sets };
+  return migrateExercise(name, sets, record.pieces, record.implement);
 }
 
 function isoDate(value: unknown): string {

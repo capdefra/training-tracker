@@ -1,26 +1,24 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Field } from '../components/Field';
+import { StrengthGuide } from '../components/StrengthGuide';
 import {
-  COMMON_LIFTS,
   RUN_TITLES,
   applyTemplateMeta,
-  blankExercise,
-  blankSet,
   draftFromPreset,
   draftFromSession,
   exercisesFromTemplate,
+  exercisesToSession,
   blankDraft,
   type Draft,
 } from '../lib/draft';
 import { isISODate, startOfWeek, todayISO } from '../lib/dates';
 import { formatDuration, parseNum } from '../lib/format';
 import { hasDisplayedMetrics, readWatch } from '../lib/watch';
-import { RunWatchFields, StrengthWatchFields } from '../components/WatchFields';
+import { RunWatchFields } from '../components/WatchFields';
 import { WatchSummary } from '../components/WatchSummary';
 import { findPlanSession, logFromPreset, planChoices } from '../lib/plans';
 import { cx } from '../lib/cx';
-import { ExerciseDemo } from '../components/ExerciseDemo';
 import type { DraftRequest } from './draft-request';
 import type { Session, TrainingData } from '../types';
 
@@ -49,6 +47,7 @@ export function LogView({
   });
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [guideNonce, setGuideNonce] = useState(0);
   const draftId = existing?.id ?? `log-${request.token}`;
 
   if (sessionId && !existing) {
@@ -91,7 +90,10 @@ export function LogView({
       goalId: choice.plan.goalId,
       kind: choice.session.kind,
       title: choice.session.title,
-      exercises: choice.session.kind === 'strength' ? exercisesFromTemplate(choice.session.exercises, data.sessions) : current.exercises,
+      exercises:
+        choice.session.kind === 'strength' && current.exercises.every((exercise) => exercise.sets.length === 0)
+          ? exercisesFromTemplate(choice.session.exercises, data.sessions)
+          : current.exercises,
       prompt:
         choice.session.kind === 'run'
           ? `${choice.session.title} · ${choice.session.notes || 'doing the run is enough'}`
@@ -104,6 +106,10 @@ export function LogView({
 
   function save(event: FormEvent) {
     event.preventDefault();
+    if (draft.kind === 'strength') {
+      const submitter = (event.nativeEvent as SubmitEvent).submitter;
+      if (!(submitter instanceof HTMLElement) || submitter.getAttribute('name') !== 'save-session') return;
+    }
     const session = toSession(draft, draftId, existing?.createdAt ?? new Date().toISOString());
     if (typeof session === 'string') {
       setError(session);
@@ -111,6 +117,35 @@ export function LogView({
     }
     setError(null);
     onSave(session);
+  }
+
+  if (draft.kind === 'strength') {
+    return (
+      <form className="stack page" onSubmit={save} autoComplete="off">
+        <StrengthGuide
+          key={guideNonce}
+          draft={draft}
+          setDraft={setDraft}
+          data={data}
+          choices={choices}
+          duplicate={duplicate}
+          error={error}
+          existing={existing}
+          allowKindChange={!existing && request.mode !== 'preset'}
+          confirmDelete={confirmDelete}
+          setConfirmDelete={setConfirmDelete}
+          onDelete={onDelete}
+          onChoosePlan={choosePlanSession}
+          onKind={(kind) => update('kind', kind)}
+          onPreset={(presetId) => {
+            const preset = data.presets.find((item) => item.id === presetId);
+            if (!preset) return;
+            setGuideNonce((nonce) => nonce + 1);
+            setDraft(draftFromPreset(logFromPreset(preset, data, draft.date || todayISO()), data.sessions));
+          }}
+        />
+      </form>
+    );
   }
 
   return (
@@ -140,10 +175,10 @@ export function LogView({
       ) : null}
 
       <div className="seg" role="group" aria-label="Session type">
-        <button type="button" className={cx(draft.kind === 'strength' && 'on')} onClick={() => update('kind', 'strength')}>
+        <button type="button" onClick={() => update('kind', 'strength')}>
           Strength
         </button>
-        <button type="button" className={cx(draft.kind === 'run' && 'on')} onClick={() => update('kind', 'run')}>
+        <button type="button" className="on" onClick={() => update('kind', 'run')}>
           Run
         </button>
       </div>
@@ -209,11 +244,7 @@ export function LogView({
       </div>
       {duplicate ? <p className="muted">This plan session already has a log this week. Saving adds another.</p> : null}
 
-      {draft.kind === 'strength' ? (
-        <StrengthFields draft={draft} setDraft={setDraft} />
-      ) : (
-        <RunWatchFields draft={draft} setDraft={setDraft} />
-      )}
+      <RunWatchFields draft={draft} setDraft={setDraft} />
 
       <Field label="Notes">
         <textarea value={draft.notes} onChange={(event) => update('notes', event.target.value)} rows={3} maxLength={2000} placeholder="How it felt, what to change next time" />
@@ -253,144 +284,6 @@ export function LogView({
   );
 }
 
-function StrengthFields({ draft, setDraft }: { draft: Draft; setDraft: (value: Draft | ((current: Draft) => Draft)) => void }) {
-  function addLift(name: string) {
-    setDraft((current) => {
-      if (current.exercises.some((exercise) => exercise.name.trim().toLowerCase() === name.toLowerCase())) return current;
-      const empty = current.exercises.length === 1 && current.exercises[0]?.name.trim() === '';
-      if (empty && current.exercises[0]) {
-        return { ...current, exercises: [{ ...current.exercises[0], name }] };
-      }
-      return { ...current, exercises: [...current.exercises, blankExercise(name)] };
-    });
-  }
-
-  return (
-    <div className="stack">
-      <p className="muted fine">Load is optional. This week’s target is the sets and reps.</p>
-      <div className="chips" aria-label="Common lifts">
-        {COMMON_LIFTS.map((name) => (
-          <button key={name} type="button" className="chip" onClick={() => addLift(name)}>
-            {name}
-          </button>
-        ))}
-      </div>
-      {draft.exercises.map((exercise, exerciseIndex) => (
-        <fieldset key={exercise.key} className="exercise">
-          <legend className="sr-only">Exercise {exerciseIndex + 1}</legend>
-          <div className="split">
-            <input
-              value={exercise.name}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  exercises: current.exercises.map((item) => (item.key === exercise.key ? { ...item, name: event.target.value } : item)),
-                }))
-              }
-              placeholder="Exercise"
-              aria-label="Exercise name"
-            />
-            <button
-              type="button"
-              className="btn ghost small"
-              onClick={() =>
-                setDraft((current) => ({
-                  ...current,
-                  exercises: current.exercises.length === 1 ? [blankExercise()] : current.exercises.filter((item) => item.key !== exercise.key),
-                }))
-              }
-            >
-              Remove
-            </button>
-          </div>
-          {exercise.targetLabel ? <p className="muted fine">Target {exercise.targetLabel}. Kilograms are not part of the target.</p> : null}
-          <ExerciseDemo name={exercise.name} />
-          <div className="set-head" aria-hidden="true">
-            <span />
-            <span>{exercise.count === 'seconds' ? 'Seconds' : 'Reps'}</span>
-            <span>kg</span>
-            <span />
-          </div>
-          {exercise.sets.map((set, setIndex) => (
-            <div key={set.key} className="set-row">
-              <span>{setIndex + 1}</span>
-              <input
-                inputMode="numeric"
-                aria-label={`Set ${setIndex + 1} ${exercise.count === 'seconds' ? 'seconds' : 'reps'}`}
-                value={set.reps}
-                placeholder={exercise.count === 'seconds' ? 'Sec' : 'Reps'}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    exercises: current.exercises.map((item) =>
-                      item.key === exercise.key
-                        ? { ...item, sets: item.sets.map((entry) => (entry.key === set.key ? { ...entry, reps: event.target.value } : entry)) }
-                        : item,
-                    ),
-                  }))
-                }
-              />
-              <input
-                inputMode="decimal"
-                aria-label={`Set ${setIndex + 1} kilograms`}
-                value={set.weightKg}
-                placeholder="kg"
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    exercises: current.exercises.map((item) =>
-                      item.key === exercise.key
-                        ? { ...item, sets: item.sets.map((entry) => (entry.key === set.key ? { ...entry, weightKg: event.target.value } : entry)) }
-                        : item,
-                    ),
-                  }))
-                }
-              />
-              <button
-                type="button"
-                className="icon-btn"
-                aria-label={`Remove set ${setIndex + 1}`}
-                onClick={() =>
-                  setDraft((current) => ({
-                    ...current,
-                    exercises: current.exercises.map((item) =>
-                      item.key === exercise.key
-                        ? { ...item, sets: item.sets.length === 1 ? [blankSet()] : item.sets.filter((entry) => entry.key !== set.key) }
-                        : item,
-                    ),
-                  }))
-                }
-              >
-                ×
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            className="btn ghost small"
-            onClick={() =>
-              setDraft((current) => ({
-                ...current,
-                exercises: current.exercises.map((item) => {
-                  if (item.key !== exercise.key) return item;
-                  const previous = item.sets.at(-1);
-                  return { ...item, sets: [...item.sets, blankSet(previous?.reps || '5')] };
-                }),
-              }))
-            }
-          >
-            Add set
-          </button>
-        </fieldset>
-      ))}
-      <button type="button" className="btn ghost" onClick={() => setDraft((current) => ({ ...current, exercises: [...current.exercises, blankExercise()] }))}>
-        Add exercise
-      </button>
-      <StrengthWatchFields draft={draft} setDraft={setDraft} />
-    </div>
-  );
-}
-
 function minutesClock(minutes: number): string {
   return formatDuration(Math.round(minutes * 60));
 }
@@ -417,21 +310,8 @@ function toSession(draft: Draft, id: string, createdAt: string): Session | strin
     planSessionId: draft.planSessionId || null,
   };
   if (draft.kind === 'strength') {
-    const exercises: Session['exercises'] = [];
-    for (const exercise of draft.exercises) {
-      const name = exercise.name.trim();
-      if (!name) continue;
-      const sets: Session['exercises'][number]['sets'] = [];
-      for (const set of exercise.sets) {
-        const reps = parseNum(set.reps);
-        if (reps === null || reps <= 0) continue;
-        const weight = parseNum(set.weightKg);
-        sets.push({ reps: Math.round(reps), weightKg: weight === null ? 0 : Math.max(0, Math.round(weight * 10) / 10) });
-      }
-      if (sets.length === 0) return `Add ${exercise.count === 'seconds' ? 'seconds' : 'reps'} for ${name}.`;
-      exercises.push({ name, sets });
-    }
-    if (exercises.length === 0) return 'Add at least one exercise.';
+    const exercises = exercisesToSession(draft.exercises);
+    if (typeof exercises === 'string') return exercises;
     const watch = readWatch(draft, false);
     if (typeof watch === 'string') return watch;
     return {
