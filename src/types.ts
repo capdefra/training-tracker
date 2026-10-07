@@ -52,6 +52,17 @@ export interface PlanPhase {
   sessions: PhaseChange[];
 }
 
+/**
+ * One occurrence of a repeating session, shown on `toDate` instead of `fromDate`.
+ * Dates are `YYYY-MM-DD`. The planner writes a move for every session that shifts.
+ */
+export interface PlanMove {
+  sessionId: string;
+  fromDate: string;
+  toDate: string;
+  updatedAt?: string;
+}
+
 export interface Plan {
   id: string;
   goalId: string;
@@ -64,6 +75,8 @@ export interface Plan {
   notes: string;
   sessions: PlanSession[];
   phases?: PlanPhase[];
+  /** One-off date changes. Absent means the repeating week is unchanged. */
+  moves?: PlanMove[];
   status: GoalStatus;
   updatedAt?: string;
 }

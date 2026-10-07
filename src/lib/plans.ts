@@ -1,5 +1,6 @@
 import type { LogPreset, Plan, PlanPhase, PlanSession, Session, TrainingData, WorkoutPreset } from '../types';
-import { addDays, formatPretty, startOfWeek, weekdayIndex } from './dates';
+import { addDays, daysBetween, formatPretty, startOfWeek, weekdayIndex } from './dates';
+import { normalizeMoves } from './plan-moves';
 
 /** Weeks shown on the activity tab, ending with the week that contains today. */
 export const ACTIVITY_WEEKS = 16;
@@ -14,6 +15,8 @@ export interface PlanItem {
   logged: Session | null;
   targets: ExerciseTarget[];
   done: boolean;
+  /** The usual date, when this occurrence was moved. */
+  movedFrom: string | null;
 }
 
 export function planLastDay(plan: Plan): string {
@@ -70,37 +73,111 @@ export function activeGoal(data: TrainingData) {
   return [...pool].sort((a, b) => a.targetDate.localeCompare(b.targetDate) || a.createdAt.localeCompare(b.createdAt))[0] ?? null;
 }
 
+interface Occurrence {
+  plan: Plan;
+  session: PlanSession;
+  fromDate: string;
+  date: string;
+}
+
+/**
+ * Places each repeating session on its weekday, then applies `plan.moves`.
+ * Each shifted session is written by the planner. Landing on an occupied day does not move that session.
+ * The phase is the one that covers `fromDate`, so the occurrence keeps that week's prescription.
+ */
+function occurrencesForWeek(plan: Plan, dates: string[]): Occurrence[] {
+  const weekStart = dates[0];
+  const weekEnd = dates[dates.length - 1];
+  if (!weekStart || !weekEnd) return [];
+  const moves = normalizeMoves(plan.moves, plan.sessions).filter((move) => planCovers(plan, move.fromDate));
+  const relocated = new Set(moves.map((move) => `${move.sessionId}\0${move.fromDate}`));
+  const found: Occurrence[] = [];
+  for (const date of dates) {
+    if (!planCovers(plan, date)) continue;
+    const day = weekdayIndex(date);
+    for (const session of plan.sessions) {
+      if (session.dayOfWeek !== day) continue;
+      if (relocated.has(`${session.id}\0${date}`)) continue;
+      found.push({ plan, session, fromDate: date, date });
+    }
+  }
+  for (const move of moves) {
+    if (move.toDate < weekStart || move.toDate > weekEnd) continue;
+    const session = plan.sessions.find((item) => item.id === move.sessionId);
+    if (!session) continue;
+    found.push({ plan, session, fromDate: move.fromDate, date: move.toDate });
+  }
+  return found;
+}
+
+function sessionsForWeek(sessions: Session[], occurrences: Occurrence[], weekStart: string, weekEnd: string): Session[] {
+  const outside = new Set<string>();
+  for (const item of occurrences) {
+    if (item.fromDate !== item.date && (item.fromDate < weekStart || item.fromDate > weekEnd)) {
+      outside.add(`${item.session.id}\0${item.fromDate}`);
+    }
+  }
+  return sessions.filter((session) => {
+    if (session.date >= weekStart && session.date <= weekEnd) return true;
+    return session.planSessionId !== null && outside.has(`${session.planSessionId}\0${session.date}`);
+  });
+}
+
+function nearestOccurrence(siblings: Occurrence[], date: string): Occurrence | null {
+  let best: Occurrence | null = null;
+  let bestDistance = Infinity;
+  for (const sibling of siblings) {
+    let distance = Math.abs(daysBetween(sibling.date, date));
+    if (sibling.fromDate !== sibling.date) distance = Math.min(distance, Math.abs(daysBetween(sibling.fromDate, date)));
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = sibling;
+    }
+  }
+  return best;
+}
+
+function logsForOccurrence(occurrence: Occurrence, occurrences: Occurrence[], sessions: Session[]): Session[] {
+  const siblings = occurrences.filter((item) => item.plan.id === occurrence.plan.id && item.session.id === occurrence.session.id);
+  const linked = sessions.filter((entry) => entry.planSessionId === occurrence.session.id);
+  if (siblings.length <= 1) return linked;
+  return linked.filter((entry) => nearestOccurrence(siblings, entry.date) === occurrence);
+}
+
 export function planItemsForWeek(data: TrainingData, plans: Plan[], anchor: string): PlanItem[] {
   const monday = startOfWeek(anchor);
   const dates = Array.from({ length: 7 }, (_, index) => addDays(monday, index));
   const weekStart = dates[0] ?? monday;
   const weekEnd = dates[6] ?? monday;
-  const weekSessions = data.sessions.filter((session) => session.date >= weekStart && session.date <= weekEnd);
-  const items: PlanItem[] = [];
-  for (const date of dates) {
-    const day = weekdayIndex(date);
-    for (const plan of plans) {
-      if (!planCovers(plan, date)) continue;
-      for (const session of plan.sessions) {
-        if (session.dayOfWeek !== day) continue;
-        const resolved = sessionForDate(plan, session, date);
-        const logs = weekSessions.filter((entry) => entry.planSessionId === session.id);
-        const targets = exerciseTargets(resolved, logs);
-        const sameDay = logs.find((entry) => entry.date === date);
-        items.push({
-          date,
-          plan,
-          phase: phaseOn(plan, date),
-          session: resolved,
-          logs,
-          logged: sameDay ?? logs[0] ?? null,
-          targets,
-          done: sessionTargetsMet(resolved, logs),
-        });
-      }
-    }
-  }
-  return items;
+  const occurrences = plans.flatMap((plan) => occurrencesForWeek(plan, dates));
+  const planOrder = new Map(plans.map((plan, index) => [plan.id, index]));
+  occurrences.sort((a, b) => {
+    const byDate = a.date.localeCompare(b.date);
+    if (byDate !== 0) return byDate;
+    const byPlan = (planOrder.get(a.plan.id) ?? 0) - (planOrder.get(b.plan.id) ?? 0);
+    if (byPlan !== 0) return byPlan;
+    const aIndex = a.plan.sessions.findIndex((session) => session.id === a.session.id);
+    const bIndex = b.plan.sessions.findIndex((session) => session.id === b.session.id);
+    if (aIndex !== bIndex) return aIndex - bIndex;
+    return a.fromDate.localeCompare(b.fromDate);
+  });
+  const weekSessions = sessionsForWeek(data.sessions, occurrences, weekStart, weekEnd);
+  return occurrences.map((occurrence) => {
+    const resolved = sessionForDate(occurrence.plan, occurrence.session, occurrence.fromDate);
+    const logs = logsForOccurrence(occurrence, occurrences, weekSessions);
+    const sameDay = logs.find((entry) => entry.date === occurrence.date);
+    return {
+      date: occurrence.date,
+      plan: occurrence.plan,
+      phase: phaseOn(occurrence.plan, occurrence.fromDate),
+      session: resolved,
+      logs,
+      logged: sameDay ?? logs[0] ?? null,
+      targets: exerciseTargets(resolved, logs),
+      done: sessionTargetsMet(resolved, logs),
+      movedFrom: occurrence.fromDate === occurrence.date ? null : occurrence.fromDate,
+    };
+  });
 }
 
 /**
@@ -220,26 +297,17 @@ export interface PlanChoice {
 }
 
 export function planChoices(data: TrainingData, date: string, currentId: string | null): PlanChoice[] {
-  const monday = startOfWeek(date);
   const choices: PlanChoice[] = [];
   const seen = new Set<string>();
-  for (let index = 0; index < 7; index += 1) {
-    const day = addDays(monday, index);
-    const weekday = weekdayIndex(day);
-    for (const plan of data.plans) {
-      if (plan.status !== 'active' || !planCovers(plan, day)) continue;
-      for (const session of plan.sessions) {
-        if (session.dayOfWeek !== weekday || seen.has(session.id)) continue;
-        seen.add(session.id);
-        const resolved = sessionForDate(plan, session, day);
-        choices.push({
-          id: session.id,
-          label: `${formatPretty(day)} · ${resolved.title}`,
-          plan,
-          session: resolved,
-        });
-      }
-    }
+  for (const item of planItemsForWeek(data, data.plans, date)) {
+    if (seen.has(item.session.id)) continue;
+    seen.add(item.session.id);
+    choices.push({
+      id: item.session.id,
+      label: `${formatPretty(item.date)} · ${item.session.title}`,
+      plan: item.plan,
+      session: item.session,
+    });
   }
   if (currentId && !seen.has(currentId)) {
     const found = findPlanSession(data, currentId, date);

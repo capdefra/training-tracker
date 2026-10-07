@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { ExerciseDemo } from './ExerciseDemo';
 import { WatchSummary } from './WatchSummary';
 import { findDemo } from '../lib/demos';
-import { addDays, formatDayMonth, formatPretty, formatWeekday, startOfWeek, todayISO } from '../lib/dates';
+import { addDays, formatDayMonth, formatPretty, formatWeekday, isRealISODate, startOfWeek, todayISO } from '../lib/dates';
 import { cx } from '../lib/cx';
 import { activityMondays, buildPreset, extraLogsForDay, planItemsForWeek, planLastDay, type PlanItem } from '../lib/plans';
 import { formatDuration, formatKm } from '../lib/format';
@@ -232,6 +232,7 @@ function SessionCard({
             {item.session.kind === 'run' ? 'Run' : 'Strength'}
             {item.session.focus ? ` · ${item.session.focus}` : ''}
             {showPlan ? ` · ${item.plan.name}` : ''}
+            {item.movedFrom ? <span className="moved-hint"> · Moved from {formatWeekday(item.movedFrom)}</span> : null}
           </p>
           <h2>{item.session.title}</h2>
           {!summary && item.session.kind === 'strength' && item.session.durationMin ? <p className="muted">{item.session.durationMin} min</p> : null}
@@ -381,6 +382,12 @@ function weekBounds(plans: Plan[], today: string): { first: string; last: string
     if (end) {
       const endWeek = startOfWeek(end);
       if (endWeek > last) last = endWeek;
+    }
+    for (const move of plan.moves ?? []) {
+      if (!isRealISODate(move.toDate)) continue;
+      const week = startOfWeek(move.toDate);
+      if (week < first) first = week;
+      if (week > last) last = week;
     }
   }
   return { first, last };
