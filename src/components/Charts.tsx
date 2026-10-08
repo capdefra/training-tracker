@@ -30,7 +30,7 @@ const card = token('--card', '#171a21');
 const spruce = token('--spruce', '#3ecf8e');
 const ember = token('--ember', '#ff8f78');
 
-ChartJS.defaults.font.family = 'Outfit, sans-serif';
+ChartJS.defaults.font.family = 'Inter Variable, Inter, sans-serif';
 ChartJS.defaults.color = muted;
 ChartJS.defaults.borderColor = line;
 ChartJS.defaults.plugins.tooltip.backgroundColor = card;
