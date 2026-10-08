@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { isISODate } from '../lib/dates';
 
-export type RouteName = 'today' | 'log' | 'plans' | 'progress' | 'activity' | 'data';
+export type RouteName = 'today' | 'log' | 'plans' | 'progress' | 'activity' | 'data' | 'session';
 
 export interface Route {
   name: RouteName;
@@ -18,6 +18,8 @@ export function parseHash(hash: string): Route {
   if (head === 'progress') return { name: 'progress' };
   if (head === 'activity') return { name: 'activity' };
   if (head === 'data') return { name: 'data' };
+  if (head === 'session') return { name: 'session' };
+  if (head === 'prototype') return { name: 'today' };
   const date = parts[1];
   return { name: 'today', date: date && isISODate(date) ? date : undefined };
 }

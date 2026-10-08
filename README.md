@@ -95,12 +95,17 @@ For a repo named `training-tracker` under `capdefra`, that URL is:
 
 https://capdefra.github.io/training-tracker/
 
+## Strength session
+
+Start, Log, or Continue on a strength day opens a fullscreen session. It uses the plan for that day, including a moved day, and saves through the same log as the rest of the app. An unfinished session stays in this browser until you save or exit. `#/prototype/session` opens Today.
+
 ## Project layout
 
 ```
 public/data/training.json     starter goal, plan, and presets (no sessions)
 public/form-demos/            short form clips, one per strength exercise
 src/views                     Today, Log, Plans, Progress, Data
+src/components/StrengthSession.tsx   fullscreen strength logger
 src/lib                       dates, targets, gist sync, storage, form clips
 .github/workflows/deploy.yml  Pages deploy
 scripts/sample-data.mjs       rewrites the starter file

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "node --experimental-strip-types scripts/check-screen-wake.mjs && node scripts/run-ts.mjs scripts/check-load.ts && node scripts/run-ts.mjs scripts/check-moves.ts && node scripts/run-ts.mjs scripts/check-phases.ts",
+    "test": "node --experimental-strip-types scripts/check-screen-wake.mjs && node scripts/run-ts.mjs scripts/check-load.ts && node scripts/run-ts.mjs scripts/check-moves.ts && node scripts/run-ts.mjs scripts/check-phases.ts && node scripts/run-ts.mjs scripts/check-session.ts",
     "sample-data": "node --experimental-strip-types scripts/sample-data.mjs",
     "preview": "vite preview"
   },

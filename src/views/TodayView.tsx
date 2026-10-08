@@ -4,6 +4,8 @@ import { WeekBoard } from '../components/WeekBoard';
 import { cx } from '../lib/cx';
 import { addDays, formatCountdown, formatLong, formatPretty, isISODate, startOfWeek, todayISO } from '../lib/dates';
 import { activeGoal, planItemsForWeek, recentSessions, type PlanItem } from '../lib/plans';
+import { requestScreenWakeLock } from '../lib/screen-wake';
+import { clearPendingLaunch, loadStrengthProgress, progressHasSets } from '../lib/session-progress';
 import { sessionSummary } from '../lib/stats';
 import type { LogPreset, TrainingData } from '../types';
 
@@ -17,6 +19,8 @@ export function TodayView({ data, onLog, date }: { data: TrainingData; onLog: (p
   const weekStart = startOfWeek(focus);
   const loggedCount = data.sessions.filter((session) => session.date >= weekStart && session.date <= addDays(weekStart, 6)).length;
   const onToday = focus === today;
+  const unfinished = loadStrengthProgress();
+  const resume = unfinished && progressHasSets(unfinished) ? unfinished : null;
   const goalLine = goal ? (goal.targetDate ? `${goal.name} · ${formatCountdown(today, goal.targetDate)}` : goal.name) : '';
 
   return (
@@ -28,6 +32,19 @@ export function TodayView({ data, onLog, date }: { data: TrainingData; onLog: (p
           <span className="today-title">{formatLong(today)}</span>
           {goalLine ? <span className="muted">{goalLine}</span> : null}
         </button>
+        {resume ? (
+          <button
+            type="button"
+            className="btn primary"
+            onClick={() => {
+              requestScreenWakeLock();
+              clearPendingLaunch();
+              window.location.hash = '#/session';
+            }}
+          >
+            Resume {resume.draft.title.trim() || 'strength session'}
+          </button>
+        ) : null}
       </header>
 
       {plans.length > 0 ? (

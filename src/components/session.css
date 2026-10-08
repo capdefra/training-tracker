@@ -1,0 +1,799 @@
+/* Full-screen strength session.
+   The column is locked to the viewport. Extra height goes into the two
+   numbers. 375×667 keeps every control at least 48px without a scroller. */
+
+html.sess-lock,
+html.sess-lock body {
+  overflow: hidden;
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+.sess-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2px, 0.6dvh, 8px);
+  padding:
+    max(4px, env(safe-area-inset-top))
+    max(10px, env(safe-area-inset-right))
+    max(4px, env(safe-area-inset-bottom))
+    max(10px, env(safe-area-inset-left));
+  background: linear-gradient(180deg, var(--bg-2), var(--bg) 22%);
+  color: var(--ink);
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.sess-screen button {
+  appearance: none;
+  font: inherit;
+  color: inherit;
+  touch-action: manipulation;
+}
+
+.sess-screen button:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.sess-screen button:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.sess-screen button.sess-log,
+.sess-screen button.sess-log:active {
+  background: var(--spruce);
+  color: #f6f3ec;
+  opacity: 1;
+}
+
+.sess-screen button.sess-log:active {
+  background: var(--spruce-2);
+}
+
+.sess-screen button.sess-log:disabled {
+  background: #d9e0da;
+  color: #2a3830;
+  border: 1px solid #b7c3bb;
+  opacity: 1;
+}
+
+.sess-header {
+  flex: none;
+  display: grid;
+  grid-template-columns: 4.75rem minmax(0, 1fr) 4.75rem;
+  gap: 6px;
+  align-items: center;
+  height: 48px;
+}
+
+.sess-exit,
+.sess-header-side {
+  height: 48px;
+  min-width: 0;
+}
+
+.sess-exit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sess-header-side {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.sess-screen .form-sheet .icon-btn {
+  width: 48px;
+  height: 48px;
+}
+
+button.form-link.sess-form {
+  width: 100%;
+  min-height: 48px;
+  height: 48px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--spruce);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.sess-progress {
+  width: 100%;
+  height: 48px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-width: 0;
+  padding: 0 4px;
+}
+
+.sess-progress small {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.sess-progress strong {
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.sess-work {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2px, 0.5dvh, 8px);
+  overflow: hidden;
+}
+
+.sess-screen input,
+.sess-screen textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.sess-name {
+  flex: none;
+  margin: 0;
+  height: 2.15em;
+  font-size: clamp(1.05rem, 2.5dvh, 1.65rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.sess-name-input {
+  flex: none;
+  width: 100%;
+  height: 2.15em;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--display);
+  font-size: clamp(1.05rem, 2.5dvh, 1.65rem);
+  font-weight: 560;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.sess-name-short {
+  height: 1.15em;
+  -webkit-line-clamp: 1;
+}
+
+.sess-next {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  height: 22px;
+  line-height: 22px;
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.sess-next .kicker {
+  flex: none;
+  line-height: 22px;
+}
+
+.sess-next span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sess-target {
+  flex: none;
+  height: 48px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.sess-target-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+}
+
+.sess-target-copy strong,
+.sess-target-copy span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 1.15;
+}
+
+.sess-target-copy strong {
+  font-size: 0.95rem;
+}
+
+.sess-target-copy span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+.sess-dots {
+  display: flex;
+  gap: 2px;
+  flex: none;
+}
+
+.sess-dots button {
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.sess-dots button[aria-disabled='true'] {
+  cursor: default;
+}
+
+.sess-dots i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #cfc6b6;
+  background: transparent;
+  display: block;
+}
+
+.sess-dots button.done i {
+  background: var(--spruce);
+  border-color: var(--spruce);
+}
+
+.sess-dots button.now i {
+  border-color: var(--spruce);
+  box-shadow: 0 0 0 4px #d5eadc;
+}
+
+.sess-dots button.edit i {
+  background: var(--amber);
+  border-color: var(--amber);
+  box-shadow: none;
+}
+
+.sess-pieces {
+  flex: none;
+  height: 48px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.sess-pieces button,
+.sess-bw {
+  height: 48px;
+  min-width: 0;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  padding: 2px 4px;
+  line-height: 1.05;
+}
+
+.sess-pieces button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.sess-pieces button strong,
+.sess-bw strong {
+  display: block;
+  font-family: var(--display);
+  font-size: 1.05rem;
+  font-weight: 560;
+}
+
+.sess-pieces button small {
+  display: block;
+  margin-top: 1px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.sess-pieces button.on {
+  background: var(--spruce);
+  border-color: var(--spruce);
+  color: #f6f3ec;
+}
+
+.sess-pieces button.on small {
+  color: rgba(246, 243, 236, 0.82);
+}
+
+.sess-bw {
+  flex: none;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-weight: 700;
+}
+
+.sess-measure {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 1rem minmax(0, 1fr) 48px 1rem;
+  gap: 2px;
+  align-items: stretch;
+  padding: 2px 8px 4px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.sess-caption {
+  margin: 0;
+  padding-right: 64px;
+  line-height: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sess-reset {
+  position: absolute;
+  top: 0;
+  right: 4px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  min-width: 48px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sess-value {
+  container-type: size;
+  min-height: 0;
+  height: 100%;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.sess-value strong {
+  font-family: var(--display);
+  font-size: clamp(1.6rem, 78cqh, 4.4rem);
+  font-weight: 560;
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+}
+
+.sess-measure.is-body .sess-value strong {
+  color: var(--muted);
+  font-size: clamp(1.35rem, 70cqh, 2.6rem);
+}
+
+.sess-stepper {
+  height: 48px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.sess-stepper button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sess-detail {
+  margin: 0;
+  height: 1rem;
+  line-height: 1rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.sess-detail.is-alert {
+  color: var(--ember);
+}
+
+.sess-footer {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sess-add {
+  flex: none;
+  height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  font-weight: 700;
+}
+
+.sess-rest {
+  height: 48px;
+  display: grid;
+  grid-template-columns: 4.75rem minmax(0, 1fr) 4.75rem;
+  gap: 6px;
+}
+
+.sess-rest button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 8px;
+}
+
+.sess-rest button.on {
+  background: var(--spruce);
+  border-color: var(--spruce);
+  color: #f6f3ec;
+}
+
+.sess-clock {
+  font-family: var(--display);
+  font-size: 1.35rem;
+  font-weight: 560;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.sess-nav {
+  height: 48px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.sess-nav-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.sess-nav button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 8px;
+}
+
+.sess-log {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 56px;
+  min-height: 56px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--spruce);
+  color: #f6f3ec;
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  padding: 0 16px;
+}
+
+.sess-log:active,
+.sess-nav button:active,
+.sess-stepper button:active,
+.sess-pieces button:active,
+.sess-exit:active,
+.sess-rest button:active {
+  background: var(--spruce-2);
+  color: #f6f3ec;
+}
+
+.sess-nav button:active,
+.sess-pieces button:not(.on):active,
+.sess-exit:active,
+.sess-rest button:not(.on):active,
+.sess-stepper button:active {
+  background: #e7f0ea;
+  color: var(--ink);
+}
+
+.sess-review {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+}
+
+.sess-review li {
+  flex: 1 1 0;
+  min-height: 48px;
+  min-width: 0;
+  display: flex;
+}
+
+.sess-review button {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 48px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  text-align: left;
+  cursor: pointer;
+}
+
+.sess-review-name {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: baseline;
+  min-width: 0;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.sess-review-name span:first-child,
+.sess-review-sets {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sess-review-name span:last-child,
+.sess-review-sets {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.sess-dialog {
+  width: min(22rem, calc(100% - 24px));
+  max-height: calc(100dvh - 24px);
+  margin: auto;
+  padding: 18px 16px calc(16px + env(safe-area-inset-bottom));
+  border: 0;
+  border-radius: 22px;
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: 0 18px 50px rgba(28, 25, 21, 0.22);
+}
+
+.sess-dialog::backdrop {
+  background: rgba(28, 25, 21, 0.48);
+}
+
+.sess-dialog h2 {
+  font-size: 1.45rem;
+  margin-bottom: 6px;
+}
+
+.sess-dialog p {
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+
+.sess-dialog-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sess-dialog-actions button,
+.sess-session-list button {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 14px;
+}
+
+.sess-dialog-actions .sess-log {
+  border: 0;
+}
+
+.sess-session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sess-session-list button {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 1px;
+  text-align: left;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.sess-session-list button small {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sess-session-list button.on {
+  background: var(--spruce);
+  border-color: var(--spruce);
+  color: #f6f3ec;
+}
+
+.sess-session-list button.on small {
+  color: rgba(246, 243, 236, 0.82);
+}
+
+@media (max-height: 720px) {
+  .sess-screen {
+    gap: 2px;
+    padding-top: max(2px, env(safe-area-inset-top));
+    padding-bottom: max(2px, env(safe-area-inset-bottom));
+  }
+
+  .sess-work {
+    gap: 2px;
+  }
+
+  .sess-measure {
+    grid-template-rows: minmax(0, 1fr) 48px 1rem;
+  }
+
+  .sess-caption {
+    position: absolute;
+    top: 2px;
+    left: 8px;
+    right: 62px;
+    z-index: 1;
+    padding-right: 0;
+  }
+
+  .sess-value {
+    align-items: end;
+  }
+
+  .sess-log {
+    height: 52px;
+    min-height: 52px;
+  }
+}
+
+@media (min-height: 780px) {
+  .sess-pieces,
+  .sess-pieces button,
+  .sess-bw {
+    height: 56px;
+  }
+
+  .sess-log {
+    height: 64px;
+    min-height: 64px;
+  }
+}

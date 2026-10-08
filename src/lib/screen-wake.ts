@@ -165,12 +165,13 @@ export function createScreenWake(env: ScreenWakeEnvironment): ScreenWake {
   return { start, requestFromGesture };
 }
 
-/** True for in-app links that open the log (`#/log`, `#/log/<id>`). */
+/** True for in-app links that open a workout (`#/log`, `#/log/<id>`, `#/session`). */
 export function isWorkoutOpenHref(href: string | null | undefined): boolean {
   if (!href) return false;
   const hashIndex = href.indexOf('#');
   const hash = hashIndex >= 0 ? href.slice(hashIndex + 1) : href;
-  return hash.split('/').filter(Boolean)[0] === 'log';
+  const head = hash.split('/').filter(Boolean)[0];
+  return head === 'log' || head === 'session';
 }
 
 function browserEnvironment(): ScreenWakeEnvironment {
