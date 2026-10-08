@@ -170,11 +170,15 @@ export function StrengthSession({
   const reviewing = cursor >= draft.exercises.length;
   const exercise = draft.exercises[cursor];
   const dirty = isDirty(workout);
-  const nextLabel = reviewing ? '' : cursor >= draft.exercises.length - 1 ? 'Review' : draft.exercises[cursor + 1]?.name.trim() || 'Next exercise';
+  const onLastExercise = !reviewing && draft.exercises.length > 0 && cursor >= draft.exercises.length - 1;
+  const upcoming = onLastExercise || reviewing ? '' : draft.exercises[cursor + 1]?.name.trim() || 'Next exercise';
   const restLabel = !restOn ? 'Off' : remaining === null ? clock(restChoice) : clock(remaining);
   const restRunning = remaining !== null && remaining > 0;
   const repsNow = exercise ? (parseNum(exercise.pendingReps) ?? 0) : 0;
-  const canLog = Boolean(exercise && exercise.name.trim() && repsNow > 0);
+  // Cap is the exercise target: the plan's set count, or 3 on a blank exercise.
+  const atSetCap = Boolean(exercise && exercise.targetSets > 0 && exercise.sets.length >= exercise.targetSets);
+  const overSetCap = Boolean(exercise && exercise.targetSets > 0 && exercise.sets.length > exercise.targetSets);
+  const canLog = Boolean(exercise && exercise.name.trim() && repsNow > 0 && (editingKey || !atSetCap));
 
   function update(next: StrengthProgress) {
     setProgress(next);
@@ -243,6 +247,7 @@ export function StrengthSession({
 
   function commit() {
     if (!exercise || !canLog) return;
+    if (!editingKey && exercise.targetSets > 0 && exercise.sets.length >= exercise.targetSets) return;
     const reps = parseNum(exercise.pendingReps);
     if (reps === null || reps <= 0) return;
     const ready = withName(exercise);
@@ -268,6 +273,26 @@ export function StrengthSession({
       setLive(editingKey ? `Updated set ${setNumber}.` : `Logged set ${setNumber}.`);
     }
     requestScreenWakeLock();
+  }
+
+  function removeSet(key: string) {
+    if (!exercise) return;
+    const index = exercise.sets.findIndex((set) => set.key === key);
+    if (index < 0) return;
+    const snap = snapshot.current;
+    snapshot.current = null;
+    setEditingKey(null);
+    const restored = snap ? { ...exercise, ...snap, name: exercise.name.trim() } : withName(exercise);
+    const sets = restored.sets.filter((set) => set.key !== key);
+    setNotice('');
+    update({
+      ...workout,
+      draft: {
+        ...draft,
+        exercises: draft.exercises.map((item) => (item.key === restored.key ? { ...restored, sets } : item)),
+      },
+    });
+    setLive(`Removed set ${index + 1}.`);
   }
 
   function bumpKg(delta: number) {
@@ -365,7 +390,6 @@ export function StrengthSession({
           exercise={exercise}
           editing={editingKey ? exercise.sets.findIndex((set) => set.key === editingKey) : null}
           notice={notice}
-          nextLabel={nextLabel}
           onName={(name) => patchExercise(exercise.key, { name })}
           onNameCommit={() => patchExercise(exercise.key, loadForName(exercise))}
           onPieces={(pieces, implement) => {
@@ -427,7 +451,7 @@ export function StrengthSession({
             <button type="button" onClick={() => goTo(cursor + 1)}>
               Skip
             </button>
-            <button type="button" onClick={() => goTo(cursor + 1)} aria-label={`Next: ${nextLabel}`}>
+            <button type="button" onClick={() => goTo(cursor + 1)} aria-label={onLastExercise ? 'Next, review the session' : `Next: ${upcoming}`}>
               Next
             </button>
           </div>
@@ -437,9 +461,41 @@ export function StrengthSession({
             Save
           </button>
         ) : (
-          <button type="button" className="sess-log" disabled={!canLog} onClick={commit}>
-            {editingKey ? 'Update set' : 'Log set'}
-          </button>
+          <div className={cx('sess-commit', editingKey && 'is-split')}>
+            {editingKey ? (
+              <button type="button" className="sess-remove" aria-label="Remove set" onClick={() => removeSet(editingKey)}>
+                Remove
+              </button>
+            ) : null}
+            {overSetCap && !editingKey ? (
+              <button
+                type="button"
+                className="sess-extra"
+                onClick={() => {
+                  const last = exercise?.sets.at(-1);
+                  if (last) removeSet(last.key);
+                }}
+              >
+                Remove extra set
+              </button>
+            ) : (
+              <button type="button" className={cx('sess-log', atSetCap && !editingKey && 'is-complete')} disabled={!canLog} onClick={commit}>
+                {editingKey ? 'Update set' : atSetCap ? 'Exercise complete' : 'Log set'}
+              </button>
+            )}
+          </div>
+        )}
+        {reviewing ? null : (
+          <p className="sess-upcoming">
+            {onLastExercise ? (
+              <span>Last exercise</span>
+            ) : (
+              <>
+                <span className="kicker">Next</span>
+                <span>{upcoming}</span>
+              </>
+            )}
+          </p>
         )}
       </footer>
 
@@ -514,7 +570,6 @@ function ExercisePane({
   exercise,
   editing,
   notice,
-  nextLabel,
   onName,
   onNameCommit,
   onPieces,
@@ -527,7 +582,6 @@ function ExercisePane({
   exercise: ExerciseDraft;
   editing: number | null;
   notice: string;
-  nextLabel: string;
   onName: (name: string) => void;
   onNameCommit: () => void;
   onPieces: (pieces: LoadPieces, implement: LoadImplement) => void;
@@ -545,10 +599,12 @@ function ExercisePane({
     : editing !== null && editing >= 0
       ? `Editing set ${editing + 1}`
       : logged > exercise.targetSets
-        ? `${logged} logged`
-        : exercise.targetLabel
-          ? `Target ${exercise.targetLabel}`
-          : 'Log each set, then move on';
+        ? `${logged} logged, plan is ${exercise.targetSets}`
+        : exercise.targetSets > 0 && logged >= exercise.targetSets
+          ? 'All sets logged'
+          : exercise.targetLabel
+            ? `Target ${exercise.targetLabel}`
+            : 'Log each set, then move on';
   const unnamed = exercise.name.trim() === '';
 
   return (
@@ -567,10 +623,6 @@ function ExercisePane({
       ) : (
         <h1 className="sess-name">{exercise.name}</h1>
       )}
-      <p className="sess-next">
-        <span className="kicker">Next</span>
-        <span>{nextLabel}</span>
-      </p>
       <div className="sess-target">
         <div className="sess-target-copy">
           <strong>{exercise.targetLabel || `${exercise.targetSets} sets`}</strong>
