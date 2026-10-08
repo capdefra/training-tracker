@@ -13,6 +13,7 @@ import { DataView } from './views/DataView';
 import { LogView } from './views/LogView';
 import { PlansView } from './views/PlansView';
 import { ProgressView } from './views/ProgressView';
+import { SessionPrototype } from './prototype/SessionPrototype';
 import { TodayView } from './views/TodayView';
 
 const NAV: { href: string; name: RouteName; label: string; icon: IconName }[] = [
@@ -25,6 +26,12 @@ const NAV: { href: string; name: RouteName; label: string; icon: IconName }[] = 
 ];
 
 export default function App() {
+  const route = useHashRoute();
+  if (route.name === 'prototype') return <SessionPrototype />;
+  return <Tracker />;
+}
+
+function Tracker() {
   useScreenWakeLock();
   const store = useTrainingData();
   const route = useHashRoute();
@@ -38,6 +45,7 @@ export default function App() {
       progress: 'Progress',
       activity: 'Activity',
       data: 'Data',
+      prototype: 'Session preview',
     };
     document.title = `${titles[route.name]} · Training Tracker`;
     window.scrollTo({ top: 0 });

@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState, type MouseEvent } from 'react';
 import { demoAssetUrl, findDemo, FORM_LIBRARY, type ExerciseDemo as Demo } from '../lib/demos';
 
-export function ExerciseDemo({ name }: { name: string }) {
+export function ExerciseDemo({ name, className }: { name: string; className?: string }) {
   const demo = findDemo(name);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -42,7 +42,7 @@ export function ExerciseDemo({ name }: { name: string }) {
 
   return (
     <>
-      <button type="button" className="form-link" onClick={show} title={`Play the ${name} form clip`}>
+      <button type="button" className={className ? `form-link ${className}` : 'form-link'} onClick={show} title={`Play the ${name} form clip`}>
         Form
         <span className="sr-only"> for {name}</span>
       </button>

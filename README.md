@@ -95,12 +95,19 @@ For a repo named `training-tracker` under `capdefra`, that URL is:
 
 https://capdefra.github.io/training-tracker/
 
+## Session preview
+
+A fullscreen strength-session prototype is available for review and is not part of Today or the log. It does not save. On GitHub Pages:
+
+https://capdefra.github.io/training-tracker/#/prototype/session
+
 ## Project layout
 
 ```
 public/data/training.json     starter goal, plan, and presets (no sessions)
 public/form-demos/            short form clips, one per strength exercise
 src/views                     Today, Log, Plans, Progress, Data
+src/prototype                 fullscreen session preview (not wired to the log)
 src/lib                       dates, targets, gist sync, storage, form clips
 .github/workflows/deploy.yml  Pages deploy
 scripts/sample-data.mjs       rewrites the starter file
