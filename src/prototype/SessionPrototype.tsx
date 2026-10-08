@@ -7,7 +7,7 @@ import { trimNum } from '../lib/format';
 import { shownLoad } from '../lib/load';
 import { requestScreenWakeLock } from '../lib/screen-wake';
 import type { LoadImplement, LoadPieces } from '../types';
-import { findPrototypeSession, prototypeSessions, type PrototypeExercise, type PrototypeSession } from './plan';
+import { findPrototypeSession, loadPrototypeSessions, prototypeSessions, type PrototypeExercise, type PrototypeSession } from './plan';
 import './session.css';
 
 const PIECE_CHOICES: { pieces: LoadPieces; implement: LoadImplement; count: string; label: string }[] = [
@@ -57,14 +57,31 @@ function setToken(exercise: PrototypeExercise, set: LoggedSet): string {
   return `${trimNum(set.kg)}×${set.reps}`;
 }
 
-export function SessionPrototype() {
-  const route = useHashRoute();
-  const session = findPrototypeSession(route.id);
-  return <SessionScreen key={session.id} session={session} />;
+function sameSessions(left: readonly PrototypeSession[], right: readonly PrototypeSession[]): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function SessionScreen({ session }: { session: PrototypeSession }) {
-  const sessions = prototypeSessions();
+export function SessionPrototype() {
+  const route = useHashRoute();
+  const [sessions, setSessions] = useState<readonly PrototypeSession[]>(() => prototypeSessions());
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadPrototypeSessions().then((loaded) => {
+      if (cancelled) return;
+      setSessions((current) => (sameSessions(current, loaded) ? current : loaded));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const session = findPrototypeSession(route.id, sessions);
+  const sessionKey = `${session.id}:${session.exercises.map((exercise) => `${exercise.name}/${exercise.sets}/${exercise.repsLabel}/${exercise.count}`).join('|')}`;
+  return <SessionScreen key={sessionKey} session={session} sessions={sessions} />;
+}
+
+function SessionScreen({ session, sessions }: { session: PrototypeSession; sessions: readonly PrototypeSession[] }) {
   const [cursor, setCursor] = useState(0);
   const [work, setWork] = useState<ExerciseWork[]>(() =>
     session.exercises.map((exercise) => ({
@@ -332,7 +349,7 @@ function SessionScreen({ session }: { session: PrototypeSession }) {
             Save
           </button>
         ) : (
-          <button type="button" className="proto-log" onClick={commit}>
+          <button type="button" className="proto-log" disabled={!entry || entry.reps <= 0} onClick={commit}>
             {editing?.exerciseIndex === cursor ? 'Update set' : 'Log set'}
           </button>
         )}

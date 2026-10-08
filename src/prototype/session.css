@@ -51,6 +51,24 @@ html.proto-lock body {
   cursor: default;
 }
 
+.proto-screen button.proto-log,
+.proto-screen button.proto-log:active {
+  background: var(--spruce);
+  color: #f6f3ec;
+  opacity: 1;
+}
+
+.proto-screen button.proto-log:active {
+  background: var(--spruce-2);
+}
+
+.proto-screen button.proto-log:disabled {
+  background: #d9e0da;
+  color: #2a3830;
+  border: 1px solid #b7c3bb;
+  opacity: 1;
+}
+
 .proto-header {
   flex: none;
   display: grid;
