@@ -1,17 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Field } from '../components/Field';
-import { StrengthGuide } from '../components/StrengthGuide';
 import {
   RUN_TITLES,
   applyTemplateMeta,
   draftFromPreset,
   draftFromSession,
   exercisesFromTemplate,
-  exercisesToSession,
   blankDraft,
   type Draft,
 } from '../lib/draft';
+import { metricsFromWatch, sessionFromDraft } from '../lib/session-save';
 import { isISODate, startOfWeek, todayISO } from '../lib/dates';
 import { formatDuration, parseNum } from '../lib/format';
 import { hasDisplayedMetrics, readWatch } from '../lib/watch';
@@ -28,12 +27,14 @@ export function LogView({
   request,
   onSave,
   onDelete,
+  onStrength,
 }: {
   data: TrainingData;
   sessionId?: string;
   request: DraftRequest;
   onSave: (session: Session) => void;
   onDelete: (id: string) => void;
+  onStrength: () => void;
 }) {
   const existing = sessionId ? data.sessions.find((session) => session.id === sessionId) : undefined;
   const [draft, setDraft] = useState<Draft>(() => {
@@ -47,8 +48,12 @@ export function LogView({
   });
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [guideNonce, setGuideNonce] = useState(0);
   const draftId = existing?.id ?? `log-${request.token}`;
+
+  useEffect(() => {
+    if (sessionId || draft.kind !== 'strength') return;
+    onStrength();
+  }, [sessionId, draft.kind, onStrength]);
 
   if (sessionId && !existing) {
     return (
@@ -110,7 +115,7 @@ export function LogView({
       const submitter = (event.nativeEvent as SubmitEvent).submitter;
       if (!(submitter instanceof HTMLElement) || submitter.getAttribute('name') !== 'save-session') return;
     }
-    const session = toSession(draft, draftId, existing?.createdAt ?? new Date().toISOString());
+    const session = sessionFromDraft(draft, draftId, existing?.createdAt ?? new Date().toISOString());
     if (typeof session === 'string') {
       setError(session);
       return;
@@ -119,34 +124,7 @@ export function LogView({
     onSave(session);
   }
 
-  if (draft.kind === 'strength') {
-    return (
-      <form className="stack page" onSubmit={save} autoComplete="off">
-        <StrengthGuide
-          key={guideNonce}
-          draft={draft}
-          setDraft={setDraft}
-          data={data}
-          choices={choices}
-          duplicate={duplicate}
-          error={error}
-          existing={existing}
-          allowKindChange={!existing && request.mode !== 'preset'}
-          confirmDelete={confirmDelete}
-          setConfirmDelete={setConfirmDelete}
-          onDelete={onDelete}
-          onChoosePlan={choosePlanSession}
-          onKind={(kind) => update('kind', kind)}
-          onPreset={(presetId) => {
-            const preset = data.presets.find((item) => item.id === presetId);
-            if (!preset) return;
-            setGuideNonce((nonce) => nonce + 1);
-            setDraft(draftFromPreset(logFromPreset(preset, data, draft.date || todayISO()), data.sessions));
-          }}
-        />
-      </form>
-    );
-  }
+  if (draft.kind === 'strength') return null;
 
   return (
     <form className="stack page" onSubmit={save} autoComplete="off">
@@ -175,7 +153,7 @@ export function LogView({
       ) : null}
 
       <div className="seg" role="group" aria-label="Session type">
-        <button type="button" onClick={() => update('kind', 'strength')}>
+        <button type="button" onClick={onStrength}>
           Strength
         </button>
         <button type="button" className="on" onClick={() => update('kind', 'run')}>
@@ -302,69 +280,3 @@ function previewSession(existing: Session, draft: Draft): Session | null {
   return hasDisplayedMetrics(session) ? session : null;
 }
 
-function toSession(draft: Draft, id: string, createdAt: string): Session | string {
-  if (!isISODate(draft.date)) return 'Pick a date.';
-  const link = {
-    goalId: draft.goalId || null,
-    planId: draft.planId || null,
-    planSessionId: draft.planSessionId || null,
-  };
-  if (draft.kind === 'strength') {
-    const exercises = exercisesToSession(draft.exercises);
-    if (typeof exercises === 'string') return exercises;
-    const watch = readWatch(draft, false);
-    if (typeof watch === 'string') return watch;
-    return {
-      id,
-      date: draft.date,
-      kind: 'strength',
-      title: draft.title.trim() || exercises[0]?.name || 'Strength',
-      notes: draft.notes.trim(),
-      ...link,
-      exercises,
-      ...metricsFromWatch(watch, false, null),
-      createdAt,
-      updatedAt: new Date().toISOString(),
-    };
-  }
-
-  const distance = parseNum(draft.distanceKm);
-  if (draft.distanceKm.trim() && distance === null) return 'Distance needs to be a number.';
-  if (distance !== null && distance < 0) return 'Distance can’t be negative.';
-  const watch = readWatch(draft, true);
-  if (typeof watch === 'string') return watch;
-  return {
-    id,
-    date: draft.date,
-    kind: 'run',
-    title: draft.title.trim() || 'Run',
-    notes: draft.notes.trim(),
-    ...link,
-    exercises: [],
-    ...metricsFromWatch(watch, true, distance),
-    createdAt,
-    updatedAt: new Date().toISOString(),
-  };
-}
-
-function metricsFromWatch(watch: Exclude<ReturnType<typeof readWatch>, string>, run: boolean, distance: number | null) {
-  return {
-    distanceKm: run && distance !== null && distance > 0 ? Math.round(distance * 100) / 100 : null,
-    durationSec: watch.durationSec,
-    elevationM: run ? watch.elevationM : null,
-    effort: watch.effort,
-    paceSec: run ? watch.paceSec : null,
-    heartRate: watch.heartRate,
-    activeKcal: watch.activeKcal,
-    totalKcal: watch.totalKcal,
-    cadenceSpm: run ? watch.cadenceSpm : null,
-    powerW: run ? watch.powerW : null,
-    place: watch.place,
-    source: watch.source,
-    activity: watch.activity,
-    startTime: watch.startTime,
-    endTime: watch.endTime,
-    weather: watch.weather,
-    splits: run ? watch.splits : [],
-  };
-}

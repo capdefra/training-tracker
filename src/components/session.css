@@ -1,15 +1,15 @@
-/* Full-screen session preview.
+/* Full-screen strength session.
    The column is locked to the viewport. Extra height goes into the two
    numbers. 375×667 keeps every control at least 48px without a scroller. */
 
-html.proto-lock,
-html.proto-lock body {
+html.sess-lock,
+html.sess-lock body {
   overflow: hidden;
   height: 100%;
   overscroll-behavior: none;
 }
 
-.proto-screen {
+.sess-screen {
   position: fixed;
   inset: 0;
   z-index: 30;
@@ -34,42 +34,42 @@ html.proto-lock body {
   -webkit-user-select: none;
 }
 
-.proto-screen button {
+.sess-screen button {
   appearance: none;
   font: inherit;
   color: inherit;
   touch-action: manipulation;
 }
 
-.proto-screen button:focus-visible {
+.sess-screen button:focus-visible {
   outline: 2px solid var(--amber);
   outline-offset: 2px;
 }
 
-.proto-screen button:disabled {
+.sess-screen button:disabled {
   opacity: 0.38;
   cursor: default;
 }
 
-.proto-screen button.proto-log,
-.proto-screen button.proto-log:active {
+.sess-screen button.sess-log,
+.sess-screen button.sess-log:active {
   background: var(--spruce);
   color: #f6f3ec;
   opacity: 1;
 }
 
-.proto-screen button.proto-log:active {
+.sess-screen button.sess-log:active {
   background: var(--spruce-2);
 }
 
-.proto-screen button.proto-log:disabled {
+.sess-screen button.sess-log:disabled {
   background: #d9e0da;
   color: #2a3830;
   border: 1px solid #b7c3bb;
   opacity: 1;
 }
 
-.proto-header {
+.sess-header {
   flex: none;
   display: grid;
   grid-template-columns: 4.75rem minmax(0, 1fr) 4.75rem;
@@ -78,13 +78,13 @@ html.proto-lock body {
   height: 48px;
 }
 
-.proto-exit,
-.proto-header-side {
+.sess-exit,
+.sess-header-side {
   height: 48px;
   min-width: 0;
 }
 
-.proto-exit {
+.sess-exit {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -96,18 +96,18 @@ html.proto-lock body {
   cursor: pointer;
 }
 
-.proto-header-side {
+.sess-header-side {
   display: flex;
   justify-content: flex-end;
   align-items: center;
 }
 
-.proto-screen .form-sheet .icon-btn {
+.sess-screen .form-sheet .icon-btn {
   width: 48px;
   height: 48px;
 }
 
-button.form-link.proto-form {
+button.form-link.sess-form {
   width: 100%;
   min-height: 48px;
   height: 48px;
@@ -124,13 +124,13 @@ button.form-link.proto-form {
   font-weight: 700;
 }
 
-.proto-progress {
+.sess-progress {
   width: 100%;
   height: 48px;
   border: 0;
   border-radius: 12px;
   background: transparent;
-  cursor: pointer;
+  cursor: default;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -140,7 +140,7 @@ button.form-link.proto-form {
   padding: 0 4px;
 }
 
-.proto-progress small {
+.sess-progress small {
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -153,14 +153,14 @@ button.form-link.proto-form {
   line-height: 1.1;
 }
 
-.proto-progress strong {
+.sess-progress strong {
   font-size: 0.95rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
 }
 
-.proto-work {
+.sess-work {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -169,7 +169,13 @@ button.form-link.proto-form {
   overflow: hidden;
 }
 
-.proto-name {
+.sess-screen input,
+.sess-screen textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.sess-name {
   flex: none;
   margin: 0;
   height: 2.15em;
@@ -182,12 +188,28 @@ button.form-link.proto-form {
   overflow: hidden;
 }
 
-.proto-name-short {
+.sess-name-input {
+  flex: none;
+  width: 100%;
+  height: 2.15em;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--display);
+  font-size: clamp(1.05rem, 2.5dvh, 1.65rem);
+  font-weight: 560;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.sess-name-short {
   height: 1.15em;
   -webkit-line-clamp: 1;
 }
 
-.proto-next {
+.sess-next {
   flex: none;
   display: flex;
   align-items: baseline;
@@ -203,18 +225,18 @@ button.form-link.proto-form {
   font-weight: 650;
 }
 
-.proto-next .kicker {
+.sess-next .kicker {
   flex: none;
   line-height: 22px;
 }
 
-.proto-next span:last-child {
+.sess-next span:last-child {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.proto-target {
+.sess-target {
   flex: none;
   height: 48px;
   display: grid;
@@ -223,7 +245,7 @@ button.form-link.proto-form {
   align-items: center;
 }
 
-.proto-target-copy {
+.sess-target-copy {
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -231,8 +253,8 @@ button.form-link.proto-form {
   gap: 1px;
 }
 
-.proto-target-copy strong,
-.proto-target-copy span {
+.sess-target-copy strong,
+.sess-target-copy span {
   display: block;
   min-width: 0;
   overflow: hidden;
@@ -241,23 +263,23 @@ button.form-link.proto-form {
   line-height: 1.15;
 }
 
-.proto-target-copy strong {
+.sess-target-copy strong {
   font-size: 0.95rem;
 }
 
-.proto-target-copy span {
+.sess-target-copy span {
   color: var(--muted);
   font-size: 0.75rem;
   font-weight: 650;
 }
 
-.proto-dots {
+.sess-dots {
   display: flex;
   gap: 2px;
   flex: none;
 }
 
-.proto-dots button {
+.sess-dots button {
   width: 48px;
   height: 48px;
   border: 0;
@@ -269,11 +291,11 @@ button.form-link.proto-form {
   cursor: pointer;
 }
 
-.proto-dots button[aria-disabled='true'] {
+.sess-dots button[aria-disabled='true'] {
   cursor: default;
 }
 
-.proto-dots i {
+.sess-dots i {
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -282,23 +304,23 @@ button.form-link.proto-form {
   display: block;
 }
 
-.proto-dots button.done i {
+.sess-dots button.done i {
   background: var(--spruce);
   border-color: var(--spruce);
 }
 
-.proto-dots button.now i {
+.sess-dots button.now i {
   border-color: var(--spruce);
   box-shadow: 0 0 0 4px #d5eadc;
 }
 
-.proto-dots button.edit i {
+.sess-dots button.edit i {
   background: var(--amber);
   border-color: var(--amber);
   box-shadow: none;
 }
 
-.proto-pieces {
+.sess-pieces {
   flex: none;
   height: 48px;
   display: grid;
@@ -306,8 +328,8 @@ button.form-link.proto-form {
   gap: 6px;
 }
 
-.proto-pieces button,
-.proto-bw {
+.sess-pieces button,
+.sess-bw {
   height: 48px;
   min-width: 0;
   border-radius: 14px;
@@ -317,7 +339,7 @@ button.form-link.proto-form {
   line-height: 1.05;
 }
 
-.proto-pieces button {
+.sess-pieces button {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -325,15 +347,15 @@ button.form-link.proto-form {
   cursor: pointer;
 }
 
-.proto-pieces button strong,
-.proto-bw strong {
+.sess-pieces button strong,
+.sess-bw strong {
   display: block;
   font-family: var(--display);
   font-size: 1.05rem;
   font-weight: 560;
 }
 
-.proto-pieces button small {
+.sess-pieces button small {
   display: block;
   margin-top: 1px;
   font-size: 0.68rem;
@@ -341,17 +363,17 @@ button.form-link.proto-form {
   color: var(--muted);
 }
 
-.proto-pieces button.on {
+.sess-pieces button.on {
   background: var(--spruce);
   border-color: var(--spruce);
   color: #f6f3ec;
 }
 
-.proto-pieces button.on small {
+.sess-pieces button.on small {
   color: rgba(246, 243, 236, 0.82);
 }
 
-.proto-bw {
+.sess-bw {
   flex: none;
   grid-column: 1 / -1;
   display: flex;
@@ -361,7 +383,7 @@ button.form-link.proto-form {
   font-weight: 700;
 }
 
-.proto-measure {
+.sess-measure {
   position: relative;
   flex: 1 1 0;
   min-height: 0;
@@ -377,7 +399,7 @@ button.form-link.proto-form {
   overflow: hidden;
 }
 
-.proto-caption {
+.sess-caption {
   margin: 0;
   padding-right: 64px;
   line-height: 1rem;
@@ -386,7 +408,7 @@ button.form-link.proto-form {
   text-overflow: ellipsis;
 }
 
-.proto-reset {
+.sess-reset {
   position: absolute;
   top: 0;
   right: 4px;
@@ -405,7 +427,7 @@ button.form-link.proto-form {
   cursor: pointer;
 }
 
-.proto-value {
+.sess-value {
   container-type: size;
   min-height: 0;
   height: 100%;
@@ -415,7 +437,7 @@ button.form-link.proto-form {
   overflow: hidden;
 }
 
-.proto-value strong {
+.sess-value strong {
   font-family: var(--display);
   font-size: clamp(1.6rem, 78cqh, 4.4rem);
   font-weight: 560;
@@ -424,19 +446,19 @@ button.form-link.proto-form {
   font-variant-numeric: tabular-nums;
 }
 
-.proto-measure.is-body .proto-value strong {
+.sess-measure.is-body .sess-value strong {
   color: var(--muted);
   font-size: clamp(1.35rem, 70cqh, 2.6rem);
 }
 
-.proto-stepper {
+.sess-stepper {
   height: 48px;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
 }
 
-.proto-stepper button {
+.sess-stepper button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -452,7 +474,7 @@ button.form-link.proto-form {
   padding: 0;
 }
 
-.proto-detail {
+.sess-detail {
   margin: 0;
   height: 1rem;
   line-height: 1rem;
@@ -465,25 +487,34 @@ button.form-link.proto-form {
   font-variant-numeric: tabular-nums;
 }
 
-.proto-detail.is-alert {
+.sess-detail.is-alert {
   color: var(--ember);
 }
 
-.proto-footer {
+.sess-footer {
   flex: none;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.proto-rest {
+.sess-add {
+  flex: none;
+  height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  font-weight: 700;
+}
+
+.sess-rest {
   height: 48px;
   display: grid;
   grid-template-columns: 4.75rem minmax(0, 1fr) 4.75rem;
   gap: 6px;
 }
 
-.proto-rest button {
+.sess-rest button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -497,13 +528,13 @@ button.form-link.proto-form {
   padding: 0 8px;
 }
 
-.proto-rest button.on {
+.sess-rest button.on {
   background: var(--spruce);
   border-color: var(--spruce);
   color: #f6f3ec;
 }
 
-.proto-clock {
+.sess-clock {
   font-family: var(--display);
   font-size: 1.35rem;
   font-weight: 560;
@@ -512,18 +543,18 @@ button.form-link.proto-form {
   line-height: 1;
 }
 
-.proto-nav {
+.sess-nav {
   height: 48px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
 }
 
-.proto-nav-single {
+.sess-nav-single {
   grid-template-columns: minmax(0, 1fr);
 }
 
-.proto-nav button {
+.sess-nav button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -537,7 +568,7 @@ button.form-link.proto-form {
   padding: 0 8px;
 }
 
-.proto-log {
+.sess-log {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -554,26 +585,26 @@ button.form-link.proto-form {
   padding: 0 16px;
 }
 
-.proto-log:active,
-.proto-nav button:active,
-.proto-stepper button:active,
-.proto-pieces button:active,
-.proto-exit:active,
-.proto-rest button:active {
+.sess-log:active,
+.sess-nav button:active,
+.sess-stepper button:active,
+.sess-pieces button:active,
+.sess-exit:active,
+.sess-rest button:active {
   background: var(--spruce-2);
   color: #f6f3ec;
 }
 
-.proto-nav button:active,
-.proto-pieces button:not(.on):active,
-.proto-exit:active,
-.proto-rest button:not(.on):active,
-.proto-stepper button:active {
+.sess-nav button:active,
+.sess-pieces button:not(.on):active,
+.sess-exit:active,
+.sess-rest button:not(.on):active,
+.sess-stepper button:active {
   background: #e7f0ea;
   color: var(--ink);
 }
 
-.proto-review {
+.sess-review {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -585,14 +616,14 @@ button.form-link.proto-form {
   overflow: hidden;
 }
 
-.proto-review li {
+.sess-review li {
   flex: 1 1 0;
   min-height: 48px;
   min-width: 0;
   display: flex;
 }
 
-.proto-review button {
+.sess-review button {
   flex: 1 1 auto;
   width: 100%;
   min-height: 48px;
@@ -609,7 +640,7 @@ button.form-link.proto-form {
   cursor: pointer;
 }
 
-.proto-review-name {
+.sess-review-name {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
@@ -619,23 +650,23 @@ button.form-link.proto-form {
   line-height: 1.15;
 }
 
-.proto-review-name span:first-child,
-.proto-review-sets {
+.sess-review-name span:first-child,
+.sess-review-sets {
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.proto-review-name span:last-child,
-.proto-review-sets {
+.sess-review-name span:last-child,
+.sess-review-sets {
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
 
-.proto-dialog {
+.sess-dialog {
   width: min(22rem, calc(100% - 24px));
   max-height: calc(100dvh - 24px);
   margin: auto;
@@ -647,28 +678,28 @@ button.form-link.proto-form {
   box-shadow: 0 18px 50px rgba(28, 25, 21, 0.22);
 }
 
-.proto-dialog::backdrop {
+.sess-dialog::backdrop {
   background: rgba(28, 25, 21, 0.48);
 }
 
-.proto-dialog h2 {
+.sess-dialog h2 {
   font-size: 1.45rem;
   margin-bottom: 6px;
 }
 
-.proto-dialog p {
+.sess-dialog p {
   margin: 0 0 14px;
   color: var(--muted);
 }
 
-.proto-dialog-actions {
+.sess-dialog-actions {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.proto-dialog-actions button,
-.proto-session-list button {
+.sess-dialog-actions button,
+.sess-session-list button {
   width: 100%;
   min-height: 48px;
   border-radius: 999px;
@@ -679,18 +710,18 @@ button.form-link.proto-form {
   padding: 0 14px;
 }
 
-.proto-dialog-actions .proto-log {
+.sess-dialog-actions .sess-log {
   border: 0;
 }
 
-.proto-session-list {
+.sess-session-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-bottom: 8px;
 }
 
-.proto-session-list button {
+.sess-session-list button {
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -701,7 +732,7 @@ button.form-link.proto-form {
   overflow: hidden;
 }
 
-.proto-session-list button small {
+.sess-session-list button small {
   color: var(--muted);
   font-size: 0.75rem;
   font-weight: 650;
@@ -710,32 +741,32 @@ button.form-link.proto-form {
   text-overflow: ellipsis;
 }
 
-.proto-session-list button.on {
+.sess-session-list button.on {
   background: var(--spruce);
   border-color: var(--spruce);
   color: #f6f3ec;
 }
 
-.proto-session-list button.on small {
+.sess-session-list button.on small {
   color: rgba(246, 243, 236, 0.82);
 }
 
 @media (max-height: 720px) {
-  .proto-screen {
+  .sess-screen {
     gap: 2px;
     padding-top: max(2px, env(safe-area-inset-top));
     padding-bottom: max(2px, env(safe-area-inset-bottom));
   }
 
-  .proto-work {
+  .sess-work {
     gap: 2px;
   }
 
-  .proto-measure {
+  .sess-measure {
     grid-template-rows: minmax(0, 1fr) 48px 1rem;
   }
 
-  .proto-caption {
+  .sess-caption {
     position: absolute;
     top: 2px;
     left: 8px;
@@ -744,24 +775,24 @@ button.form-link.proto-form {
     padding-right: 0;
   }
 
-  .proto-value {
+  .sess-value {
     align-items: end;
   }
 
-  .proto-log {
+  .sess-log {
     height: 52px;
     min-height: 52px;
   }
 }
 
 @media (min-height: 780px) {
-  .proto-pieces,
-  .proto-pieces button,
-  .proto-bw {
+  .sess-pieces,
+  .sess-pieces button,
+  .sess-bw {
     height: 56px;
   }
 
-  .proto-log {
+  .sess-log {
     height: 64px;
     min-height: 64px;
   }

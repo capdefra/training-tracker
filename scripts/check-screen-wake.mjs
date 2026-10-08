@@ -97,6 +97,7 @@ const hrefs = [
   ['#/log', true],
   ['#/log/', true],
   ['#/log/abc', true],
+  ['#/session', true],
   ['https://capdefra.github.io/training-tracker/#/log/abc', true],
   ['#/today', false],
   ['#/progress', false],
