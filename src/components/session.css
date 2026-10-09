@@ -1,8 +1,9 @@
 /* Full-screen strength session.
    The column is locked to the viewport. Extra height goes into the two
-   numbers. 375×667 keeps every control at least 48px without a scroller.
+   numbers. Controls are 40px so 375×667 still fits without a scroller.
    One side gutter is shared by every block. Header, rest, and prev/next
-   use the same three columns so their edges line up. */
+   use the same three columns so their edges line up.
+   The next-exercise line is a fixed 20px footer under Log set. */
 
 html.sess-lock,
 html.sess-lock body {
@@ -13,7 +14,8 @@ html.sess-lock body {
 
 .sess-screen {
   --sess-gutter: 16px;
-  --sess-gap: 6px;
+  --sess-gap: 8px;
+  --sess-control: 40px;
   --sess-reset: 4.5rem;
   position: fixed;
   inset: 0;
@@ -42,12 +44,14 @@ html.sess-lock body {
 .sess-screen button {
   appearance: none;
   font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
   color: inherit;
   touch-action: manipulation;
 }
 
 .sess-screen button:focus-visible {
-  outline: 2px solid var(--amber);
+  outline: 2px solid var(--spruce);
   outline-offset: 2px;
 }
 
@@ -58,20 +62,26 @@ html.sess-lock body {
 
 .sess-screen button.sess-log,
 .sess-screen button.sess-log:active {
-  background: var(--spruce);
+  background: var(--accent-fill);
   color: #f6f3ec;
   opacity: 1;
 }
 
 .sess-screen button.sess-log:active {
-  background: var(--spruce-2);
+  background: var(--accent-fill-2);
 }
 
 .sess-screen button.sess-log:disabled {
-  background: #d9e0da;
-  color: #2a3830;
-  border: 1px solid #b7c3bb;
+  background: #242830;
+  color: #9aa1ad;
+  border: 1px solid #3a4150;
   opacity: 1;
+}
+
+.sess-screen button.sess-log.is-complete:disabled {
+  background: #173228;
+  color: #c6f3dc;
+  border: 1px solid #2c7a56;
 }
 
 .sess-header {
@@ -80,12 +90,12 @@ html.sess-lock body {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--sess-gap);
   align-items: center;
-  height: 48px;
+  height: var(--sess-control);
 }
 
 .sess-exit,
 .sess-header-side {
-  height: 48px;
+  height: var(--sess-control);
   min-width: 0;
 }
 
@@ -96,9 +106,10 @@ html.sess-lock body {
   width: 100%;
   padding: 0;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 6px;
   background: var(--card);
-  font-weight: 700;
+  box-shadow: var(--btn-shadow);
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -109,13 +120,13 @@ html.sess-lock body {
 }
 
 .sess-screen .form-sheet .icon-btn {
-  width: 48px;
-  height: 48px;
+  width: var(--sess-control);
+  height: var(--sess-control);
 }
 
 .sess-screen .form-sheet-head {
   align-items: center;
-  padding: 14px 16px 8px;
+  padding: 16px;
 }
 
 .sess-screen .form-stage {
@@ -130,26 +141,27 @@ html.sess-lock body {
 
 button.form-link.sess-form {
   width: 100%;
-  min-height: 48px;
-  height: 48px;
+  min-height: var(--sess-control);
+  height: var(--sess-control);
   margin: 0;
   padding: 0;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 6px;
   background: var(--card);
   color: var(--spruce);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  box-shadow: var(--btn-shadow);
+  font-weight: 500;
 }
 
 .sess-progress {
   width: 100%;
-  height: 48px;
+  height: var(--sess-control);
   border: 0;
-  border-radius: 12px;
+  border-radius: 6px;
   background: transparent;
   cursor: default;
   display: flex;
@@ -168,15 +180,15 @@ button.form-link.sess-form {
   white-space: nowrap;
   color: var(--muted);
   font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: 500;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   line-height: 1.1;
 }
 
 .sess-progress strong {
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
 }
@@ -219,7 +231,7 @@ button.form-link.sess-form {
   background: transparent;
   font-family: var(--display);
   font-size: clamp(1.05rem, 2.5dvh, 1.65rem);
-  font-weight: 560;
+  font-weight: 600;
   line-height: 1.05;
   letter-spacing: -0.03em;
   color: var(--ink);
@@ -243,7 +255,7 @@ button.form-link.sess-form {
   white-space: nowrap;
   color: var(--muted);
   font-size: 0.92rem;
-  font-weight: 650;
+  font-weight: 500;
 }
 
 .sess-next .kicker {
@@ -259,7 +271,7 @@ button.form-link.sess-form {
 
 .sess-target {
   flex: none;
-  height: 48px;
+  height: var(--sess-control);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--sess-gap);
@@ -291,7 +303,7 @@ button.form-link.sess-form {
 .sess-target-copy span {
   color: var(--muted);
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 500;
 }
 
 .sess-dots {
@@ -302,10 +314,10 @@ button.form-link.sess-form {
 }
 
 .sess-dots button {
-  width: 48px;
-  height: 48px;
+  width: var(--sess-control);
+  height: var(--sess-control);
   border: 0;
-  border-radius: 12px;
+  border-radius: 6px;
   background: transparent;
   padding: 0;
   display: grid;
@@ -321,7 +333,7 @@ button.form-link.sess-form {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  border: 2px solid #cfc6b6;
+  border: 2px solid var(--dot);
   background: transparent;
   display: block;
 }
@@ -333,7 +345,7 @@ button.form-link.sess-form {
 
 .sess-dots button.now i {
   border-color: var(--spruce);
-  box-shadow: 0 0 0 4px #d5eadc;
+  box-shadow: 0 0 0 4px var(--dot-ring);
 }
 
 .sess-dots button.edit i {
@@ -344,7 +356,7 @@ button.form-link.sess-form {
 
 .sess-pieces {
   flex: none;
-  height: 48px;
+  height: var(--sess-control);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--sess-gap);
@@ -352,11 +364,12 @@ button.form-link.sess-form {
 
 .sess-pieces button,
 .sess-bw {
-  height: 48px;
+  height: var(--sess-control);
   min-width: 0;
-  border-radius: 14px;
+  border-radius: 6px;
   border: 1px solid var(--line);
   background: var(--card);
+  box-shadow: var(--btn-shadow);
   padding: 2px 4px;
   line-height: 1.05;
 }
@@ -374,21 +387,22 @@ button.form-link.sess-form {
   display: block;
   font-family: var(--display);
   font-size: 1.05rem;
-  font-weight: 560;
+  font-weight: 600;
 }
 
 .sess-pieces button small {
   display: block;
   margin-top: 1px;
   font-size: 0.68rem;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--muted);
 }
 
 .sess-pieces button.on {
-  background: var(--spruce);
-  border-color: var(--spruce);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
   color: #f6f3ec;
+  box-shadow: none;
 }
 
 .sess-pieces button.on small {
@@ -402,7 +416,7 @@ button.form-link.sess-form {
   align-items: center;
   justify-content: center;
   margin: 0;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .sess-measure {
@@ -410,14 +424,12 @@ button.form-link.sess-form {
   flex: 1 1 0;
   min-height: 0;
   display: grid;
-  grid-template-rows: 1rem minmax(0, 1fr) 48px 1rem;
+  grid-template-rows: 1rem minmax(0, 1fr) var(--sess-control) 1rem;
   gap: 2px;
   align-items: stretch;
-  padding: 0 0 4px;
-  border: 0;
-  border-radius: 16px;
-  outline: 1px solid var(--line);
-  outline-offset: -1px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
   background: var(--card);
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -425,10 +437,10 @@ button.form-link.sess-form {
 
 .sess-caption {
   align-self: start;
-  height: 48px;
+  height: var(--sess-control);
   margin: 0;
-  padding: 0 calc(var(--sess-reset) + 8px) 0 12px;
-  transform: translateY(12px);
+  padding: 0 calc(var(--sess-reset) + 16px) 0 8px;
+  transform: translateY(8px);
   display: flex;
   align-items: center;
   line-height: 1rem;
@@ -440,21 +452,22 @@ button.form-link.sess-form {
 
 .sess-reset {
   position: absolute;
-  top: 12px;
-  right: 0;
+  top: 8px;
+  right: 8px;
   z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: var(--sess-reset);
-  height: 48px;
-  min-width: 48px;
+  height: var(--sess-control);
+  min-width: var(--sess-control);
   padding: 0;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 6px;
   background: var(--bg);
-  font-size: 0.82rem;
-  font-weight: 700;
+  box-shadow: var(--btn-shadow);
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -472,7 +485,7 @@ button.form-link.sess-form {
 .sess-value strong {
   font-family: var(--display);
   font-size: clamp(1.6rem, 78cqh, 4.4rem);
-  font-weight: 560;
+  font-weight: 600;
   letter-spacing: -0.04em;
   line-height: 0.9;
   font-variant-numeric: tabular-nums;
@@ -484,7 +497,7 @@ button.form-link.sess-form {
 }
 
 .sess-stepper {
-  height: 48px;
+  height: var(--sess-control);
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--sess-gap);
@@ -494,12 +507,13 @@ button.form-link.sess-form {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 48px;
+  height: var(--sess-control);
   min-width: 0;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 6px;
   background: var(--bg);
-  font-weight: 700;
+  box-shadow: var(--btn-shadow);
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   font-size: 1rem;
   cursor: pointer;
@@ -516,7 +530,7 @@ button.form-link.sess-form {
   text-overflow: ellipsis;
   color: var(--muted);
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 
@@ -528,20 +542,21 @@ button.form-link.sess-form {
   flex: none;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 .sess-add {
   flex: none;
-  height: 48px;
+  height: var(--sess-control);
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 6px;
   background: var(--card);
-  font-weight: 700;
+  box-shadow: var(--btn-shadow);
+  font-weight: 500;
 }
 
 .sess-rest {
-  height: 48px;
+  height: var(--sess-control);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--sess-gap);
@@ -551,33 +566,35 @@ button.form-link.sess-form {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 48px;
+  height: var(--sess-control);
   min-width: 0;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 6px;
   background: var(--card);
-  font-weight: 700;
+  box-shadow: var(--btn-shadow);
+  font-weight: 500;
   cursor: pointer;
-  padding: 0 8px;
+  padding: 0 16px;
 }
 
 .sess-rest button.on {
-  background: var(--spruce);
-  border-color: var(--spruce);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
   color: #f6f3ec;
+  box-shadow: none;
 }
 
 .sess-clock {
   font-family: var(--display);
   font-size: 1.35rem;
-  font-weight: 560;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.03em;
   line-height: 1;
 }
 
 .sess-nav {
-  height: 48px;
+  height: var(--sess-control);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--sess-gap);
@@ -591,14 +608,80 @@ button.form-link.sess-form {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 48px;
+  height: var(--sess-control);
   min-width: 0;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 6px;
   background: var(--card);
-  font-weight: 700;
+  box-shadow: var(--btn-shadow);
+  font-weight: 500;
   cursor: pointer;
-  padding: 0 8px;
+  padding: 0 16px;
+}
+
+.sess-commit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sess-gap);
+}
+
+.sess-commit.is-split {
+  grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr);
+}
+
+.sess-remove,
+.sess-extra {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: var(--sess-control);
+  min-height: var(--sess-control);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: var(--btn-shadow);
+  background: var(--card);
+  color: var(--ember);
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0 12px;
+}
+
+.sess-remove:active,
+.sess-extra:active {
+  background: var(--raised);
+  color: var(--ember);
+}
+
+.sess-upcoming {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  height: 20px;
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.sess-upcoming .kicker {
+  flex: none;
+  margin: 0;
+  line-height: 20px;
+  font-size: 0.68rem;
+}
+
+.sess-upcoming span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sess-log {
@@ -606,14 +689,14 @@ button.form-link.sess-form {
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 56px;
-  min-height: 56px;
+  height: var(--sess-control);
+  min-height: var(--sess-control);
   border: 0;
-  border-radius: 999px;
-  background: var(--spruce);
+  border-radius: 6px;
+  background: var(--accent-fill);
   color: #f6f3ec;
-  font-weight: 700;
-  font-size: 1.05rem;
+  font-weight: 500;
+  font-size: 0.875rem;
   cursor: pointer;
   padding: 0 16px;
 }
@@ -624,7 +707,7 @@ button.form-link.sess-form {
 .sess-pieces button:active,
 .sess-exit:active,
 .sess-rest button:active {
-  background: var(--spruce-2);
+  background: var(--accent-fill-2);
   color: #f6f3ec;
 }
 
@@ -633,7 +716,7 @@ button.form-link.sess-form {
 .sess-exit:active,
 .sess-rest button:not(.on):active,
 .sess-stepper button:active {
-  background: #e7f0ea;
+  background: var(--press);
   color: var(--ink);
 }
 
@@ -651,7 +734,7 @@ button.form-link.sess-form {
 
 .sess-review li {
   flex: 1 1 0;
-  min-height: 48px;
+  min-height: var(--sess-control);
   min-width: 0;
   display: flex;
 }
@@ -659,15 +742,15 @@ button.form-link.sess-form {
 .sess-review button {
   flex: 1 1 auto;
   width: 100%;
-  min-height: 48px;
+  min-height: var(--sess-control);
   min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 2px;
-  padding: 4px 10px;
+  padding: 8px 16px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: 8px;
   background: var(--card);
   text-align: left;
   cursor: pointer;
@@ -679,7 +762,7 @@ button.form-link.sess-form {
   gap: 8px;
   align-items: baseline;
   min-width: 0;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.15;
 }
 
@@ -695,7 +778,7 @@ button.form-link.sess-form {
 .sess-review-sets {
   color: var(--muted);
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 
@@ -703,16 +786,16 @@ button.form-link.sess-form {
   width: min(22rem, calc(100% - 2 * var(--sess-gutter, 16px)));
   max-height: calc(100dvh - 24px);
   margin: auto;
-  padding: 18px 16px calc(16px + env(safe-area-inset-bottom));
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
   border: 0;
-  border-radius: 22px;
+  border-radius: 8px;
   background: var(--card);
   color: var(--ink);
-  box-shadow: 0 18px 50px rgba(28, 25, 21, 0.22);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
 }
 
 .sess-dialog::backdrop {
-  background: rgba(28, 25, 21, 0.48);
+  background: rgba(0, 0, 0, 0.62);
 }
 
 .sess-dialog h2 {
@@ -734,17 +817,19 @@ button.form-link.sess-form {
 .sess-dialog-actions button,
 .sess-session-list button {
   width: 100%;
-  min-height: 48px;
-  border-radius: 999px;
+  min-height: var(--sess-control);
+  border-radius: 6px;
   border: 1px solid var(--line);
   background: var(--card);
-  font-weight: 700;
+  box-shadow: var(--btn-shadow);
+  font-weight: 500;
   cursor: pointer;
-  padding: 0 14px;
+  padding: 0 16px;
 }
 
 .sess-dialog-actions .sess-log {
   border: 0;
+  box-shadow: none;
 }
 
 .sess-session-list {
@@ -761,22 +846,22 @@ button.form-link.sess-form {
   justify-content: center;
   gap: 1px;
   text-align: left;
-  border-radius: 16px;
+  border-radius: 8px;
   overflow: hidden;
 }
 
 .sess-session-list button small {
   color: var(--muted);
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 500;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
 .sess-session-list button.on {
-  background: var(--spruce);
-  border-color: var(--spruce);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
   color: #f6f3ec;
 }
 
@@ -796,12 +881,12 @@ button.form-link.sess-form {
   }
 
   .sess-measure {
-    grid-template-rows: minmax(0, 1fr) 48px 1rem;
+    grid-template-rows: minmax(0, 1fr) var(--sess-control) 1rem;
   }
 
   .sess-caption {
     position: absolute;
-    top: 0;
+    top: 8px;
     left: 0;
     right: 0;
     z-index: 1;
@@ -810,22 +895,5 @@ button.form-link.sess-form {
   .sess-value {
     align-items: end;
   }
-
-  .sess-log {
-    height: 52px;
-    min-height: 52px;
-  }
 }
 
-@media (min-height: 780px) {
-  .sess-pieces,
-  .sess-pieces button,
-  .sess-bw {
-    height: 56px;
-  }
-
-  .sess-log {
-    height: 64px;
-    min-height: 64px;
-  }
-}

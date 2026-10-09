@@ -277,7 +277,7 @@ function BrandMark() {
     <span className="brand-mark" aria-hidden="true">
       <svg viewBox="0 0 32 32" width="28" height="28">
         <path d="M6 24 L16 8 L26 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" />
-        <circle cx="16" cy="16" r="1.6" fill="#e8a317" />
+        <circle cx="16" cy="16" r="1.6" fill="currentColor" />
       </svg>
     </span>
   );

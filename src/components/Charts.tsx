@@ -16,12 +16,28 @@ import { formatPace } from '../lib/format';
 import type { LiftPoint, RunPoint, WeekDistance } from '../lib/stats';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend, Filler);
-ChartJS.defaults.font.family = 'Outfit, sans-serif';
-ChartJS.defaults.color = '#5e584e';
 
-const grid = '#e6dfd3';
-const spruce = '#1e4d3a';
-const ember = '#c4491d';
+function token(name: string, fallback: string): string {
+  if (typeof document === 'undefined') return fallback;
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+}
+
+const ink = token('--ink', '#f2f4f7');
+const muted = token('--muted', '#b7bcc6');
+const grid = token('--chart-grid', '#3a4150');
+const line = token('--line', '#313744');
+const card = token('--card', '#171a21');
+const spruce = token('--spruce', '#3ecf8e');
+const ember = token('--ember', '#ff8f78');
+
+ChartJS.defaults.font.family = 'Inter Variable, Inter, sans-serif';
+ChartJS.defaults.color = muted;
+ChartJS.defaults.borderColor = line;
+ChartJS.defaults.plugins.tooltip.backgroundColor = card;
+ChartJS.defaults.plugins.tooltip.titleColor = ink;
+ChartJS.defaults.plugins.tooltip.bodyColor = ink;
+ChartJS.defaults.plugins.tooltip.borderColor = line;
+ChartJS.defaults.plugins.tooltip.borderWidth = 1;
 
 export function LiftChart({ points, mode }: { points: LiftPoint[]; mode: 'load' | 'reps' }) {
   const labels = points.map((point) => formatDayMonth(point.date));

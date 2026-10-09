@@ -109,6 +109,9 @@ check('today and log routes stay', parseHash('#/today').name === 'today' && pars
 const screen = readFileSync(new URL('../src/components/StrengthSession.tsx', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../src/components/session.css', import.meta.url), 'utf8');
 check('log set disables only when it cannot log', screen.includes('disabled={!canLog}'));
+check('logging stops at the planned set count', screen.includes('exercise.sets.length >= exercise.targetSets'));
+check('a logged set can be removed', screen.includes('aria-label="Remove set"'));
+check('the next exercise sits under the log button', screen.includes('sess-upcoming') && !screen.includes('nextLabel'));
 check('enabled log label stays light', css.includes('.sess-screen button.sess-log') && css.includes('color: #f6f3ec'));
 check('the session screen does not scroll', css.includes('overflow: hidden') && css.includes('100dvh') && css.includes('overscroll-behavior: none'));
 check('the logger does not write the gist itself', !screen.includes('saveToGist') && !screen.includes('localStorage'));
