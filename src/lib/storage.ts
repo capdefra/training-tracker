@@ -72,6 +72,17 @@ function focusList(value: unknown): string[] {
   return result;
 }
 
+function alsoCountsList(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const aliases: string[] = [];
+  for (const item of value) {
+    const label = text(item);
+    if (!label) continue;
+    aliases.push(label);
+  }
+  return aliases.length > 0 ? aliases : undefined;
+}
+
 function normalizeExercise(value: unknown): PlanExercise | null {
   const record = asRecord(value);
   if (!record) return null;
@@ -83,6 +94,8 @@ function normalizeExercise(value: unknown): PlanExercise | null {
     reps: text(record.reps) || '5',
   };
   if (record.count === 'seconds') exercise.count = 'seconds';
+  const aliases = alsoCountsList(record.alsoCounts);
+  if (aliases) exercise.alsoCounts = aliases;
   return exercise;
 }
 

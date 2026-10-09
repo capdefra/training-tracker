@@ -257,6 +257,7 @@ function TemplateForm({
           reps: exercise.reps.trim() || '5',
         };
         if (exercise.count === 'seconds') next.count = 'seconds';
+        if (exercise.alsoCounts && exercise.alsoCounts.length > 0) next.alsoCounts = exercise.alsoCounts;
         return next;
       })
       .filter((exercise) => exercise.name);

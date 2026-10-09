@@ -166,7 +166,10 @@ const PHASES: PlanPhase[] = [
 ];
 
 function cloneExercise(exercise: PlanExercise): PlanExercise {
-  return exercise.count ? { name: exercise.name, sets: exercise.sets, reps: exercise.reps, count: exercise.count } : { name: exercise.name, sets: exercise.sets, reps: exercise.reps };
+  const copy: PlanExercise = { name: exercise.name, sets: exercise.sets, reps: exercise.reps };
+  if (exercise.count) copy.count = exercise.count;
+  if (exercise.alsoCounts && exercise.alsoCounts.length > 0) copy.alsoCounts = [...exercise.alsoCounts];
+  return copy;
 }
 
 /** The home week. Pass an id function to mint new session ids; phase patches follow them. */
