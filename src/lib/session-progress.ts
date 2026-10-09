@@ -24,6 +24,16 @@ export function progressHasSets(progress: StrengthProgress): boolean {
   return progress.draft.exercises.some((exercise) => exercise.sets.length > 0);
 }
 
+/** Every named exercise has its planned sets logged, so the workout can be finished. */
+export function allPlannedSetsLogged(draft: Draft): boolean {
+  if (draft.kind !== 'strength' || draft.exercises.length === 0) return false;
+  return draft.exercises.every((exercise) => {
+    if (!exercise.name.trim()) return false;
+    const need = exercise.targetSets > 0 ? exercise.targetSets : 1;
+    return exercise.sets.length >= need;
+  });
+}
+
 export function isDirty(progress: StrengthProgress): boolean {
   return loggedSignature(progress.draft) !== progress.baseline;
 }
