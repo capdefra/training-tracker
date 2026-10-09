@@ -98,7 +98,7 @@ function loggedRun(date: string, planSessionId: string): Session {
   };
 }
 
-function loggedStrength(date: string, session: PlanSession, setCount: number): Session {
+function loggedStrength(date: string, session: PlanSession, setCount: number, rename: Record<string, string> = {}): Session {
   return {
     id: `log-${session.id}`,
     date,
@@ -109,7 +109,7 @@ function loggedStrength(date: string, session: PlanSession, setCount: number): S
     planId: plan.id,
     planSessionId: session.id,
     exercises: session.exercises.map((exercise) => ({
-      name: exercise.name,
+      name: rename[exercise.name] ?? exercise.name,
       sets: Array.from({ length: setCount }, () => ({ reps: 30, weightKg: 0 })),
     })),
     distanceKm: null,
@@ -170,6 +170,87 @@ const partialDay = planItemsForWeek(shortOfTarget, shortOfTarget.plans, '2026-10
 const finishedDay = planItemsForWeek(fullTarget, fullTarget.plans, '2026-10-12').filter((entry) => entry.date === '2026-10-12');
 check('a started plan day is partial', dayProgress(partialDay, []) === 'partial');
 check('a finished plan day is done', dayProgress(finishedDay, []) === 'done');
+
+const aliasPayload = JSON.parse(serialize(data)) as TrainingData;
+const lowerBSource = aliasPayload.plans[0]?.sessions.find((session) => session.id === 'ps-lower-b');
+const rdlSource = lowerBSource?.exercises.find((exercise) => exercise.name === 'Single-leg Romanian deadlift');
+if (rdlSource) {
+  rdlSource.name = 'Dumbbell Romanian deadlift';
+  (rdlSource as { alsoCounts?: unknown }).alsoCounts = ['  Single-leg Romanian deadlift  ', '', 4, 'Single-leg Romanian deadlift'];
+}
+const hipPreset = aliasPayload.presets.find((preset) => preset.exercises.some((exercise) => exercise.name === 'Single-leg hip thrust'));
+const hipSource = hipPreset?.exercises.find((exercise) => exercise.name === 'Single-leg hip thrust');
+if (hipSource) (hipSource as { alsoCounts?: unknown }).alsoCounts = ['Hip thrust'];
+const gobletSource = aliasPayload.plans[0]?.sessions.flatMap((session) => session.exercises).find((exercise) => exercise.name === 'Goblet squat');
+if (gobletSource) (gobletSource as { alsoCounts?: unknown }).alsoCounts = 'not-a-list';
+const aliased = normalize(aliasPayload);
+const aliasedAgain = normalize(JSON.parse(serialize(aliased)));
+const aliasedLower = aliased.plans[0]?.sessions.find((session) => session.id === 'ps-lower-b');
+const aliasedRdl = aliasedLower?.exercises.find((exercise) => exercise.name === 'Dumbbell Romanian deadlift');
+const aliasedGoblet = aliased.plans[0]?.sessions.flatMap((session) => session.exercises).find((exercise) => exercise.name === 'Goblet squat');
+const aliasedHip = aliased.presets.flatMap((preset) => preset.exercises).find((exercise) => exercise.name === 'Single-leg hip thrust');
+check('alsoCounts is trimmed and blanks are dropped', aliasedRdl?.alsoCounts?.join('|') === 'Single-leg Romanian deadlift|Single-leg Romanian deadlift');
+check('a non-array alsoCounts is ignored', aliasedGoblet?.alsoCounts === undefined && !JSON.stringify(aliasedGoblet).includes('alsoCounts'));
+check('preset alsoCounts round trips', aliasedHip?.alsoCounts?.join('|') === 'Hip thrust');
+check('alsoCounts survives another save', JSON.stringify(aliasedAgain) === JSON.stringify(aliased));
+check('starter exercises still omit alsoCounts', !JSON.stringify(data.plans).includes('alsoCounts') && !JSON.stringify(data.presets).includes('alsoCounts'));
+
+const friday = '2026-10-16';
+const aliasPlans = aliased.plans;
+const aliasSession = aliasedLower;
+if (aliasSession) {
+  const oldNameLog = {
+    ...aliased,
+    sessions: [loggedStrength(friday, aliasSession, 4, { 'Dumbbell Romanian deadlift': '  single-leg romanian deadlift ' })],
+  };
+  const oldCard = planItemsForWeek(oldNameLog, aliasPlans, friday).find((entry) => entry.session.id === 'ps-lower-b');
+  const oldTarget = oldCard?.targets.find((target) => target.name === 'Dumbbell Romanian deadlift');
+  check('a log under an alias finishes the plan exercise', oldTarget?.met === true && oldTarget.completedSets === 4);
+  check('alias sets count once', oldTarget?.completedSets === 4);
+  check('a full alias log marks the day done', oldCard?.done === true && dayProgress(planItemsForWeek(oldNameLog, aliasPlans, friday).filter((entry) => entry.date === friday), []) === 'done');
+
+  const shortAlias = {
+    ...aliased,
+    sessions: [loggedStrength(friday, aliasSession, 2, { 'Dumbbell Romanian deadlift': 'Single-leg Romanian deadlift' })],
+  };
+  const shortCard = planItemsForWeek(shortAlias, aliasPlans, friday).find((entry) => entry.session.id === 'ps-lower-b');
+  check('a short alias log stays in progress', shortCard?.done === false && shortCard?.logs.length === 1);
+  check('a short alias log is a partial day', dayProgress(planItemsForWeek(shortAlias, aliasPlans, friday).filter((entry) => entry.date === friday), []) === 'partial');
+  check('alias sets are counted toward the target', shortCard?.targets.find((target) => target.name === 'Dumbbell Romanian deadlift')?.completedSets === 2);
+
+  const unrelated = {
+    ...aliased,
+    sessions: [loggedStrength(friday, aliasSession, 3, { 'Dumbbell Romanian deadlift': 'Romanian deadlift' })],
+  };
+  const unrelatedCard = planItemsForWeek(unrelated, aliasPlans, friday).find((entry) => entry.session.id === 'ps-lower-b');
+  check('a different name does not match the alias', unrelatedCard?.done === false && unrelatedCard?.targets.find((target) => target.name === 'Dumbbell Romanian deadlift')?.completedSets === 0);
+
+  const mixed = loggedStrength(friday, aliasSession, 4);
+  const rdl = mixed.exercises.find((exercise) => exercise.name === 'Dumbbell Romanian deadlift');
+  if (rdl) {
+    rdl.sets = [{ reps: 30, weightKg: 0 }];
+    mixed.exercises.push({ name: 'Single-leg Romanian deadlift', sets: [{ reps: 30, weightKg: 0 }, { reps: 30, weightKg: 0 }] });
+  }
+  const mixedCard = planItemsForWeek({ ...aliased, sessions: [mixed] }, aliasPlans, friday).find((entry) => entry.session.id === 'ps-lower-b');
+  check('the plan name and an alias add toward the same target', mixedCard?.targets.find((target) => target.name === 'Dumbbell Romanian deadlift')?.completedSets === 3 && mixedCard?.done === true);
+
+  const taperAlias = {
+    ...aliased,
+    sessions: [loggedStrength('2026-12-11', aliasSession, 2, { 'Dumbbell Romanian deadlift': 'Single-leg Romanian deadlift' })],
+  };
+  const taperCard = planItemsForWeek(taperAlias, aliasPlans, '2026-12-11').find((entry) => entry.session.id === 'ps-lower-b');
+  check('a phase keeps alsoCounts when it changes the set count', taperCard?.session.exercises.find((exercise) => exercise.name === 'Dumbbell Romanian deadlift')?.alsoCounts?.[0] === 'Single-leg Romanian deadlift');
+  check('alias sets finish the tapered target', taperCard?.done === true);
+}
+
+const plainLower = plan.sessions.find((session) => session.id === 'ps-lower-b');
+if (plainLower) {
+  const withoutAlias = { ...data, sessions: [loggedStrength(friday, plainLower, 3, { 'Single-leg Romanian deadlift': 'Dumbbell Romanian deadlift' })] };
+  const plainCard = planItemsForWeek(withoutAlias, withoutAlias.plans, friday).find((entry) => entry.session.id === 'ps-lower-b');
+  check('without alsoCounts only the plan name counts', plainCard?.done === false && plainCard?.targets.find((target) => target.name === 'Single-leg Romanian deadlift')?.completedSets === 0);
+  const exact = { ...data, sessions: [loggedStrength(friday, plainLower, 4)] };
+  check('the plan name still finishes the day', planItemsForWeek(exact, exact.plans, friday).find((entry) => entry.session.id === 'ps-lower-b')?.done === true);
+}
 const mondays = activityMondays('2026-10-03');
 check('activity starts on the week that contains today', mondays[0] === '2026-09-28');
 check('activity stacks older weeks under the current one', mondays[1] === '2026-09-21' && mondays.length === 16);
@@ -307,6 +388,9 @@ check('older run without new fields still loads', oldRun?.distanceKm === 4 && ol
 check('older run pace still comes from time and distance', sessionSummary(oldRun!).includes('6:15'));
 check('watch import does not tombstone the ski goal', again.deleted.goals.length === 0);
 
+const hipDemo = findDemo('Hip thrust');
+check('hip thrust demo is keyed by name', hipDemo?.clip === 'form-demos/hip-thrust.webm' && hipDemo.source === 'wger' && hipDemo.href === 'https://wger.de/en/exercise/294/view');
+check('hip thrust demo ignores case and surrounding space', findDemo('  HIP THRUST ')?.clip === 'form-demos/hip-thrust.webm');
 check('demo asset urls keep the site base', demoAssetUrl('form-demos/goblet-squat.webm', './') === './form-demos/goblet-squat.webm');
 check('demo asset urls join an absolute base', demoAssetUrl('form-demos/goblet-squat.webm', '/training-tracker/') === '/training-tracker/form-demos/goblet-squat.webm');
 const strengthNames = new Set<string>();

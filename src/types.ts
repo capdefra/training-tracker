@@ -19,6 +19,11 @@ export interface PlanExercise {
   reps: string;
   /** Seconds are held, not repeated. Side plank uses this. */
   count?: EffortCount;
+  /**
+   * Logged names that also satisfy this exercise.
+   * Optional. Matching is case-insensitive and trimmed.
+   */
+  alsoCounts?: string[];
 }
 
 export interface PlanSession {

@@ -118,9 +118,9 @@ Form on a strength exercise opens a sheet and plays a short loop. The week contr
 
 Clips live in `public/form-demos/`, one file per exercise on the presets and the ski plan. `src/lib/demos.ts` maps the exercise name to that file. WebM is what the files use now. A GIF with the same name also plays.
 
-Goblet squat, flat dumbbell bench press, incline press, and dumbbell curl are short trims from the [wger](https://wger.de/) library under CC BY-SA 4.0. Credits are in `public/form-demos/CREDITS.txt` and on the sheet. The other exercises are placeholder stick figures, labeled Placeholder, so a demo still plays with the phone offline. They are not filmed form.
+Goblet squat, flat dumbbell bench press, incline press, dumbbell curl, and hip thrust are short trims from the [wger](https://wger.de/) library under CC BY-SA 4.0. Credits are in `public/form-demos/CREDITS.txt` and on the sheet. The other exercises are placeholder stick figures, labeled Placeholder, so a demo still plays with the phone offline. They are not filmed form.
 
-To drop in a real clip, replace the WebM at that exercise’s path with a short, muted file about 480px wide. A GIF named the same way works too. Then set that exercise’s `source` to `wger` and add a `credit` line in `src/lib/demos.ts`. `python3 scripts/form-placeholders.py` redraws only the placeholders, and only if ffmpeg is installed. It does not touch the four filmed files.
+To drop in a real clip, replace the WebM at that exercise’s path with a short, muted file about 480px wide. A GIF named the same way works too. Then set that exercise’s `source` to `wger` and add a `credit` line in `src/lib/demos.ts`. `python3 scripts/form-placeholders.py` redraws only the placeholders, and only if ffmpeg is installed. It does not touch the filmed files.
 
 Learn more, at the bottom of the sheet, still opens the wger page for that exercise.
 
@@ -135,6 +135,12 @@ Learn more, at the bottom of the sheet, still opens the wger page for that exerc
 - **deleted** — ids removed on one device, so a sync does not bring them back
 
 A strength target is sets and reps of an exercise (seconds for a hold). It does not include weight. A run on the plan is done when a run is logged against it that week. Logged kilograms, distance, and pace are history, not the target.
+
+A plan or preset exercise can include an optional `alsoCounts` list of other logged names that satisfy that exercise. The field is absent when there are no aliases. Matching trims both names and ignores case. The gist file stays version 1, and exercises that omit `alsoCounts` are unchanged.
+
+```json
+{ "name": "Dumbbell Romanian deadlift", "sets": 3, "reps": "8", "alsoCounts": ["Single-leg Romanian deadlift"] }
+```
 
 ### One-off moves
 

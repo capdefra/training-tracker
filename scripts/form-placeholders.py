@@ -5,8 +5,8 @@ These are original stick figures, not filmed demonstrations. Each file is a
 silent WebM under public/form-demos/. To use a real clip, replace that file
 (WebM preferred, GIF works too) and update the matching entry in src/lib/demos.ts.
 
-The four filmed clips (goblet squat, bench press, incline press, curl) are not
-generated here.
+The filmed clips (goblet squat, bench press, incline press, curl, hip thrust)
+are not generated here.
 """
 
 from __future__ import annotations

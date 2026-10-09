@@ -20,6 +20,10 @@ dumbbell-curl.webm
   Biceps Curls With Dumbbell, wger exercise 92, video by Goulart.
   https://wger.de/en/exercise/92/view
 
+hip-thrust.webm
+  Hip Thrust, wger exercise 294, video by Goulart.
+  https://wger.de/en/exercise/294/view
+
 Every other WebM here is an original placeholder animation (a stick figure
 labeled PLACEHOLDER). It is not from wger and it is not a filmed demonstration.
 Replace the file to show a real clip, then update the matching entry in

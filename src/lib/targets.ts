@@ -34,12 +34,21 @@ function setsMeetingTarget(entries: ExerciseEntry[], need: number): number {
   return count;
 }
 
+/** A logged name counts when it is the plan name or one of `alsoCounts`. Both sides are trimmed and compared case-insensitively. */
+function loggedNameCounts(loggedName: string, exercise: PlanExercise): boolean {
+  const logged = exerciseKey(loggedName);
+  if (logged === exerciseKey(exercise.name)) return true;
+  return (exercise.alsoCounts ?? []).some((alias) => {
+    const key = exerciseKey(alias);
+    return key !== '' && key === logged;
+  });
+}
+
 export function exerciseTargets(session: PlanSession, logs: Session[]): ExerciseTarget[] {
   if (session.kind !== 'strength') return [];
   return session.exercises.map((exercise) => {
-    const key = exerciseKey(exercise.name);
     const matches = logs.flatMap((log) =>
-      log.kind === 'strength' ? log.exercises.filter((entry) => exerciseKey(entry.name) === key) : [],
+      log.kind === 'strength' ? log.exercises.filter((entry) => loggedNameCounts(entry.name, exercise)) : [],
     );
     const completedSets = setsMeetingTarget(matches, targetCount(exercise.reps));
     return {

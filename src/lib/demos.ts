@@ -57,6 +57,7 @@ const DEMOS: ExerciseDemo[] = [
   { name: 'Single-leg Romanian deadlift', title: 'Single-Leg Deadlift with Dumbbell', clip: 'form-demos/single-leg-romanian-deadlift.webm', source: 'placeholder', href: 'https://wger.de/en/exercise/1736/view' },
   { name: 'Reverse lunge', title: 'Dumbbell Rear Lunge', clip: 'form-demos/reverse-lunge.webm', source: 'placeholder', href: 'https://wger.de/en/exercise/1651/view' },
   { name: 'Single-leg hip thrust', title: 'Dumbbell Single-leg Hip Thrust', clip: 'form-demos/single-leg-hip-thrust.webm', source: 'placeholder', href: 'https://wger.de/en/exercise/1234/view' },
+  { name: 'Hip thrust', title: 'Hip Thrust', clip: 'form-demos/hip-thrust.webm', source: 'wger', credit: `Goulart · ${WGER}`, href: 'https://wger.de/en/exercise/294/view' },
   { name: 'Push-up', title: 'Push-Up', clip: 'form-demos/push-up.webm', source: 'placeholder', href: 'https://wger.de/en/exercise/1551/view' },
   { name: 'Suitcase carry', title: 'Suitcase Carry', clip: 'form-demos/suitcase-carry.webm', source: 'placeholder', href: 'https://wger.de/en/exercise/1776/view' },
 ];
