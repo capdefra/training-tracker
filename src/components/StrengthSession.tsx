@@ -9,6 +9,7 @@ import { defaultLoad, shownLoad } from '../lib/load';
 import { requestScreenWakeLock } from '../lib/screen-wake';
 import { sessionFromDraft } from '../lib/session-save';
 import {
+  allPlannedSetsLogged,
   clearPendingLaunch,
   isDirty,
   loadStrengthProgress,
@@ -179,6 +180,7 @@ export function StrengthSession({
   const atSetCap = Boolean(exercise && exercise.targetSets > 0 && exercise.sets.length >= exercise.targetSets);
   const overSetCap = Boolean(exercise && exercise.targetSets > 0 && exercise.sets.length > exercise.targetSets);
   const canLog = Boolean(exercise && exercise.name.trim() && repsNow > 0 && (editingKey || !atSetCap));
+  const workoutComplete = allPlannedSetsLogged(draft);
 
   function update(next: StrengthProgress) {
     setProgress(next);
@@ -375,6 +377,7 @@ export function StrengthSession({
         <Review
           draft={draft}
           notice={notice}
+          complete={workoutComplete}
           onOpen={(index) => goTo(index)}
           onAdd={
             draft.planSessionId
@@ -451,14 +454,14 @@ export function StrengthSession({
             <button type="button" onClick={() => goTo(cursor + 1)}>
               Skip
             </button>
-            <button type="button" onClick={() => goTo(cursor + 1)} aria-label={onLastExercise ? 'Next, review the session' : `Next: ${upcoming}`}>
+            <button type="button" onClick={() => goTo(cursor + 1)} aria-label={onLastExercise ? (workoutComplete ? 'Next, finish the session' : 'Next, review the session') : `Next: ${upcoming}`}>
               Next
             </button>
           </div>
         )}
         {reviewing ? (
           <button type="button" className="sess-log" onClick={save}>
-            Save
+            {workoutComplete ? 'Complete workout' : 'Save'}
           </button>
         ) : (
           <div className={cx('sess-commit', editingKey && 'is-split')}>
@@ -488,7 +491,7 @@ export function StrengthSession({
         {reviewing ? null : (
           <p className="sess-upcoming">
             {onLastExercise ? (
-              <span>Last exercise</span>
+              <span>{workoutComplete ? 'Review to finish' : 'Last exercise'}</span>
             ) : (
               <>
                 <span className="kicker">Next</span>
@@ -712,12 +715,12 @@ function StepButton({ label, delta, disabled, onBump }: { label: string; delta: 
   );
 }
 
-function Review({ draft, notice, onOpen, onAdd }: { draft: Draft; notice: string; onOpen: (index: number) => void; onAdd: (() => void) | null }) {
+function Review({ draft, notice, complete, onOpen, onAdd }: { draft: Draft; notice: string; complete: boolean; onOpen: (index: number) => void; onAdd: (() => void) | null }) {
   return (
     <main className="sess-work">
       <h1 className="sess-name sess-name-short">Review</h1>
       <p className="sess-next">
-        <span>{notice || 'Only logged sets are saved.'}</span>
+        <span>{notice || (complete ? 'Every set is logged.' : 'Only logged sets are saved.')}</span>
       </p>
       <ul className="sess-review">
         {draft.exercises.map((exercise, index) => {

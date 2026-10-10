@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { parseHash } from '../src/hooks/useHashRoute';
-import { draftFromPreset, exercisesFromTemplate } from '../src/lib/draft';
+import { blankDraft, draftFromPreset, exercisesFromTemplate, type Draft } from '../src/lib/draft';
 import { addDays } from '../src/lib/dates';
 import { buildPreset, planItemsForWeek } from '../src/lib/plans';
-import { decideLaunch, freshProgress, isDirty, loadStrengthProgress, progressHasSets, saveStrengthProgress, type StrengthProgress } from '../src/lib/session-progress';
+import { allPlannedSetsLogged, decideLaunch, freshProgress, isDirty, loadStrengthProgress, progressHasSets, saveStrengthProgress, type StrengthProgress } from '../src/lib/session-progress';
 import { sessionFromDraft } from '../src/lib/session-save';
 import { normalize } from '../src/lib/storage';
 import type { TrainingData } from '../src/types';
@@ -79,6 +79,23 @@ if (lower) {
       check('the set stores kg per piece and the total', saved.exercises[0]?.pieces === 1 && saved.exercises[0]?.implement === 'kettlebell' && saved.exercises[0]?.sets[0]?.kgPerPiece === 16 && saved.exercises[0]?.sets[0]?.weightKg === 16 && saved.exercises[0]?.sets[0]?.reps === 8);
     }
 
+    check('a partly logged plan day is not ready to finish', !allPlannedSetsLogged(draft));
+    const finished = withAllSetsLogged(draft);
+    check('all planned sets logged means the workout can be finished', allPlannedSetsLogged(finished));
+    const completed = sessionFromDraft(finished, 'log-done', '2026-10-08T12:00:00.000Z');
+    if (typeof completed === 'string') check('a finished plan session saves through the log', false);
+    else {
+      check(
+        'finishing writes every planned exercise',
+        completed.planSessionId === 'ps-lower-a' &&
+          completed.exercises.length === finished.exercises.length &&
+          completed.exercises.every((exercise, index) => exercise.sets.length === finished.exercises[index]?.sets.length),
+      );
+    }
+    const dropped = structuredClone(finished);
+    dropped.exercises.at(-1)?.sets.pop();
+    check('one unfinished exercise blocks completion', !allPlannedSetsLogged(dropped));
+
     const empty = freshProgress(draftFromPreset(preset, []), 'new-1', '2026-10-08T09:00:00.000Z');
     const again = freshProgress(draftFromPreset(preset, []), 'new-2', '2026-10-08T11:00:00.000Z');
     const resumed = decideLaunch(again, empty);
@@ -115,6 +132,29 @@ check('the next exercise sits under the log button', screen.includes('sess-upcom
 check('enabled log label stays light', css.includes('.sess-screen button.sess-log') && css.includes('color: #f6f3ec'));
 check('the session screen does not scroll', css.includes('overflow: hidden') && css.includes('100dvh') && css.includes('overscroll-behavior: none'));
 check('the logger does not write the gist itself', !screen.includes('saveToGist') && !screen.includes('localStorage'));
+check('review finishes a fully logged workout', screen.includes("workoutComplete ? 'Complete workout' : 'Save'") && screen.includes('allPlannedSetsLogged'));
+
+const blank = blankDraft('2026-10-09');
+check('a blank session is not finished', !allPlannedSetsLogged(blank));
+const blankDone = withAllSetsLogged(blank);
+check('a blank session can be finished once its sets are logged', allPlannedSetsLogged(blankDone) && blankDone.exercises[0]?.sets.length === 3);
+const blankSaved = sessionFromDraft(blankDone, 'log-blank', '2026-10-09T18:00:00.000Z');
+check('a finished blank session saves through the same log', typeof blankSaved !== 'string' && blankSaved.kind === 'strength' && blankSaved.planSessionId === null && blankSaved.exercises.length === 1 && blankSaved.exercises[0]?.sets.length === 3);
+
+function withAllSetsLogged(draft: Draft): Draft {
+  return {
+    ...draft,
+    exercises: draft.exercises.map((exercise, exerciseIndex) => ({
+      ...exercise,
+      name: exercise.name.trim() || 'Press',
+      sets: Array.from({ length: Math.max(exercise.targetSets, 1) }, (_, setIndex) => ({
+        key: `done-${exerciseIndex}-${setIndex}`,
+        reps: exercise.pendingReps || exercise.seedReps || '8',
+        kgPerPiece: exercise.bodyweight ? '' : exercise.pendingKg || exercise.seedKg || '0',
+      })),
+    })),
+  };
+}
 
 function memoryStore(): Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> {
   const map = new Map<string, string>();
