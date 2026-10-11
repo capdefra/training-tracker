@@ -286,6 +286,7 @@ function TemplateForm({
         if (exercise.count === 'seconds') next.count = 'seconds';
         if (exercise.alsoCounts && exercise.alsoCounts.length > 0) next.alsoCounts = [...exercise.alsoCounts];
         if (exercise.target) next.target = { ...exercise.target };
+        if (exercise.equipment && exercise.equipment.length > 0) next.equipment = [...exercise.equipment];
         return keepUnknown(next, exercise, PLAN_EXERCISE_KEYS);
       })
       .filter((exercise) => exercise.name);

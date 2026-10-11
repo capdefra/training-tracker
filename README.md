@@ -173,6 +173,14 @@ A phase can list `targets` for the dates it covers. Each of `sets`, `reps`, and 
 { "name": "Reverse lunge", "sets": 3, "reps": "8", "target": { "reps": 8, "weightKg": 8 } }
 ```
 
+An exercise can list the gear it needs. Each entry is a short label. `2× dumbbells` is a pair, `dumbbell` or `kettlebell` is one piece, and `bench`, `mat`, and `resistance band` are the other home-plan pieces. The field is absent until a writer adds it. The preview then infers the piece count from the exercise name and adds the bench or mat the home plan uses. A written list replaces that inference for that exercise.
+
+```json
+{ "name": "Reverse lunge", "sets": 3, "reps": "8", "equipment": ["2× dumbbells"] }
+```
+
+A phase note that only restates those loads, including a paragraph that starts with `Loads:`, is left off the preview. A coaching sentence after it, and a run note such as `20-25 min easy`, still show.
+
 ### One-off moves
 
 The repeating week stays on `dayOfWeek`. To show one occurrence on another date, the planner adds `moves` on that plan. Leave `moves` off and the week is unchanged. The site does not edit this list.

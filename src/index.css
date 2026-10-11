@@ -624,10 +624,28 @@ html:has(dialog.form-sheet[open]) { overflow: hidden; }
   padding: 0 16px 12px;
 }
 .preview-actions .btn { flex: 1; min-width: 0; }
+.preview-equipment {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0 16px 12px;
+  min-height: 2.8em;
+}
+.preview-equipment span:last-child {
+  min-height: 1.35em;
+  font-variant-numeric: tabular-nums;
+}
 .preview-phase {
   margin: 0;
   padding: 0 16px 12px;
   color: var(--ink);
+}
+.preview-gear {
+  margin: 0;
+  min-height: 1.35em;
+  color: var(--muted);
+  font-size: 0.92rem;
 }
 .preview-list {
   list-style: none;

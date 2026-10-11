@@ -176,6 +176,7 @@ if (session && loadedRdl) {
       if (item.name !== 'Dumbbell Romanian deadlift') return item;
       const next: PlanExercise = { name: item.name, sets: item.sets, reps: '6' };
       if (item.alsoCounts && item.alsoCounts.length > 0) next.alsoCounts = [...item.alsoCounts];
+      if (item.equipment && item.equipment.length > 0) next.equipment = [...item.equipment];
       return keepUnknown(next, item, PLAN_EXERCISE_KEYS);
     }),
   };

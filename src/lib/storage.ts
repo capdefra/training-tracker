@@ -157,6 +157,19 @@ function normalizePhaseTargets(value: unknown): PhaseSessionTarget[] | undefined
   return result.length > 0 ? result : undefined;
 }
 
+function equipmentList(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const items: string[] = [];
+  const seen = new Set<string>();
+  for (const item of value) {
+    const label = text(item);
+    if (!label || seen.has(label.toLowerCase())) continue;
+    seen.add(label.toLowerCase());
+    items.push(label);
+  }
+  return items.length > 0 ? items : undefined;
+}
+
 function alsoCountsList(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) return undefined;
   const aliases: string[] = [];
@@ -183,6 +196,8 @@ function normalizeExercise(value: unknown): PlanExercise | null {
   if (aliases) exercise.alsoCounts = aliases;
   const target = normalizeLoadTarget(record.target);
   if (target) exercise.target = target;
+  const equipment = equipmentList(record.equipment);
+  if (equipment) exercise.equipment = equipment;
   return keepUnknown(exercise, record, PLAN_EXERCISE_KEYS);
 }
 
