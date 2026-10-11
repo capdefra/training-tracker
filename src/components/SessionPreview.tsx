@@ -35,6 +35,9 @@ export function SessionPreview({
   }
 
   function onDialogClick(event: MouseEvent<HTMLDialogElement>) {
+    const target = event.target instanceof Element ? event.target : null;
+    const nested = target?.closest('dialog');
+    if (nested && nested !== event.currentTarget) return;
     const rect = event.currentTarget.getBoundingClientRect();
     const inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
     if (!inside) requestClose();
@@ -45,7 +48,9 @@ export function SessionPreview({
       ref={dialogRef}
       className="form-sheet preview-sheet"
       aria-labelledby={titleId}
-      onClose={onClose}
+      onClose={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
       onClick={onDialogClick}
     >
       {model ? (
