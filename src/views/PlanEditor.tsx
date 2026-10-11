@@ -2,11 +2,13 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Field } from '../components/Field';
 import { FocusField } from '../components/FocusField';
+import { SessionPreview } from '../components/SessionPreview';
 import { WeekBoard } from '../components/WeekBoard';
 import { DAY_OPTIONS, addDays, formatDayMonth, formatLong, startOfWeek, todayISO, weekdayLabel } from '../lib/dates';
 import { uid } from '../lib/ids';
 import { cx } from '../lib/cx';
-import { describePhase, planLastDay } from '../lib/plans';
+import { buildPreset, describePhase, planLastDay, sessionForDate } from '../lib/plans';
+import { previewSession } from '../lib/preview';
 import { describePlanSession } from '../lib/targets';
 import { PLAN_EXERCISE_KEYS, absorbPlanSession, keepUnknown } from '../lib/unknown';
 import type { LogPreset, Plan, PlanExercise, PlanSession, SessionKind, TrainingData } from '../types';
@@ -27,10 +29,12 @@ export function PlanEditor({
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [anchor, setAnchor] = useState(todayISO());
   const end = planLastDay(plan);
   const ordered = [...plan.sessions].sort((a, b) => rankDay(a.dayOfWeek) - rankDay(b.dayOfWeek));
+  const previewing = ordered.find((session) => session.id === previewId) ?? null;
   const viewedMonday = startOfWeek(anchor);
   const viewedSunday = addDays(viewedMonday, 6);
 
@@ -173,9 +177,14 @@ export function PlanEditor({
                   <strong>{session.title}</strong>
                   <p className="muted">{describeSession(session)}</p>
                 </div>
-                <button type="button" className="btn ghost small" onClick={() => { setEditingId(editingId === session.id ? null : session.id); setAdding(false); }}>
-                  {editingId === session.id ? 'Close' : 'Edit'}
-                </button>
+                <div className="check-actions">
+                  <button type="button" className="btn ghost small" onClick={() => { setPreviewId(session.id); setEditingId(null); setAdding(false); }}>
+                    Preview
+                  </button>
+                  <button type="button" className="btn ghost small" onClick={() => { setEditingId(editingId === session.id ? null : session.id); setAdding(false); }}>
+                    {editingId === session.id ? 'Close' : 'Edit'}
+                  </button>
+                </div>
               </div>
               {editingId === session.id ? (
                 <TemplateForm
@@ -219,6 +228,19 @@ export function PlanEditor({
           />
         ) : null}
       </div>
+      <SessionPreview
+        model={previewing ? previewSession(plan, previewing, anchor, data.sessions) : null}
+        onClose={() => setPreviewId(null)}
+        onStart={
+          previewing && previewing.kind === 'strength'
+            ? () => {
+                const session = previewing;
+                setPreviewId(null);
+                onLog(buildPreset(plan, sessionForDate(plan, session, anchor), anchor, todayISO()));
+              }
+            : null
+        }
+      />
     </article>
   );
 }

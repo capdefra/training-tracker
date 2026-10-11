@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { ExerciseDemo } from './ExerciseDemo';
+import { SessionPreview } from './SessionPreview';
 import { todayISO } from '../lib/dates';
 import { logFromPreset } from '../lib/plans';
+import { previewSession } from '../lib/preview';
 import { describePlanSession } from '../lib/targets';
 import type { LogPreset, PlanSession, TrainingData, WorkoutPreset } from '../types';
 
@@ -14,8 +15,9 @@ export function PresetList({
   onLog: (preset: LogPreset) => void;
   embedded?: boolean;
 }) {
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
   if (data.presets.length === 0) return null;
+  const previewing = data.presets.find((preset) => preset.id === previewId) ?? null;
 
   return (
     <section className="stack">
@@ -29,7 +31,6 @@ export function PresetList({
       )}
       <ul className="preset-list">
         {data.presets.map((preset) => {
-          const open = openId === preset.id;
           const summary = presetSummary(preset);
           return (
             <li key={preset.id} className="card preset-card">
@@ -43,35 +44,36 @@ export function PresetList({
               </div>
               {preset.notes && preset.notes !== summary ? <p>{preset.notes}</p> : null}
               <div className="preset-actions">
+                <button type="button" className="btn ghost" onClick={() => setPreviewId(preset.id)}>
+                  Preview
+                </button>
                 <button type="button" className="btn primary" onClick={() => onLog(logFromPreset(preset, data, todayISO()))}>
                   {preset.kind === 'run' ? 'Log' : 'Start'}
                 </button>
-                {preset.kind === 'strength' ? (
-                  <button type="button" className="btn ghost" aria-expanded={open} onClick={() => setOpenId(open ? null : preset.id)}>
-                    {open ? 'Hide exercises' : 'Exercises'}
-                  </button>
-                ) : null}
               </div>
-              {open ? (
-                <ul className="targets">
-                  {preset.exercises.map((exercise) => (
-                    <li key={exercise.name}>
-                      <span className="target-name">{exercise.name}</span>
-                      <ExerciseDemo name={exercise.name} />
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
             </li>
           );
         })}
       </ul>
+      <SessionPreview
+        model={previewing ? previewSession(null, presetAsSession(previewing), todayISO(), data.sessions) : null}
+        onClose={() => setPreviewId(null)}
+        onStart={
+          previewing && previewing.kind === 'strength'
+            ? () => {
+                const preset = previewing;
+                setPreviewId(null);
+                onLog(logFromPreset(preset, data, todayISO()));
+              }
+            : null
+        }
+      />
     </section>
   );
 }
 
-function presetSummary(preset: WorkoutPreset): string {
-  const session: PlanSession = {
+function presetAsSession(preset: WorkoutPreset): PlanSession {
+  return {
     id: preset.id,
     dayOfWeek: 1,
     kind: preset.kind,
@@ -82,5 +84,8 @@ function presetSummary(preset: WorkoutPreset): string {
     distanceKm: null,
     durationMin: null,
   };
-  return describePlanSession(session);
+}
+
+function presetSummary(preset: WorkoutPreset): string {
+  return describePlanSession(presetAsSession(preset));
 }
