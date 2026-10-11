@@ -1,5 +1,6 @@
-import type { LogPreset, Plan, PlanPhase, PlanSession, Session, TrainingData, WorkoutPreset } from '../types';
+import type { ExerciseLoadTarget, LogPreset, Plan, PlanExercise, PlanPhase, PlanSession, Session, TrainingData, WorkoutPreset } from '../types';
 import { addDays, daysBetween, formatPretty, startOfWeek, weekdayIndex } from './dates';
+import { resolveExerciseTarget } from './load-target';
 import { normalizeMoves } from './plan-moves';
 
 /** Weeks shown on the activity tab, ending with the week that contains today. */
@@ -41,18 +42,33 @@ export function phaseOn(plan: Plan, date: string): PlanPhase | null {
   return match;
 }
 
+function sameTarget(current: ExerciseLoadTarget | undefined, resolved: ExerciseLoadTarget): boolean {
+  return current?.sets === resolved.sets && current?.reps === resolved.reps && current?.weightKg === resolved.weightKg;
+}
+
+function exerciseForDate(phase: PlanPhase | null, session: PlanSession, exercise: PlanExercise, blanketSets: number | undefined): PlanExercise {
+  const base = blanketSets === undefined ? exercise : { ...exercise, sets: blanketSets };
+  const resolved = resolveExerciseTarget(phase, session.id, base);
+  if (!resolved) return base;
+  const sets = resolved.sets ?? base.sets;
+  const target = sameTarget(base.target, resolved) && base.target ? base.target : resolved;
+  if (sets === base.sets && target === base.target) return base;
+  return { ...base, sets, target };
+}
+
 /** The repeating session, with this date's phase applied. */
 export function sessionForDate(plan: Plan, session: PlanSession, date: string): PlanSession {
   const phase = phaseOn(plan, date);
-  if (!phase) return session;
-  const change = phase.sessions.find((item) => item.sessionId === session.id);
-  if (!change) return session;
-  const sets = change.sets;
+  const change = phase?.sessions.find((item) => item.sessionId === session.id);
+  const blanketSets = change?.sets;
+  const exercises = session.exercises.map((exercise) => exerciseForDate(phase, session, exercise, blanketSets));
+  const exercisesChanged = exercises.some((exercise, index) => exercise !== session.exercises[index]);
+  if (!change && !exercisesChanged) return session;
   return {
     ...session,
-    notes: change.notes ?? session.notes,
-    durationMin: change.durationMin === undefined ? session.durationMin : change.durationMin,
-    exercises: sets === undefined ? session.exercises : session.exercises.map((exercise) => ({ ...exercise, sets })),
+    notes: change?.notes ?? session.notes,
+    durationMin: change === undefined || change.durationMin === undefined ? session.durationMin : change.durationMin,
+    exercises: exercisesChanged ? exercises : session.exercises,
   };
 }
 

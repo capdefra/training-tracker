@@ -41,7 +41,7 @@ export function LogView({
     if (existing) {
       const base = draftFromSession(existing);
       const template = existing.planSessionId ? findPlanSession(data, existing.planSessionId, existing.date)?.session.exercises ?? [] : [];
-      return applyTemplateMeta(base, template);
+      return applyTemplateMeta(base, template, data.sessions);
     }
     if (request.mode === 'preset') return draftFromPreset(request.preset, data.sessions);
     return blankDraft(todayISO());

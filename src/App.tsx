@@ -255,7 +255,7 @@ function Tracker() {
 
 function progressForSaved(data: TrainingData, session: Session) {
   const template = session.planSessionId ? findPlanSession(data, session.planSessionId, session.date)?.session.exercises ?? [] : [];
-  return freshProgress(applyTemplateMeta(draftFromSession(session), template), session.id, session.createdAt);
+  return freshProgress(applyTemplateMeta(draftFromSession(session), template, data.sessions), session.id, session.createdAt);
 }
 
 function syncLabel(status: 'idle' | 'syncing' | 'synced' | 'error', gistId: string, dirty: boolean, repoMissing: boolean): string {

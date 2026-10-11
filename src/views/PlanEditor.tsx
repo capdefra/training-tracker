@@ -191,11 +191,15 @@ export function PlanEditor({
                       ...plan,
                       sessions: plan.sessions.filter((item) => item.id !== session.id),
                       phases: plan.phases
-                        ?.map((phase) => ({
-                          ...phase,
-                          sessions: phase.sessions.filter((change) => change.sessionId !== session.id),
-                        }))
-                        .filter((phase) => phase.sessions.length > 0),
+                        ?.map((phase) => {
+                          const sessions = phase.sessions.filter((change) => change.sessionId !== session.id);
+                          const targets = phase.targets?.filter((block) => block.sessionId !== session.id);
+                          const next = { ...phase, sessions };
+                          if (targets && targets.length > 0) next.targets = targets;
+                          else delete next.targets;
+                          return next;
+                        })
+                        .filter((phase) => phase.sessions.length > 0 || (phase.targets?.length ?? 0) > 0),
                       moves: moves && moves.length > 0 ? moves : undefined,
                     });
                   }}
@@ -259,6 +263,7 @@ function TemplateForm({
         };
         if (exercise.count === 'seconds') next.count = 'seconds';
         if (exercise.alsoCounts && exercise.alsoCounts.length > 0) next.alsoCounts = [...exercise.alsoCounts];
+        if (exercise.target) next.target = { ...exercise.target };
         return keepUnknown(next, exercise, PLAN_EXERCISE_KEYS);
       })
       .filter((exercise) => exercise.name);
