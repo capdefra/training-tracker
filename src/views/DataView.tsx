@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SESSION_WRITE_MESSAGE, STALE_WRITE_MESSAGE, guardSharedWrite } from '../lib/deploy-client';
 import { commitTrainingFile, loadGithubSettings, saveGithubSettings, type GithubSettings } from '../lib/github';
 import { GIST_FILENAME } from '../lib/gist';
 import { downloadData, normalize, serialize } from '../lib/storage';
@@ -96,6 +97,12 @@ export function DataView({
     setBusy(true);
     setCommitUrl(null);
     try {
+      const gate = await guardSharedWrite();
+      if (gate !== 'allow') {
+        if (gate === 'defer') fail(SESSION_WRITE_MESSAGE);
+        else if (gate === 'refuse') fail(STALE_WRITE_MESSAGE);
+        return;
+      }
       saveGithubSettings(settings);
       const url = await commitTrainingFile(settings, data);
       onSynced();

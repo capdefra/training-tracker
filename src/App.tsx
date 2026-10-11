@@ -12,6 +12,7 @@ import { useHashRoute, type RouteName } from './hooks/useHashRoute';
 import { useScreenWakeLock } from './hooks/useScreenWakeLock';
 import { useTrainingData } from './hooks/useTrainingData';
 import { removeSession } from './lib/storage';
+import { replaceLoggedSession } from './lib/unknown';
 import type { LogPreset, Session, TrainingData } from './types';
 import type { DraftRequest } from './views/draft-request';
 import { ActivityView } from './views/ActivityView';
@@ -133,9 +134,7 @@ function Tracker() {
           clearPendingLaunch();
           store.update((current) => ({
             ...current,
-            sessions: current.sessions.some((item) => item.id === session.id)
-              ? current.sessions.map((item) => (item.id === session.id ? session : item))
-              : [...current.sessions, session],
+            sessions: replaceLoggedSession(current.sessions, session),
           }));
           goToHash('#/today');
         }}
@@ -200,9 +199,7 @@ function Tracker() {
               onSave={(session) => {
                 store.update((current) => ({
                   ...current,
-                  sessions: current.sessions.some((item) => item.id === session.id)
-                    ? current.sessions.map((item) => (item.id === session.id ? session : item))
-                    : [...current.sessions, session],
+                  sessions: replaceLoggedSession(current.sessions, session),
                 }));
                 goToHash('#/today');
               }}

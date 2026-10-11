@@ -1,5 +1,6 @@
 import type { ExerciseEntry, LoadImplement, LoadPieces, SetEntry } from '../types';
 import { parseNum, trimNum } from './format';
+import { SET_KEYS, keepUnknown } from './unknown';
 
 /**
  * Kilograms on a strength set.
@@ -111,12 +112,12 @@ export function migrateExercise(name: string, sets: SetEntry[], rawPieces: unkno
 }
 
 function reconcileSet(set: SetEntry, pieces: LoadPieces | undefined): SetEntry {
-  if (!pieces) return { reps: set.reps, weightKg: roundKg(set.weightKg) };
+  if (!pieces) return keepUnknown({ reps: set.reps, weightKg: roundKg(set.weightKg) }, set, SET_KEYS);
   const fromPer = set.kgPerPiece && set.kgPerPiece > 0 ? roundKg(set.kgPerPiece) : 0;
   const fromTotal = set.weightKg > 0 ? roundKg(set.weightKg / pieces) : 0;
   const per = fromPer || fromTotal;
-  if (per <= 0) return { reps: set.reps, weightKg: 0 };
-  return { reps: set.reps, weightKg: roundKg(per * pieces), kgPerPiece: per };
+  if (per <= 0) return keepUnknown({ reps: set.reps, weightKg: 0 }, set, SET_KEYS);
+  return keepUnknown({ reps: set.reps, weightKg: roundKg(per * pieces), kgPerPiece: per }, set, SET_KEYS);
 }
 
 /** History and progress. Per piece first, total after it, or a bare total when pieces were not stored. */

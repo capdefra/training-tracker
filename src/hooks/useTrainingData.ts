@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { guardSharedWrite, SESSION_WRITE_MESSAGE, STALE_WRITE_MESSAGE, type WriteGuard } from '../lib/deploy-client';
 import { clearGistConfig, loadFromGist, loadGistConfig, parseGistId, saveGistConfig, saveToGist } from '../lib/gist';
 import { mergeTraining } from '../lib/merge';
 import { clearLocal, emptyData, loadLocal, loadRepo, normalize, saveLocal, serialize } from '../lib/storage';
@@ -23,25 +24,48 @@ export function useTrainingData() {
     return next;
   }, []);
 
+  const guardWrite = useCallback(async (): Promise<WriteGuard> => {
+    const gate = await guardSharedWrite();
+    if (gate === 'refuse') {
+      setSyncStatus('error');
+      setSyncError(STALE_WRITE_MESSAGE);
+    }
+    if (gate === 'defer') {
+      setSyncStatus('idle');
+      setSyncError(null);
+    }
+    return gate;
+  }, []);
+
+  const requireSharedWrite = useCallback(async () => {
+    const gate = await guardWrite();
+    if (gate === 'allow') return;
+    throw new Error(gate === 'defer' ? SESSION_WRITE_MESSAGE : STALE_WRITE_MESSAGE);
+  }, [guardWrite]);
+
   const queueGistSave = useCallback((next: TrainingData) => {
     latest.current = next;
     const config = loadGistConfig();
     if (!config) return;
     if (syncTimer.current) clearTimeout(syncTimer.current);
     syncTimer.current = setTimeout(() => {
-      const snapshot = latest.current;
-      const current = loadGistConfig();
-      if (!snapshot || !current) return;
-      setSyncStatus('syncing');
-      setSyncError(null);
-      void saveToGist(current.token, current.gistId, snapshot)
-        .then(() => setSyncStatus('synced'))
-        .catch((err: unknown) => {
+      void (async () => {
+        if ((await guardWrite()) !== 'allow') return;
+        const snapshot = latest.current;
+        const current = loadGistConfig();
+        if (!snapshot || !current) return;
+        setSyncStatus('syncing');
+        setSyncError(null);
+        try {
+          await saveToGist(current.token, current.gistId, snapshot);
+          setSyncStatus('synced');
+        } catch (err: unknown) {
           setSyncStatus('error');
           setSyncError(err instanceof Error ? err.message : 'Could not save to the gist.');
-        });
+        }
+      })();
     }, 1500);
-  }, []);
+  }, [guardWrite]);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,10 +89,13 @@ export function useTrainingData() {
           saveLocal(merged);
           setData(merged);
           setPersisted(true);
-          await saveToGist(config.token, config.gistId, merged);
-          if (!cancelled) {
-            setSyncStatus('synced');
-            setSyncError(null);
+          if (cancelled) return;
+          if ((await guardWrite()) === 'allow') {
+            await saveToGist(config.token, config.gistId, merged);
+            if (!cancelled) {
+              setSyncStatus('synced');
+              setSyncError(null);
+            }
           }
         } catch (err) {
           if (cancelled) return;
@@ -93,7 +120,33 @@ export function useTrainingData() {
       cancelled = true;
       if (syncTimer.current) clearTimeout(syncTimer.current);
     };
-  }, [remember]);
+  }, [guardWrite, remember]);
+
+  useEffect(() => {
+    let stopped = false;
+    const look = () => {
+      void guardSharedWrite().then((gate) => {
+        if (stopped || gate !== 'refuse') return;
+        setSyncStatus('error');
+        setSyncError(STALE_WRITE_MESSAGE);
+      });
+    };
+    look();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') look();
+    };
+    window.addEventListener('focus', look);
+    window.addEventListener('pageshow', look);
+    window.addEventListener('hashchange', look);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      stopped = true;
+      window.removeEventListener('focus', look);
+      window.removeEventListener('pageshow', look);
+      window.removeEventListener('hashchange', look);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
 
   const update = useCallback(
     (recipe: (current: TrainingData) => TrainingData) => {
@@ -131,6 +184,7 @@ export function useTrainingData() {
       saveLocal(merged);
       setData(merged);
       setPersisted(true);
+      await requireSharedWrite();
       await saveToGist(config.token, config.gistId, merged);
       setSyncStatus('synced');
       setSyncError(null);
@@ -140,7 +194,7 @@ export function useTrainingData() {
     remember(fresh);
     setData(fresh);
     setPersisted(false);
-  }, [remember]);
+  }, [remember, requireSharedWrite]);
 
   const markRepoSynced = useCallback(() => {
     if (latest.current) setRepo(normalize(latest.current));
@@ -164,6 +218,15 @@ export function useTrainingData() {
       setSyncStatus('syncing');
       setSyncError(null);
       try {
+        const gate = await guardSharedWrite();
+        if (gate !== 'allow') {
+          const message = gate === 'defer' ? SESSION_WRITE_MESSAGE : STALE_WRITE_MESSAGE;
+          if (gate !== 'reload') {
+            setSyncStatus(gate === 'refuse' ? 'error' : 'idle');
+            setSyncError(message);
+          }
+          throw new Error(message);
+        }
         const remote = await loadFromGist(token, id);
         saveGistConfig(id, token);
         setGistId(id);
@@ -205,6 +268,7 @@ export function useTrainingData() {
       saveLocal(merged);
       setData(merged);
       setPersisted(true);
+      await requireSharedWrite();
       await saveToGist(config.token, config.gistId, merged);
       setSyncStatus('synced');
     } catch (err) {
@@ -212,7 +276,7 @@ export function useTrainingData() {
       setSyncError(err instanceof Error ? err.message : 'Could not sync the gist.');
       throw err;
     }
-  }, [remember]);
+  }, [remember, requireSharedWrite]);
 
   const dirty = data !== null && repo !== null && serialize(data) !== serialize(repo);
 

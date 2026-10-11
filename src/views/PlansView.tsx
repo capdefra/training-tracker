@@ -7,6 +7,7 @@ import { cx } from '../lib/cx';
 import { uid } from '../lib/ids';
 import { removeGoal, removePlan } from '../lib/storage';
 import { HOME_SKI_END, HOME_SKI_FOCUS, HOME_SKI_NAME, HOME_SKI_NOTES, HOME_SKI_START, HOME_SKI_WEEKS, homeSkiWeek } from '../lib/templates';
+import { absorbGoal } from '../lib/unknown';
 import { PlanEditor } from './PlanEditor';
 import type { Goal, GoalStatus, LogPreset, Plan, TrainingData } from '../types';
 
@@ -222,7 +223,7 @@ function GoalForm({
     }
     const statusValue = String(form.get('status') ?? initial?.status ?? 'active');
     const status: GoalStatus = statusValue === 'paused' || statusValue === 'done' ? statusValue : 'active';
-    onSave({
+    const next: Goal = {
       id: initial?.id ?? uid('goal'),
       name,
       targetDate,
@@ -231,7 +232,8 @@ function GoalForm({
       status,
       createdAt: initial?.createdAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    });
+    };
+    onSave(initial ? absorbGoal(next, initial) : next);
   }
 
   return (

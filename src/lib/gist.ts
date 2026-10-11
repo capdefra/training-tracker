@@ -1,4 +1,5 @@
 import type { TrainingData } from '../types';
+import { mergeTraining } from './merge';
 import { emptyData, normalize, serialize } from './storage';
 
 const TOKEN_KEY = 'training-tracker:gist-token';
@@ -124,12 +125,18 @@ export function parseGistPayload(raw: string): TrainingData {
   });
 }
 
+/** Merge with the gist that is live now, so this write does not drop a record another writer just added. */
+export function documentForGist(local: TrainingData, remote: TrainingData): string {
+  return serialize(mergeTraining(local, remote));
+}
+
 export async function saveToGist(token: string, gistId: string, data: TrainingData): Promise<void> {
+  const remote = await loadFromGist(token, gistId);
   await github(`/gists/${encodeURIComponent(gistId)}`, token, {
     method: 'PATCH',
     body: JSON.stringify({
       files: {
-        [GIST_FILENAME]: { content: serialize(data) },
+        [GIST_FILENAME]: { content: documentForGist(data, remote) },
       },
     }),
   });
