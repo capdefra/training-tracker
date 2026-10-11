@@ -59,7 +59,9 @@ On the Data tab, connect the same gist on each device:
 
 The app loads the gist when it opens, merges it with the cache, and saves back a couple of seconds after you change something. `Sync now` does the same immediately. Disconnecting stops the sync and leaves the cache on that device.
 
-Sessions, goals, plans, and presets merge by id. The later edit wins. A delete is recorded, so removing a session on the phone removes it on the laptop at the next sync.
+Sessions, goals, plans, and presets merge by id. The later edit wins. A delete is recorded, so removing a session on the phone removes it on the laptop at the next sync. Each save reads the gist once more and merges before writing, so a save does not replace a session the other device just added.
+
+Fields the app does not use are kept through that load and save. An open copy of an older build therefore cannot wipe a newer plan field. Each deploy writes `version.json` with that build’s id. A tab or home-screen app still running an older build compares it, with the network cache bypassed, when the page loads, when it regains focus, and before a gist write. A newer id reloads the page. An open strength session or the log form finishes first; the reload waits until you leave that screen. If a reload still leaves the old build running, that copy stops writing to the gist.
 
 This follows the same idea as the [Cardmarket wishlist tracker](https://github.com/capdefra/magiccardmarket-wishlist-tracker): the browser calls the GitHub API directly, and the gist is the shared JSON file. Here you paste the gist id yourself so both devices are aimed at the one gist.
 

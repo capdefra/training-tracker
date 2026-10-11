@@ -1,5 +1,23 @@
 import { migrateExercise, roundKg } from './load';
 import { normalizeMoves } from './plan-moves';
+import {
+  DELETIONS_KEYS,
+  DELETION_KEYS,
+  GOAL_KEYS,
+  LOGGED_EXERCISE_KEYS,
+  PHASE_CHANGE_KEYS,
+  PHASE_KEYS,
+  PLAN_EXERCISE_KEYS,
+  PLAN_KEYS,
+  PLAN_SESSION_KEYS,
+  PRESET_KEYS,
+  ROOT_KEYS,
+  SESSION_KEYS,
+  SET_KEYS,
+  SPLIT_KEYS,
+  WEATHER_KEYS,
+  keepUnknown,
+} from './unknown';
 import type {
   Deletion,
   Deletions,
@@ -96,7 +114,7 @@ function normalizeExercise(value: unknown): PlanExercise | null {
   if (record.count === 'seconds') exercise.count = 'seconds';
   const aliases = alsoCountsList(record.alsoCounts);
   if (aliases) exercise.alsoCounts = aliases;
-  return exercise;
+  return keepUnknown(exercise, record, PLAN_EXERCISE_KEYS);
 }
 
 function normalizeSet(value: unknown): SetEntry | null {
@@ -109,7 +127,7 @@ function normalizeSet(value: unknown): SetEntry | null {
   if (weightKg <= 0 && per !== null && per > 0) weightKg = per;
   const set: SetEntry = { reps: Math.round(reps), weightKg: roundKg(weightKg) };
   if (per !== null && per > 0) set.kgPerPiece = roundKg(per);
-  return set;
+  return keepUnknown(set, record, SET_KEYS);
 }
 
 function normalizeLoggedExercise(value: unknown): ExerciseEntry | null {
@@ -118,7 +136,7 @@ function normalizeLoggedExercise(value: unknown): ExerciseEntry | null {
   const name = text(record.name);
   const sets = Array.isArray(record.sets) ? record.sets.map(normalizeSet).filter((set) => set !== null) : [];
   if (!name || sets.length === 0) return null;
-  return migrateExercise(name, sets, record.pieces, record.implement);
+  return keepUnknown(migrateExercise(name, sets, record.pieces, record.implement), record, LOGGED_EXERCISE_KEYS);
 }
 
 function isoDate(value: unknown): string {
@@ -143,7 +161,7 @@ function normalizePhaseChange(value: unknown): PhaseChange | null {
     if (sets > 0) change.sets = sets;
   }
   if (change.notes === undefined && change.durationMin === undefined && change.sets === undefined) return null;
-  return change;
+  return keepUnknown(change, record, PHASE_CHANGE_KEYS);
 }
 
 function normalizePhase(value: unknown): PlanPhase | null {
@@ -156,31 +174,39 @@ function normalizePhase(value: unknown): PlanPhase | null {
     ? record.sessions.map(normalizePhaseChange).filter((item) => item !== null)
     : [];
   if (sessions.length === 0) return null;
-  return {
-    name: text(record.name),
-    startDate,
-    endDate,
-    sessions,
-  };
+  return keepUnknown(
+    {
+      name: text(record.name),
+      startDate,
+      endDate,
+      sessions,
+    },
+    record,
+    PHASE_KEYS,
+  );
 }
 
 function normalizePlanSession(value: unknown): PlanSession | null {
   const record = asRecord(value);
   if (!record) return null;
   const day = Math.round(numberOr(record.dayOfWeek, 1));
-  return {
-    id: text(record.id) || `ps-${Math.random().toString(36).slice(2, 8)}`,
-    dayOfWeek: ((day % 7) + 7) % 7,
-    kind: kind(record.kind),
-    title: text(record.title) || 'Session',
-    focus: text(record.focus),
-    notes: text(record.notes),
-    exercises: Array.isArray(record.exercises)
-      ? record.exercises.map(normalizeExercise).filter((item) => item !== null)
-      : [],
-    distanceKm: numberOrNull(record.distanceKm),
-    durationMin: numberOrNull(record.durationMin),
-  };
+  return keepUnknown(
+    {
+      id: text(record.id) || `ps-${Math.random().toString(36).slice(2, 8)}`,
+      dayOfWeek: ((day % 7) + 7) % 7,
+      kind: kind(record.kind),
+      title: text(record.title) || 'Session',
+      focus: text(record.focus),
+      notes: text(record.notes),
+      exercises: Array.isArray(record.exercises)
+        ? record.exercises.map(normalizeExercise).filter((item) => item !== null)
+        : [],
+      distanceKm: numberOrNull(record.distanceKm),
+      durationMin: numberOrNull(record.durationMin),
+    },
+    record,
+    PLAN_SESSION_KEYS,
+  );
 }
 
 function normalizeGoal(value: unknown): Goal | null {
@@ -188,16 +214,20 @@ function normalizeGoal(value: unknown): Goal | null {
   if (!record) return null;
   const name = text(record.name);
   if (!name) return null;
-  return {
-    id: text(record.id) || `goal-${Math.random().toString(36).slice(2, 8)}`,
-    name,
-    targetDate: text(record.targetDate),
-    focus: focusList(record.focus),
-    notes: text(record.notes),
-    status: status(record.status),
-    createdAt: text(record.createdAt) || new Date().toISOString(),
-    updatedAt: optionalStamp(record.updatedAt),
-  };
+  return keepUnknown(
+    {
+      id: text(record.id) || `goal-${Math.random().toString(36).slice(2, 8)}`,
+      name,
+      targetDate: text(record.targetDate),
+      focus: focusList(record.focus),
+      notes: text(record.notes),
+      status: status(record.status),
+      createdAt: text(record.createdAt) || new Date().toISOString(),
+      updatedAt: optionalStamp(record.updatedAt),
+    },
+    record,
+    GOAL_KEYS,
+  );
 }
 
 function normalizePlan(value: unknown): Plan | null {
@@ -230,7 +260,7 @@ function normalizePlan(value: unknown): Plan | null {
     status: status(record.status),
     ...(updatedAt ? { updatedAt } : {}),
   };
-  return plan;
+  return keepUnknown(plan, record, PLAN_KEYS);
 }
 
 function normalizePreset(value: unknown): WorkoutPreset | null {
@@ -239,18 +269,22 @@ function normalizePreset(value: unknown): WorkoutPreset | null {
   const name = text(record.name);
   if (!name) return null;
   const presetKind = kind(record.kind);
-  return {
-    id: text(record.id) || `preset-${Math.random().toString(36).slice(2, 8)}`,
-    name,
-    kind: presetKind,
-    focus: text(record.focus),
-    notes: text(record.notes),
-    exercises: presetKind === 'strength' && Array.isArray(record.exercises)
-      ? record.exercises.map(normalizeExercise).filter((item) => item !== null)
-      : [],
-    createdAt: text(record.createdAt) || new Date().toISOString(),
-    updatedAt: optionalStamp(record.updatedAt),
-  };
+  return keepUnknown(
+    {
+      id: text(record.id) || `preset-${Math.random().toString(36).slice(2, 8)}`,
+      name,
+      kind: presetKind,
+      focus: text(record.focus),
+      notes: text(record.notes),
+      exercises: presetKind === 'strength' && Array.isArray(record.exercises)
+        ? record.exercises.map(normalizeExercise).filter((item) => item !== null)
+        : [],
+      createdAt: text(record.createdAt) || new Date().toISOString(),
+      updatedAt: optionalStamp(record.updatedAt),
+    },
+    record,
+    PRESET_KEYS,
+  );
 }
 
 function clock(value: unknown): string {
@@ -278,7 +312,7 @@ function normalizeWeather(value: unknown): SessionWeather | null {
   const humidityPct = humidity !== null && humidity >= 0 ? Math.round(humidity) : null;
   const airQuality = air !== null && air >= 0 ? Math.round(air) : null;
   if (tempC === null && humidityPct === null && airQuality === null) return null;
-  return { tempC, humidityPct, airQuality };
+  return keepUnknown({ tempC, humidityPct, airQuality }, record, WEATHER_KEYS);
 }
 
 function normalizeSplit(value: unknown, index: number): RunSplit | null {
@@ -290,12 +324,16 @@ function normalizeSplit(value: unknown, index: number): RunSplit | null {
   const timeSec = time !== null && time >= 0 ? Math.round(time) : null;
   if (timeSec === null && pace === null && heart === null) return null;
   const km = positiveCount(record.km);
-  return {
-    km: km ?? index + 1,
-    timeSec: timeSec ?? 0,
-    paceSec: pace,
-    heartRate: heart,
-  };
+  return keepUnknown(
+    {
+      km: km ?? index + 1,
+      timeSec: timeSec ?? 0,
+      paceSec: pace,
+      heartRate: heart,
+    },
+    record,
+    SPLIT_KEYS,
+  );
 }
 
 function normalizeSession(value: unknown): Session | null {
@@ -308,38 +346,42 @@ function normalizeSession(value: unknown): Session | null {
   const splits = Array.isArray(record.splits)
     ? record.splits.map(normalizeSplit).filter((item) => item !== null)
     : [];
-  return {
-    id: text(record.id) || `log-${Math.random().toString(36).slice(2, 8)}`,
-    date,
-    kind: sessionKind,
-    title: text(record.title) || (sessionKind === 'run' ? 'Run' : 'Strength'),
-    notes: text(record.notes),
-    goalId: text(record.goalId) || null,
-    planId: text(record.planId) || null,
-    planSessionId: text(record.planSessionId) || null,
-    exercises: Array.isArray(record.exercises)
-      ? record.exercises.map(normalizeLoggedExercise).filter((item) => item !== null)
-      : [],
-    distanceKm: numberOrNull(record.distanceKm),
-    durationSec: numberOrNull(record.durationSec),
-    elevationM: numberOrNull(record.elevationM),
-    effort: effort !== null ? Math.min(10, Math.max(1, Math.round(effort))) : null,
-    paceSec: positiveCount(record.paceSec),
-    heartRate: positiveCount(record.heartRate),
-    activeKcal: positiveCount(record.activeKcal),
-    totalKcal: positiveCount(record.totalKcal),
-    cadenceSpm: positiveCount(record.cadenceSpm),
-    powerW: positiveCount(record.powerW),
-    place: text(record.place),
-    source: text(record.source),
-    activity: text(record.activity),
-    startTime: clock(record.startTime),
-    endTime: clock(record.endTime),
-    weather: normalizeWeather(record.weather),
-    splits,
-    createdAt: text(record.createdAt) || new Date().toISOString(),
-    updatedAt: optionalStamp(record.updatedAt),
-  };
+  return keepUnknown(
+    {
+      id: text(record.id) || `log-${Math.random().toString(36).slice(2, 8)}`,
+      date,
+      kind: sessionKind,
+      title: text(record.title) || (sessionKind === 'run' ? 'Run' : 'Strength'),
+      notes: text(record.notes),
+      goalId: text(record.goalId) || null,
+      planId: text(record.planId) || null,
+      planSessionId: text(record.planSessionId) || null,
+      exercises: Array.isArray(record.exercises)
+        ? record.exercises.map(normalizeLoggedExercise).filter((item) => item !== null)
+        : [],
+      distanceKm: numberOrNull(record.distanceKm),
+      durationSec: numberOrNull(record.durationSec),
+      elevationM: numberOrNull(record.elevationM),
+      effort: effort !== null ? Math.min(10, Math.max(1, Math.round(effort))) : null,
+      paceSec: positiveCount(record.paceSec),
+      heartRate: positiveCount(record.heartRate),
+      activeKcal: positiveCount(record.activeKcal),
+      totalKcal: positiveCount(record.totalKcal),
+      cadenceSpm: positiveCount(record.cadenceSpm),
+      powerW: positiveCount(record.powerW),
+      place: text(record.place),
+      source: text(record.source),
+      activity: text(record.activity),
+      startTime: clock(record.startTime),
+      endTime: clock(record.endTime),
+      weather: normalizeWeather(record.weather),
+      splits,
+      createdAt: text(record.createdAt) || new Date().toISOString(),
+      updatedAt: optionalStamp(record.updatedAt),
+    },
+    record,
+    SESSION_KEYS,
+  );
 }
 
 function normalizeDeletion(value: unknown): Deletion | null {
@@ -348,7 +390,7 @@ function normalizeDeletion(value: unknown): Deletion | null {
   const id = text(record.id);
   const at = text(record.at);
   if (!id || !at) return null;
-  return { id, at };
+  return keepUnknown({ id, at }, record, DELETION_KEYS);
 }
 
 function deletionList(value: unknown): Deletion[] {
@@ -370,12 +412,16 @@ export function emptyDeletions(): Deletions {
 function normalizeDeletions(value: unknown): Deletions {
   const record = asRecord(value);
   if (!record) return emptyDeletions();
-  return {
-    goals: deletionList(record.goals),
-    plans: deletionList(record.plans),
-    presets: deletionList(record.presets),
-    sessions: deletionList(record.sessions),
-  };
+  return keepUnknown(
+    {
+      goals: deletionList(record.goals),
+      plans: deletionList(record.plans),
+      presets: deletionList(record.presets),
+      sessions: deletionList(record.sessions),
+    },
+    record,
+    DELETIONS_KEYS,
+  );
 }
 
 function entityStamp(item: { updatedAt?: string; createdAt?: string }): string {
@@ -394,6 +440,7 @@ export function emptyData(): TrainingData {
   return { version: 1, goals: [], plans: [], presets: [], sessions: [], deleted: emptyDeletions() };
 }
 
+/** Rebuild known fields and keep every other JSON field on the document and its records. */
 export function normalize(input: unknown): TrainingData {
   const record = asRecord(input);
   if (!record) throw new Error('The file needs to be a JSON object.');
@@ -423,7 +470,7 @@ export function normalize(input: unknown): TrainingData {
   goals.sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
   plans.sort((a, b) => a.startDate.localeCompare(b.startDate) || a.id.localeCompare(b.id));
   sessions.sort((a, b) => a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
-  return { version: 1, goals, plans, presets, sessions, deleted };
+  return keepUnknown({ version: 1, goals, plans, presets, sessions, deleted }, record, ROOT_KEYS);
 }
 
 export function serialize(data: TrainingData): string {

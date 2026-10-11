@@ -8,6 +8,7 @@ import { uid } from '../lib/ids';
 import { cx } from '../lib/cx';
 import { describePhase, planLastDay } from '../lib/plans';
 import { describePlanSession } from '../lib/targets';
+import { PLAN_EXERCISE_KEYS, absorbPlanSession, keepUnknown } from '../lib/unknown';
 import type { LogPreset, Plan, PlanExercise, PlanSession, SessionKind, TrainingData } from '../types';
 
 export function PlanEditor({
@@ -257,15 +258,15 @@ function TemplateForm({
           reps: exercise.reps.trim() || '5',
         };
         if (exercise.count === 'seconds') next.count = 'seconds';
-        if (exercise.alsoCounts && exercise.alsoCounts.length > 0) next.alsoCounts = exercise.alsoCounts;
-        return next;
+        if (exercise.alsoCounts && exercise.alsoCounts.length > 0) next.alsoCounts = [...exercise.alsoCounts];
+        return keepUnknown(next, exercise, PLAN_EXERCISE_KEYS);
       })
       .filter((exercise) => exercise.name);
     if (kind === 'strength' && cleaned.length === 0) {
       setError('Add at least one exercise, or switch this to a run.');
       return;
     }
-    onSave({
+    const next: PlanSession = {
       id: initial?.id ?? uid('ps'),
       dayOfWeek: Number(form.get('dayOfWeek')),
       kind,
@@ -275,7 +276,8 @@ function TemplateForm({
       exercises: kind === 'strength' ? cleaned : [],
       distanceKm: initial?.distanceKm ?? null,
       durationMin: initial?.durationMin ?? null,
-    });
+    };
+    onSave(initial ? absorbPlanSession(next, initial) : next);
   }
 
   return (

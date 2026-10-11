@@ -1,4 +1,5 @@
 import { isRealISODate, weekdayIndex } from './dates';
+import { MOVE_KEYS, keepUnknown } from './unknown';
 import type { PlanMove, PlanSession } from '../types';
 
 /**
@@ -35,5 +36,6 @@ function readMove(value: unknown, sessions: Map<string, PlanSession>): PlanMove 
   const session = sessions.get(sessionId);
   if (!session || weekdayIndex(fromDate) !== session.dayOfWeek) return null;
   const updatedAt = typeof record.updatedAt === 'string' ? record.updatedAt.trim() : '';
-  return updatedAt ? { sessionId, fromDate, toDate, updatedAt } : { sessionId, fromDate, toDate };
+  const move: PlanMove = updatedAt ? { sessionId, fromDate, toDate, updatedAt } : { sessionId, fromDate, toDate };
+  return keepUnknown(move, record, MOVE_KEYS);
 }
