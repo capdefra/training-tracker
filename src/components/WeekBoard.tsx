@@ -1,10 +1,12 @@
 import { useState, type ReactNode } from 'react';
 import { ExerciseDemo } from './ExerciseDemo';
+import { SessionPreview } from './SessionPreview';
 import { WatchSummary } from './WatchSummary';
 import { findDemo } from '../lib/demos';
 import { addDays, formatDayMonth, formatPretty, formatWeekday, isRealISODate, startOfWeek, todayISO } from '../lib/dates';
 import { cx } from '../lib/cx';
 import { activityMondays, buildPreset, extraLogsForDay, planItemsForWeek, planLastDay, type PlanItem } from '../lib/plans';
+import { previewSession } from '../lib/preview';
 import { formatDuration, formatKm } from '../lib/format';
 import { sessionSummary } from '../lib/stats';
 import { runPrescription } from '../lib/targets';
@@ -120,6 +122,7 @@ export function WeekBoard({
           date={selected}
           items={dayItems}
           extras={extras}
+          logs={data.sessions}
           showPlan={showPlan}
           showDate={showDate}
           today={today}
@@ -137,6 +140,7 @@ function DayPlan({
   date,
   items,
   extras,
+  logs,
   showPlan,
   showDate,
   today,
@@ -148,6 +152,7 @@ function DayPlan({
   date: string;
   items: PlanItem[];
   extras: Session[];
+  logs: Session[];
   showPlan: boolean;
   showDate: boolean;
   today: string;
@@ -185,7 +190,7 @@ function DayPlan({
         <section className="day-list" aria-label="Planned">
           <p className="kicker">Planned</p>
           {open.map((item) => (
-            <SessionCard key={`${item.plan.id}-${item.session.id}`} item={item} showPlan={showPlan} showDate={showDate} today={today} onLog={onLog} summary={summary} />
+            <SessionCard key={`${item.plan.id}-${item.session.id}`} item={item} logs={logs} showPlan={showPlan} showDate={showDate} today={today} onLog={onLog} summary={summary} />
           ))}
         </section>
       ) : null}
@@ -193,7 +198,7 @@ function DayPlan({
         <section className="day-list" aria-label="Done">
           <p className="kicker">Done</p>
           {done.map((item) => (
-            <SessionCard key={`${item.plan.id}-${item.session.id}`} item={item} showPlan={showPlan} showDate={showDate} today={today} onLog={onLog} summary={summary} />
+            <SessionCard key={`${item.plan.id}-${item.session.id}`} item={item} logs={logs} showPlan={showPlan} showDate={showDate} today={today} onLog={onLog} summary={summary} />
           ))}
           {extras.map((session) => (
             <LoggedCard key={session.id} session={session} showDate={showDate} today={today} summary={summary} />
@@ -206,6 +211,7 @@ function DayPlan({
 
 function SessionCard({
   item,
+  logs,
   showPlan,
   showDate,
   today,
@@ -213,15 +219,21 @@ function SessionCard({
   summary,
 }: {
   item: PlanItem;
+  logs: Session[];
   showPlan: boolean;
   showDate: boolean;
   today: string;
   onLog: (preset: LogPreset) => void;
   summary: boolean;
 }) {
+  const [open, setOpen] = useState(false);
   const action = sessionAction(item);
   const hasForm = item.targets.some((target) => findDemo(target.name));
   const line = summary ? summaryLine(item) : null;
+  const raw = item.plan.sessions.find((session) => session.id === item.session.id) ?? item.session;
+  const prescriptionDate = item.movedFrom ?? item.date;
+  const model = open ? previewSession(item.plan, raw, prescriptionDate, logs) : null;
+  const start = () => onLog(buildPreset(item.plan, item.session, item.date, today));
   return (
     <article className="session-card">
       <div className="split">
@@ -245,7 +257,10 @@ function SessionCard({
       {!summary && item.session.kind === 'run' ? (
         <p className="lead">{item.done ? `Run done · ${runPrescription(item.session)}` : runPrescription(item.session)}</p>
       ) : null}
-      <div className="session-action">
+      <div className="session-action session-action-pair">
+        <button type="button" className="btn ghost" onClick={() => setOpen(true)}>
+          Preview
+        </button>
         {action === 'view' && item.logged ? (
           <a className="btn primary" href={`#/log/${item.logged.id}`}>
             View session
@@ -257,16 +272,28 @@ function SessionCard({
           </a>
         ) : null}
         {action === 'log' ? (
-          <button type="button" className="btn primary" onClick={() => onLog(buildPreset(item.plan, item.session, item.date, today))}>
+          <button type="button" className="btn primary" onClick={start}>
             Log
           </button>
         ) : null}
         {action === 'start' ? (
-          <button type="button" className="btn primary" onClick={() => onLog(buildPreset(item.plan, item.session, item.date, today))}>
+          <button type="button" className="btn primary" onClick={start}>
             Start
           </button>
         ) : null}
       </div>
+      <SessionPreview
+        model={model}
+        onClose={() => setOpen(false)}
+        onStart={
+          item.session.kind === 'strength'
+            ? () => {
+                setOpen(false);
+                start();
+              }
+            : null
+        }
+      />
       {!summary && item.session.kind === 'strength' ? (
         <>
           <ul className="targets">

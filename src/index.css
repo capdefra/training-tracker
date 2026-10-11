@@ -351,6 +351,8 @@ button.day { width: 100%; }
 }
 .session-action { display: flex; flex-direction: column; gap: 8px; }
 .session-action .btn { width: 100%; }
+.session-action-pair { flex-direction: row; }
+.session-action-pair .btn { flex: 1; width: auto; min-width: 0; }
 .today-return {
   display: flex;
   flex-direction: column;
@@ -612,6 +614,71 @@ button.form-link {
   text-align: inherit;
 }
 html:has(dialog.form-sheet[open]) { overflow: hidden; }
+.preview-sheet-top {
+  flex: none;
+  background: var(--card);
+}
+.preview-actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 12px;
+}
+.preview-actions .btn { flex: 1; min-width: 0; }
+.preview-phase {
+  margin: 0;
+  padding: 0 16px 12px;
+  color: var(--ink);
+}
+.preview-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 16px calc(16px + env(safe-area-inset-bottom));
+  overflow: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+.preview-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+}
+.preview-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+}
+.preview-row-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.2;
+  min-width: 0;
+}
+.preview-plan,
+.preview-target,
+.preview-last,
+.preview-notes {
+  margin: 0;
+  min-height: 1.35em;
+  font-variant-numeric: tabular-nums;
+}
+.preview-plan { font-weight: 600; }
+.preview-target,
+.preview-last { color: var(--muted); font-size: 0.92rem; }
+.preview-notes { color: var(--ink); font-size: 0.92rem; }
+.form-link.is-off {
+  color: var(--muted);
+  text-decoration: none;
+  cursor: default;
+}
 .form-sheet {
   position: fixed;
   inset: 0;
@@ -670,6 +737,17 @@ html:has(dialog.form-sheet[open]) { overflow: hidden; }
     margin: auto;
     border-radius: 8px;
     width: min(440px, calc(100% - 32px));
+  }
+}
+.form-sheet.preview-sheet {
+  width: min(480px, 100%);
+  height: min(92dvh, 760px);
+  max-height: min(92dvh, 760px);
+  overflow: hidden;
+}
+@media (min-width: 720px) {
+  .form-sheet.preview-sheet {
+    width: min(480px, calc(100% - 32px));
   }
 }
 .target-bar { grid-column: 1 / -1; height: 6px; border-radius: 99px; background: var(--track); overflow: hidden; }
