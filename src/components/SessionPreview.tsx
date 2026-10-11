@@ -79,6 +79,12 @@ export function SessionPreview({
                 Close
               </button>
             </div>
+            {model.kind === 'strength' ? (
+              <p className="preview-equipment">
+                <span className="kicker">Equipment needed</span>
+                <span>{model.equipmentLabel || 'None'}</span>
+              </p>
+            ) : null}
             {model.phaseNotes ? <p className="preview-phase">{model.phaseNotes}</p> : null}
             {model.runLine && !model.phaseNotes ? <p className="preview-phase">{model.runLine}</p> : null}
           </div>
@@ -100,6 +106,7 @@ export function SessionPreview({
                   <p className="preview-plan">{exercise.planLabel}</p>
                   <p className="preview-target">{exercise.targetLabel}</p>
                   <p className="preview-last">{exercise.lastLabel || 'Last: no log yet'}</p>
+                  {exercise.equipmentLabel ? <p className="preview-gear">{exercise.equipmentLabel}</p> : null}
                   {exercise.notes ? <p className="preview-notes">{exercise.notes}</p> : null}
                 </li>
               ))}

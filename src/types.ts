@@ -40,6 +40,11 @@ export interface PlanExercise {
    * `weightKg` is per piece, not the total of a pair.
    */
   target?: ExerciseLoadTarget;
+  /**
+   * Gear this exercise needs. Absent means the preview infers it from the name.
+   * Each entry is a short label, such as "2× dumbbells" or "bench".
+   */
+  equipment?: string[];
 }
 
 /** One exercise inside a phase target list. `name` matches the plan exercise or an `alsoCounts` alias. */

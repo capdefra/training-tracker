@@ -2,6 +2,7 @@ import type { ExerciseEntry, Plan, PlanExercise, PlanSession, Session, SessionKi
 import { formatPretty } from './dates';
 import { trimNum } from './format';
 import { findDemo } from './demos';
+import { exerciseGear, gearLabel, sessionGear, visiblePhaseNotes } from './equipment';
 import { defaultLoad } from './load';
 import { lastLoggedExercise, resolveExerciseTarget, usableTarget } from './load-target';
 import { phaseOn } from './plans';
@@ -16,6 +17,8 @@ export interface ExercisePreview {
   /** Empty when this exercise has no log. */
   lastLabel: string;
   notes: string;
+  /** Empty when this exercise needs nothing beyond the body. */
+  equipmentLabel: string;
   hasDemo: boolean;
 }
 
@@ -25,7 +28,10 @@ export interface SessionPreviewModel {
   dateLabel: string;
   kind: SessionKind;
   phaseName: string;
+  /** Phase notes with a loads summary removed. Empty when nothing useful remains. */
   phaseNotes: string;
+  /** Deduplicated gear for a strength session. Empty for a run. */
+  equipmentLabel: string;
   runLine: string;
   exercises: ExercisePreview[];
 }
@@ -74,7 +80,7 @@ function targetLine(sets: number, repsText: string, weight: { kg: number; perPie
 export function previewSession(plan: Plan | null, session: PlanSession, date: string, logs: Session[]): SessionPreviewModel {
   const phase = plan ? phaseOn(plan, date) : null;
   const change = phase?.sessions.find((item) => item.sessionId === session.id);
-  const phaseNotes = change?.notes?.trim() ?? '';
+  const phaseNotes = visiblePhaseNotes(change?.notes?.trim() ?? '');
   const exercises = session.kind === 'strength'
     ? session.exercises.map((exercise) => {
         const plannedSets = change?.sets ?? exercise.sets;
@@ -97,6 +103,7 @@ export function previewSession(plan: Plan | null, session: PlanSession, date: st
           targetLabel: targetLine(sets, repsText, weight),
           lastLabel: formatLast(history),
           notes: exerciseNote(exercise),
+          equipmentLabel: gearLabel(exerciseGear(exercise), ' · '),
           hasDemo: findDemo(exercise.name) !== undefined,
         };
       })
@@ -109,6 +116,7 @@ export function previewSession(plan: Plan | null, session: PlanSession, date: st
     kind: session.kind,
     phaseName: phase?.name ?? '',
     phaseNotes,
+    equipmentLabel: session.kind === 'strength' ? gearLabel(sessionGear(session.exercises), ', ') : '',
     runLine: session.kind === 'run' ? runNotes || 'Do the run' : '',
     exercises,
   };

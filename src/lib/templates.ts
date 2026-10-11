@@ -169,6 +169,7 @@ function cloneExercise(exercise: PlanExercise): PlanExercise {
   const copy: PlanExercise = { name: exercise.name, sets: exercise.sets, reps: exercise.reps };
   if (exercise.count) copy.count = exercise.count;
   if (exercise.alsoCounts && exercise.alsoCounts.length > 0) copy.alsoCounts = [...exercise.alsoCounts];
+  if (exercise.equipment && exercise.equipment.length > 0) copy.equipment = [...exercise.equipment];
   return copy;
 }
 
