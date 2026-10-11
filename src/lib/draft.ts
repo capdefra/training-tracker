@@ -1,8 +1,9 @@
-import type { EffortCount, ExerciseEntry, LoadImplement, LoadPieces, LogPreset, PlanExercise, RunSplit, Session, SetEntry } from '../types';
+import type { EffortCount, ExerciseEntry, ExerciseLoadTarget, LoadImplement, LoadPieces, LogPreset, PlanExercise, RunSplit, Session, SetEntry } from '../types';
 import { todayISO } from './dates';
 import { formatDuration, formatKm, formatPace, parseNum, trimNum } from './format';
 import { uid } from './ids';
 import { defaultLoad, roundKg, type LoadDefault } from './load';
+import { lastLoggedExercise, usableTarget } from './load-target';
 import { lastExercise } from './stats';
 
 export interface SetDraft {
@@ -34,6 +35,8 @@ export interface ExerciseDraft {
   implement: LoadImplement | null;
   bodyweight: boolean;
   lastNote: string;
+  /** Last log, or the recommendation, when that is not what filled the steppers. Empty keeps the usual gear line. */
+  comparisonHint: string;
 }
 
 export interface SplitDraft {
@@ -99,6 +102,7 @@ function makeExercise(fields: {
   implement?: LoadImplement | null;
   bodyweight?: boolean;
   lastNote?: string;
+  comparisonHint?: string;
 }): ExerciseDraft {
   const seedReps = fields.seedReps ?? '8';
   const seedKg = fields.seedKg ?? '0';
@@ -119,6 +123,7 @@ function makeExercise(fields: {
     implement: fields.implement ?? null,
     bodyweight: fields.bodyweight ?? false,
     lastNote: fields.lastNote ?? '',
+    comparisonHint: fields.comparisonHint ?? '',
   };
 }
 
@@ -282,24 +287,119 @@ function previousLoad(previous: ExerciseEntry | null, fallback: LoadDefault): Pr
   };
 }
 
-export function applyTemplateMeta(draft: Draft, template: PlanExercise[]): Draft {
+function formatLast(previous: ExerciseEntry | null): string {
+  if (!previous || previous.sets.length === 0) return '';
+  const weighted = [...previous.sets].reverse().find((set) => set.weightKg > 0);
+  const ref = weighted ?? previous.sets[previous.sets.length - 1];
+  if (!ref) return '';
+  const sets = previous.sets.length;
+  if (!weighted) return `Last: ${sets}×${ref.reps}`;
+  if (previous.pieces) {
+    const per = weighted.kgPerPiece && weighted.kgPerPiece > 0 ? weighted.kgPerPiece : weighted.weightKg / previous.pieces;
+    return `Last: ${sets}×${ref.reps} @ ${trimNum(per)} kg`;
+  }
+  return `Last: ${sets}×${ref.reps} @ ${trimNum(weighted.weightKg)} kg total`;
+}
+
+function formatTarget(target: ExerciseLoadTarget, fallbackSets: number): string {
+  const sets = target.sets ?? fallbackSets;
+  if (target.reps !== undefined && target.weightKg !== undefined) return `Target: ${sets}×${target.reps} @ ${trimNum(target.weightKg)} kg`;
+  if (target.reps !== undefined) return `Target: ${sets}×${target.reps}`;
+  if (target.weightKg !== undefined) return `Target: ${sets} sets @ ${trimNum(target.weightKg)} kg`;
+  if (target.sets !== undefined) return `Target: ${target.sets} sets`;
+  return '';
+}
+
+interface PlannedLoad {
+  count: EffortCount;
+  targetSets: number;
+  targetLabel: string;
+  seedReps: string;
+  seedKg: string;
+  seedAsTotal: boolean;
+  pieces: LoadPieces | null;
+  implement: LoadImplement | null;
+  bodyweight: boolean;
+  lastNote: string;
+  comparisonHint: string;
+  appliedWeight: boolean;
+}
+
+function plannedLoad(exercise: PlanExercise, sessions: Session[]): PlannedLoad {
+  const count: EffortCount = exercise.count === 'seconds' ? 'seconds' : 'reps';
+  const target = usableTarget(exercise.target);
+  const fallback = defaultLoad(exercise.name);
+  const history = target ? lastLoggedExercise(sessions, exercise) : lastExercise(sessions, exercise.name);
+  const load = previousLoad(history, fallback);
+  const bodyweight = load.bodyweight;
+  const useReps = target?.reps !== undefined;
+  const useWeight = target?.weightKg !== undefined && !bodyweight;
+  const targetSets = target?.sets ?? exercise.sets;
+  const seedReps = useReps ? String(target.reps) : repSeed(exercise.reps, count);
+  const repsLabel = useReps ? String(target.reps) : exercise.reps;
+  let pieces = load.pieces;
+  let implement = load.implement;
+  if (useWeight && !pieces && fallback.kind === 'loaded') {
+    pieces = fallback.pieces;
+    implement = fallback.implement;
+  }
+  const shownTarget: ExerciseLoadTarget | null = target
+    ? {
+        ...(target.sets !== undefined ? { sets: target.sets } : {}),
+        ...(target.reps !== undefined ? { reps: target.reps } : {}),
+        ...(useWeight && target.weightKg !== undefined ? { weightKg: target.weightKg } : {}),
+      }
+    : null;
+  const comparisonHint =
+    shownTarget && (useReps || useWeight)
+      ? formatLast(history)
+      : shownTarget
+        ? formatTarget(shownTarget, exercise.sets)
+        : '';
+  return {
+    count,
+    targetSets,
+    targetLabel: count === 'seconds' ? `${targetSets}×${repsLabel} sec` : `${targetSets}×${repsLabel}`,
+    seedReps,
+    seedKg: useWeight && target?.weightKg !== undefined ? trimNum(target.weightKg) : load.seedKg,
+    seedAsTotal: useWeight ? false : load.seedAsTotal,
+    pieces,
+    implement,
+    bodyweight,
+    lastNote: load.lastNote,
+    comparisonHint,
+    appliedWeight: useWeight,
+  };
+}
+
+export function applyTemplateMeta(draft: Draft, template: PlanExercise[], sessions: Session[] = []): Draft {
   if (template.length === 0) return draft;
   return {
     ...draft,
     exercises: draft.exercises.map((exercise) => {
       const match = template.find((item) => item.name.trim().toLowerCase() === exercise.name.trim().toLowerCase());
       if (!match) return exercise;
-      const count: EffortCount = match.count === 'seconds' ? 'seconds' : 'reps';
-      const seedReps = repSeed(match.reps, count);
+      const planned = plannedLoad(match, sessions);
       const fresh = exercise.sets.length === 0;
-      return {
+      const next: ExerciseDraft = {
         ...exercise,
-        count,
-        targetSets: match.sets,
-        targetLabel: count === 'seconds' ? `${match.sets}×${match.reps} sec` : `${match.sets}×${match.reps}`,
-        seedReps: fresh ? seedReps : exercise.seedReps,
-        pendingReps: fresh ? seedReps : exercise.pendingReps,
+        count: planned.count,
+        targetSets: planned.targetSets,
+        targetLabel: planned.targetLabel,
+        seedReps: fresh ? planned.seedReps : exercise.seedReps,
+        pendingReps: fresh ? planned.seedReps : exercise.pendingReps,
+        comparisonHint: fresh ? planned.comparisonHint : exercise.comparisonHint,
       };
+      if (fresh && planned.appliedWeight) {
+        next.pendingKg = planned.seedKg;
+        next.seedKg = planned.seedKg;
+        next.pendingAsTotal = false;
+        next.seedAsTotal = false;
+        next.pieces = planned.pieces;
+        next.implement = planned.implement;
+        next.bodyweight = false;
+      }
+      return next;
     }),
   };
 }
@@ -307,24 +407,23 @@ export function applyTemplateMeta(draft: Draft, template: PlanExercise[]): Draft
 export function exercisesFromTemplate(template: PlanExercise[], sessions: Session[]): ExerciseDraft[] {
   if (template.length === 0) return [blankExercise()];
   return template.map((exercise) => {
-    const count: EffortCount = exercise.count === 'seconds' ? 'seconds' : 'reps';
-    const seedReps = repSeed(exercise.reps, count);
-    const load = previousLoad(lastExercise(sessions, exercise.name), defaultLoad(exercise.name));
+    const planned = plannedLoad(exercise, sessions);
     return makeExercise({
       name: exercise.name,
-      count,
-      targetLabel: count === 'seconds' ? `${exercise.sets}×${exercise.reps} sec` : `${exercise.sets}×${exercise.reps}`,
-      targetSets: exercise.sets,
-      pendingReps: seedReps,
-      pendingKg: load.seedKg,
-      pendingAsTotal: load.seedAsTotal,
-      seedReps,
-      seedKg: load.seedKg,
-      seedAsTotal: load.seedAsTotal,
-      pieces: load.pieces,
-      implement: load.implement,
-      bodyweight: load.bodyweight,
-      lastNote: load.lastNote,
+      count: planned.count,
+      targetLabel: planned.targetLabel,
+      targetSets: planned.targetSets,
+      pendingReps: planned.seedReps,
+      pendingKg: planned.seedKg,
+      pendingAsTotal: planned.seedAsTotal,
+      seedReps: planned.seedReps,
+      seedKg: planned.seedKg,
+      seedAsTotal: planned.seedAsTotal,
+      pieces: planned.pieces,
+      implement: planned.implement,
+      bodyweight: planned.bodyweight,
+      lastNote: planned.lastNote,
+      comparisonHint: planned.comparisonHint,
     });
   });
 }

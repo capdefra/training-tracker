@@ -629,7 +629,7 @@ function ExercisePane({
       <div className="sess-target">
         <div className="sess-target-copy">
           <strong>{exercise.targetLabel || `${exercise.targetSets} sets`}</strong>
-          <span>{exercise.bodyweight ? 'Bodyweight' : exercise.lastNote || weight.detail}</span>
+          <span>{exercise.comparisonHint || (exercise.bodyweight ? 'Bodyweight' : exercise.lastNote || weight.detail)}</span>
         </div>
         <div className="sess-dots" role="group" aria-label="Sets">
           {Array.from({ length: exercise.targetSets }, (_, setIndex) => {

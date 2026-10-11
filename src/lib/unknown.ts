@@ -16,10 +16,13 @@ import type {
  * model — the failure that dropped `moves` and `alsoCounts`.
  */
 export const GOAL_KEYS = ['id', 'name', 'targetDate', 'focus', 'notes', 'status', 'createdAt', 'updatedAt'] as const;
-export const PLAN_EXERCISE_KEYS = ['name', 'sets', 'reps', 'count', 'alsoCounts'] as const;
+export const LOAD_TARGET_KEYS = ['sets', 'reps', 'weightKg'] as const;
+export const PHASE_EXERCISE_TARGET_KEYS = ['name', 'sets', 'reps', 'weightKg'] as const;
+export const PHASE_SESSION_TARGET_KEYS = ['sessionId', 'exercises'] as const;
+export const PLAN_EXERCISE_KEYS = ['name', 'sets', 'reps', 'count', 'alsoCounts', 'target'] as const;
 export const PLAN_SESSION_KEYS = ['id', 'dayOfWeek', 'kind', 'title', 'focus', 'notes', 'exercises', 'distanceKm', 'durationMin'] as const;
 export const PHASE_CHANGE_KEYS = ['sessionId', 'notes', 'durationMin', 'sets'] as const;
-export const PHASE_KEYS = ['name', 'startDate', 'endDate', 'sessions'] as const;
+export const PHASE_KEYS = ['name', 'startDate', 'endDate', 'sessions', 'targets'] as const;
 export const MOVE_KEYS = ['sessionId', 'fromDate', 'toDate', 'updatedAt'] as const;
 export const PLAN_KEYS = ['id', 'goalId', 'name', 'startDate', 'weeks', 'endDate', 'focus', 'notes', 'sessions', 'phases', 'moves', 'status', 'updatedAt'] as const;
 export const PRESET_KEYS = ['id', 'name', 'kind', 'focus', 'notes', 'exercises', 'createdAt', 'updatedAt'] as const;

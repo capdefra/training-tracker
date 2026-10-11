@@ -13,6 +13,17 @@ export interface Goal {
   updatedAt?: string;
 }
 
+/**
+ * Recommended load for one exercise.
+ * Every field is optional. Omitted fields stay on the plan: set count, the reps text, and the last logged weight.
+ * `weightKg` is per piece — one dumbbell, one kettlebell, or each hand of a pair — the same number the logger shows as kg per piece.
+ */
+export interface ExerciseLoadTarget {
+  sets?: number;
+  reps?: number;
+  weightKg?: number;
+}
+
 export interface PlanExercise {
   name: string;
   sets: number;
@@ -24,6 +35,22 @@ export interface PlanExercise {
    * Optional. Matching is case-insensitive and trimmed.
    */
   alsoCounts?: string[];
+  /**
+   * Standing recommendation used when no phase target covers the session date.
+   * `weightKg` is per piece, not the total of a pair.
+   */
+  target?: ExerciseLoadTarget;
+}
+
+/** One exercise inside a phase target list. `name` matches the plan exercise or an `alsoCounts` alias. */
+export interface PhaseExerciseTarget extends ExerciseLoadTarget {
+  name: string;
+}
+
+/** Recommendations for one repeating session while a phase is in effect. */
+export interface PhaseSessionTarget {
+  sessionId: string;
+  exercises: PhaseExerciseTarget[];
 }
 
 export interface PlanSession {
@@ -55,6 +82,12 @@ export interface PlanPhase {
   startDate: string;
   endDate: string;
   sessions: PhaseChange[];
+  /**
+   * Per-exercise recommendations for dates inside this phase.
+   * A listed field wins over `PlanExercise.target`. An omitted field falls back to that standing target, then to the plan.
+   * `weightKg` is per piece, not the total of a pair.
+   */
+  targets?: PhaseSessionTarget[];
 }
 
 /**

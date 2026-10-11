@@ -5,8 +5,11 @@ import {
   DELETION_KEYS,
   GOAL_KEYS,
   LOGGED_EXERCISE_KEYS,
+  LOAD_TARGET_KEYS,
   PHASE_CHANGE_KEYS,
+  PHASE_EXERCISE_TARGET_KEYS,
   PHASE_KEYS,
+  PHASE_SESSION_TARGET_KEYS,
   PLAN_EXERCISE_KEYS,
   PLAN_KEYS,
   PLAN_SESSION_KEYS,
@@ -22,9 +25,12 @@ import type {
   Deletion,
   Deletions,
   ExerciseEntry,
+  ExerciseLoadTarget,
   Goal,
   GoalStatus,
   PhaseChange,
+  PhaseExerciseTarget,
+  PhaseSessionTarget,
   Plan,
   PlanExercise,
   PlanPhase,
@@ -90,6 +96,67 @@ function focusList(value: unknown): string[] {
   return result;
 }
 
+function positiveInt(value: unknown): number | undefined {
+  const parsed = numberOrNull(value);
+  if (parsed === null || parsed <= 0) return undefined;
+  return Math.round(parsed);
+}
+
+function positiveKg(value: unknown): number | undefined {
+  const parsed = numberOrNull(value);
+  if (parsed === null || parsed <= 0) return undefined;
+  return roundKg(parsed);
+}
+
+function normalizeLoadTarget(value: unknown): ExerciseLoadTarget | undefined {
+  const record = asRecord(value);
+  if (!record) return undefined;
+  const target: ExerciseLoadTarget = {};
+  const sets = positiveInt(record.sets);
+  const reps = positiveInt(record.reps);
+  const weightKg = positiveKg(record.weightKg);
+  if (sets !== undefined) target.sets = sets;
+  if (reps !== undefined) target.reps = reps;
+  if (weightKg !== undefined) target.weightKg = weightKg;
+  const kept = keepUnknown(target, record, LOAD_TARGET_KEYS);
+  return Object.keys(kept).length > 0 ? kept : undefined;
+}
+
+function normalizePhaseExerciseTarget(value: unknown): PhaseExerciseTarget | null {
+  const record = asRecord(value);
+  if (!record) return null;
+  const name = text(record.name);
+  if (!name) return null;
+  const target: PhaseExerciseTarget = { name };
+  const sets = positiveInt(record.sets);
+  const reps = positiveInt(record.reps);
+  const weightKg = positiveKg(record.weightKg);
+  if (sets !== undefined) target.sets = sets;
+  if (reps !== undefined) target.reps = reps;
+  if (weightKg !== undefined) target.weightKg = weightKg;
+  const kept = keepUnknown(target, record, PHASE_EXERCISE_TARGET_KEYS);
+  const hasLoad = kept.sets !== undefined || kept.reps !== undefined || kept.weightKg !== undefined;
+  const hasExtra = Object.keys(kept).some((key) => key !== 'name' && key !== 'sets' && key !== 'reps' && key !== 'weightKg');
+  return hasLoad || hasExtra ? kept : null;
+}
+
+function normalizePhaseTargets(value: unknown): PhaseSessionTarget[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const result: PhaseSessionTarget[] = [];
+  for (const item of value) {
+    const record = asRecord(item);
+    if (!record) continue;
+    const sessionId = text(record.sessionId);
+    if (!sessionId) continue;
+    const exercises = Array.isArray(record.exercises)
+      ? record.exercises.map(normalizePhaseExerciseTarget).filter((entry) => entry !== null)
+      : [];
+    if (exercises.length === 0) continue;
+    result.push(keepUnknown({ sessionId, exercises }, record, PHASE_SESSION_TARGET_KEYS));
+  }
+  return result.length > 0 ? result : undefined;
+}
+
 function alsoCountsList(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) return undefined;
   const aliases: string[] = [];
@@ -114,6 +181,8 @@ function normalizeExercise(value: unknown): PlanExercise | null {
   if (record.count === 'seconds') exercise.count = 'seconds';
   const aliases = alsoCountsList(record.alsoCounts);
   if (aliases) exercise.alsoCounts = aliases;
+  const target = normalizeLoadTarget(record.target);
+  if (target) exercise.target = target;
   return keepUnknown(exercise, record, PLAN_EXERCISE_KEYS);
 }
 
@@ -173,17 +242,16 @@ function normalizePhase(value: unknown): PlanPhase | null {
   const sessions = Array.isArray(record.sessions)
     ? record.sessions.map(normalizePhaseChange).filter((item) => item !== null)
     : [];
-  if (sessions.length === 0) return null;
-  return keepUnknown(
-    {
-      name: text(record.name),
-      startDate,
-      endDate,
-      sessions,
-    },
-    record,
-    PHASE_KEYS,
-  );
+  const targets = normalizePhaseTargets(record.targets);
+  if (sessions.length === 0 && !targets) return null;
+  const phase: PlanPhase = {
+    name: text(record.name),
+    startDate,
+    endDate,
+    sessions,
+  };
+  if (targets) phase.targets = targets;
+  return keepUnknown(phase, record, PHASE_KEYS);
 }
 
 function normalizePlanSession(value: unknown): PlanSession | null {

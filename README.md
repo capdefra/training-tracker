@@ -131,17 +131,46 @@ Learn more, at the bottom of the sheet, still opens the wger page for that exerc
 `training.json` is version 1:
 
 - **goals** — name, target date, focus tags, notes, status (`active`, `paused`, `done`)
-- **plans** — linked to a goal, with a start date, a number of weeks, an optional end date, a weekly template, optional phases (inclusive dates that change a session’s notes, minutes, or set count), and optional one-off `moves` (see below)
+- **plans** — linked to a goal, with a start date, a number of weeks, an optional end date, a weekly template, optional phases (inclusive dates that change a session’s notes, minutes, or set count, and can carry per-exercise load targets), and optional one-off `moves` (see below)
 - **presets** — reusable workouts you can start from Today or the log
 - **sessions** — a strength workout or a run, optionally linked to a plan session. A run can hold a watch summary: pace, heart rate, active and total calories, cadence, power, elevation, effort, place, source, activity, start and finish, weather, and splits. Older sessions that lack those fields still load. Strength uses the same time, heart rate, calorie, and effort fields when they are present. A strength exercise can also store how the load was held.
 - **deleted** — ids removed on one device, so a sync does not bring them back
 
-A strength target is sets and reps of an exercise (seconds for a hold). It does not include weight. A run on the plan is done when a run is logged against it that week. Logged kilograms, distance, and pace are history, not the target.
+A strength session counts as done from sets and reps (seconds for a hold). That check does not use weight. A run on the plan is done when a run is logged against it that week. Logged kilograms, distance, and pace are history.
+
+An optional recommendation can pre-fill the strength logger. `weightKg` is the kilograms of one piece — one dumbbell, one kettlebell, or each hand of a pair — the same number the session shows as kg per piece, not the total of a pair. A missing `sets`, `reps`, or `weightKg` keeps the plan’s set count, the plan’s reps text, or the last logged weight.
 
 A plan or preset exercise can include an optional `alsoCounts` list of other logged names that satisfy that exercise. The field is absent when there are no aliases. Matching trims both names and ignores case. The gist file stays version 1, and exercises that omit `alsoCounts` are unchanged.
 
 ```json
 { "name": "Dumbbell Romanian deadlift", "sets": 3, "reps": "8", "alsoCounts": ["Single-leg Romanian deadlift"] }
+```
+
+A phase can list `targets` for the dates it covers. Each of `sets`, `reps`, and `weightKg` on that list wins over the same field on the exercise. A field the phase omits falls back to `target` on the exercise, then to the plan. Names match the plan exercise, or an `alsoCounts` alias, after trim and without case. Outside the phase dates, only the exercise `target` applies.
+
+```json
+{
+  "name": "Week 2",
+  "startDate": "2026-10-12",
+  "endDate": "2026-10-18",
+  "sessions": [
+    { "sessionId": "ps-lower-b", "notes": "Reverse lunge 3x8 each leg @ 10 kg per hand" }
+  ],
+  "targets": [
+    {
+      "sessionId": "ps-lower-b",
+      "exercises": [
+        { "name": "Reverse lunge", "sets": 3, "reps": 8, "weightKg": 10 }
+      ]
+    }
+  ]
+}
+```
+
+`reps` here is a number of reps to pre-fill, not the plan’s reps text. `sets`, when present, is also the planned set count and the session cap for that date. A standing recommendation, used when no phase target covers the date, sits on the exercise:
+
+```json
+{ "name": "Reverse lunge", "sets": 3, "reps": "8", "target": { "reps": 8, "weightKg": 8 } }
 ```
 
 ### One-off moves
