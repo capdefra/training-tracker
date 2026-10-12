@@ -5,13 +5,21 @@ import { addDays, formatPretty, todayISO } from '../lib/dates';
 import { effortLabel, formatDuration, formatPace, trimNum } from '../lib/format';
 import { cx } from '../lib/cx';
 import { averagePace, exerciseOptions, liftSeries, runPoints, sessionSummary, summarize, weeklyDistance } from '../lib/stats';
-import { activeGoal } from '../lib/plans';
+import { activeGoal, type PlanItem } from '../lib/plans';
 import type { LogPreset, TrainingData } from '../types';
 
 type RangeId = '4w' | '12w' | 'all';
 type KindFilter = 'all' | 'strength' | 'run';
 
-export function ProgressView({ data, onLog }: { data: TrainingData; onLog: (preset: LogPreset) => void }) {
+export function ProgressView({
+  data,
+  onLog,
+  onMarkDone,
+}: {
+  data: TrainingData;
+  onLog: (preset: LogPreset) => void;
+  onMarkDone: (item: PlanItem, done: boolean) => void;
+}) {
   const today = todayISO();
   const [range, setRange] = useState<RangeId>('12w');
   const [kind, setKind] = useState<KindFilter>('all');
@@ -45,7 +53,7 @@ export function ProgressView({ data, onLog }: { data: TrainingData; onLog: (pres
         <p className="lead">This week is sets, reps, and runs completed. Load and pace show up once you log them.</p>
       </header>
 
-      {plans.length > 0 ? <WeekBoard data={data} plans={plans} onLog={onLog} /> : null}
+      {plans.length > 0 ? <WeekBoard data={data} plans={plans} onLog={onLog} onMarkDone={onMarkDone} /> : null}
 
       <div className="filters" role="group" aria-label="Time range">
         {([

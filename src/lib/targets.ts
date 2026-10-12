@@ -9,13 +9,6 @@ export interface ExerciseTarget {
   met: boolean;
 }
 
-export function targetCount(reps: string): number {
-  const match = /(\d+(?:\.\d+)?)/.exec(reps);
-  if (!match) return 1;
-  const value = Number(match[1]);
-  return Number.isFinite(value) && value > 0 ? value : 1;
-}
-
 export function repsLabel(exercise: PlanExercise): string {
   return exercise.count === 'seconds' ? `${exercise.reps} sec` : exercise.reps;
 }
@@ -24,11 +17,12 @@ export function exerciseTargetLabel(exercise: PlanExercise): string {
   return `${exercise.sets}×${repsLabel(exercise)}`;
 }
 
-function setsMeetingTarget(entries: ExerciseEntry[], need: number): number {
+/** Every logged set counts. Reps and weight are suggestions, so a short set still fills the planned count. */
+function loggedSetCount(entries: ExerciseEntry[]): number {
   let count = 0;
   for (const entry of entries) {
     for (const set of entry.sets) {
-      if (set.reps >= need) count += 1;
+      if (set.reps > 0) count += 1;
     }
   }
   return count;
@@ -56,7 +50,7 @@ export function exerciseTargets(session: PlanSession, logs: Session[]): Exercise
     const matches = logs.flatMap((log) =>
       log.kind === 'strength' ? log.exercises.filter((entry) => loggedNameCounts(entry.name, exercise)) : [],
     );
-    const completedSets = setsMeetingTarget(matches, targetCount(exercise.reps));
+    const completedSets = loggedSetCount(matches);
     return {
       name: exercise.name,
       targetSets: exercise.sets,

@@ -106,6 +106,19 @@ export interface PlanMove {
   updatedAt?: string;
 }
 
+/**
+ * Manual done flag for one occurrence.
+ * `date` is the day the card shows. For a moved session that is `toDate`, not `fromDate`.
+ * `done: true` forces done. `done: false` forces not done. No entry means the logged set count decides.
+ * Reps and weight never decide this. The same session and date keep the later `updatedAt`.
+ */
+export interface PlanCompletion {
+  sessionId: string;
+  date: string;
+  done: boolean;
+  updatedAt?: string;
+}
+
 export interface Plan {
   id: string;
   goalId: string;
@@ -120,6 +133,11 @@ export interface Plan {
   phases?: PlanPhase[];
   /** One-off date changes. Absent means the repeating week is unchanged. */
   moves?: PlanMove[];
+  /**
+   * Manual done flags. Absent means every card follows its logged set count.
+   * The planner can read and write this list. The site writes an entry only when the choice differs from that count.
+   */
+  completions?: PlanCompletion[];
   status: GoalStatus;
   updatedAt?: string;
 }

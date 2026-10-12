@@ -186,7 +186,7 @@ const shiftedPhase = withMoves([
   { sessionId: 'ps-long', fromDate: '2026-12-05', toDate: '2026-12-07', updatedAt: '2026-12-05T09:00:00.000Z' },
 ]);
 const carried = item(shiftedPhase, '2026-12-07', 'ps-long');
-check('a moved run keeps the phase from its original date', carried?.movedFrom === '2026-12-05' && carried.session.durationMin === 45 && carried.session.notes === '45 min easy');
+check('a moved run uses the phase on its new date', carried?.movedFrom === '2026-12-05' && carried.phase?.name === 'Taper' && carried.session.durationMin === 30 && carried.session.notes === '30 min easy');
 check('the Saturday still in taper keeps 30 minutes', item(shiftedPhase, '2026-12-12', 'ps-long')?.session.durationMin === 30 && item(shiftedPhase, '2026-12-12', 'ps-long')?.movedFrom === null);
 
 const malformed = withMoves([

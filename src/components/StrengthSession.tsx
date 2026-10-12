@@ -86,6 +86,8 @@ export function StrengthSession({
   onSave,
   onDelete,
   onExit,
+  resolvePlannedDone,
+  onMarkPlanned,
 }: {
   /** A workout the user just asked to open. Null resumes whatever is stored. */
   incoming: StrengthProgress | null;
@@ -93,6 +95,8 @@ export function StrengthSession({
   onSave: (session: Session) => void;
   onDelete?: (id: string) => void;
   onExit: () => void;
+  resolvePlannedDone: (planId: string, sessionId: string, date: string) => boolean | null;
+  onMarkPlanned: (planId: string, sessionId: string, date: string, done: boolean) => void;
 }) {
   const [boot] = useState(() => bootSession(incoming));
   const [ask, setAsk] = useState<Ask | null>(boot.ask);
@@ -181,6 +185,7 @@ export function StrengthSession({
   const overSetCap = Boolean(exercise && exercise.targetSets > 0 && exercise.sets.length > exercise.targetSets);
   const canLog = Boolean(exercise && exercise.name.trim() && repsNow > 0 && (editingKey || !atSetCap));
   const workoutComplete = allPlannedSetsLogged(draft);
+  const plannedDone = draft.planId && draft.planSessionId ? resolvePlannedDone(draft.planId, draft.planSessionId, draft.date) : null;
 
   function update(next: StrengthProgress) {
     setProgress(next);
@@ -378,6 +383,12 @@ export function StrengthSession({
           draft={draft}
           notice={notice}
           complete={workoutComplete}
+          plannedDone={plannedDone}
+          onMarkPlanned={
+            plannedDone === null
+              ? null
+              : () => onMarkPlanned(draft.planId, draft.planSessionId, draft.date, !plannedDone)
+          }
           onOpen={(index) => goTo(index)}
           onAdd={
             draft.planSessionId
@@ -715,9 +726,30 @@ function StepButton({ label, delta, disabled, onBump }: { label: string; delta: 
   );
 }
 
-function Review({ draft, notice, complete, onOpen, onAdd }: { draft: Draft; notice: string; complete: boolean; onOpen: (index: number) => void; onAdd: (() => void) | null }) {
+function Review({
+  draft,
+  notice,
+  complete,
+  plannedDone,
+  onMarkPlanned,
+  onOpen,
+  onAdd,
+}: {
+  draft: Draft;
+  notice: string;
+  complete: boolean;
+  plannedDone: boolean | null;
+  onMarkPlanned: (() => void) | null;
+  onOpen: (index: number) => void;
+  onAdd: (() => void) | null;
+}) {
   return (
     <main className="sess-work">
+      {onMarkPlanned && plannedDone !== null ? (
+        <button type="button" className="sess-mark" aria-pressed={plannedDone} onClick={onMarkPlanned}>
+          {plannedDone ? 'Mark not done' : 'Mark done'}
+        </button>
+      ) : null}
       <h1 className="sess-name sess-name-short">Review</h1>
       <p className="sess-next">
         <span>{notice || (complete ? 'Every set is logged.' : 'Only logged sets are saved.')}</span>

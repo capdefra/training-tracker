@@ -173,6 +173,8 @@ A phase can list `targets` for the dates it covers. Each of `sets`, `reps`, and 
 { "name": "Reverse lunge", "sets": 3, "reps": "8", "target": { "reps": 8, "weightKg": 8 } }
 ```
 
+Those numbers pre-fill the logger. They do not decide whether the session is done. A strength session is done when every exercise has its planned number of sets logged. A short set still counts, and weight is not checked. The logger’s set cap stays that planned count.
+
 An exercise can list the gear it needs. Each entry is a short label. `2× dumbbells` is a pair, `dumbbell` or `kettlebell` is one piece, and `bench`, `mat`, and `resistance band` are the other home-plan pieces. The field is absent until a writer adds it. The preview then infers the piece count from the exercise name and adds the bench or mat the home plan uses. A written list replaces that inference for that exercise.
 
 ```json
@@ -217,7 +219,26 @@ The site does not shift any other session. If the new day already has a workout,
 ]
 ```
 
-A move is ignored when `moves` is missing or not an array, the session id is unknown, a date is not a real calendar day, `fromDate` is not that session’s weekday, `fromDate` equals `toDate`, or `fromDate` falls outside the plan. Other weeks stay on their usual days. The phase stays the one that covers `fromDate`. The card label reads “Moved from Wed”.
+A move is ignored when `moves` is missing or not an array, the session id is unknown, a date is not a real calendar day, `fromDate` is not that session’s weekday, `fromDate` equals `toDate`, or `fromDate` falls outside the plan. Other weeks stay on their usual days. The phase, the targets, and the done check use the day the card shows (`toDate`). The card label reads “Moved from Wed”.
+
+### Marking a session done
+
+The site can mark any planned card done or not done from the day view, the session preview, and the strength review screen. The planner reads and writes the same list on the plan. Leave `completions` off and every card follows its logged set count.
+
+```json
+"completions": [
+  {
+    "sessionId": "ps-upper",
+    "date": "2026-10-12",
+    "done": true,
+    "updatedAt": "2026-10-12T18:00:00.000Z"
+  }
+]
+```
+
+`date` is the day the card shows, `YYYY-MM-DD`. For a moved session that is `toDate`, not `fromDate`. `done: true` forces the card done. `done: false` forces it not done, even when every set is logged. `updatedAt` can be omitted. When the same session and date appear twice, the later stamp wins, and an equal stamp keeps the later entry.
+
+The site stores an entry only when the choice differs from the set count, and removes it when the choice matches that count again. The planner can write either value; the site treats a stored entry as the override. An entry is ignored when `completions` is missing or not an array, the session id is unknown, the date is not a real calendar day, or `done` is not a boolean.
 
 ### Kilograms
 

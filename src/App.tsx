@@ -5,7 +5,7 @@ import { cx } from './lib/cx';
 import { applyTemplateMeta, blankDraft, draftFromPreset, draftFromSession } from './lib/draft';
 import { todayISO } from './lib/dates';
 import { uid } from './lib/ids';
-import { findPlanSession } from './lib/plans';
+import { applySessionDone, findPlanSession, occurrenceDone, type PlanItem } from './lib/plans';
 import { requestScreenWakeLock } from './lib/screen-wake';
 import { clearPendingLaunch, clearStrengthProgress, freshProgress, loadStrengthProgress, readPendingLaunch, writePendingLaunch } from './lib/session-progress';
 import { useHashRoute, type RouteName } from './hooks/useHashRoute';
@@ -99,6 +99,10 @@ function Tracker() {
     else openStrength();
   }
 
+  function markPlanned(item: PlanItem, done: boolean) {
+    store.update((current) => applySessionDone(current, item.plan.id, item.session.id, item.date, done, new Date().toISOString()));
+  }
+
   if (store.status === 'error' && !store.data) {
     return (
       <div className="boot">
@@ -145,6 +149,10 @@ function Tracker() {
           goToHash('#/today');
         }}
         onExit={discardSession}
+        resolvePlannedDone={(planId, sessionId, date) => occurrenceDone(data, planId, sessionId, date)}
+        onMarkPlanned={(planId, sessionId, date, done) => {
+          store.update((current) => applySessionDone(current, planId, sessionId, date, done, new Date().toISOString()));
+        }}
       />
     );
   }
@@ -188,7 +196,9 @@ function Tracker() {
           <p className="nav-status">{syncLabel(store.syncStatus, store.gistId, store.dirty, store.repo === null)}</p>
         </nav>
         <main className="content">
-          {route.name === 'today' ? <TodayView key={route.date ?? 'today'} data={data} onLog={openLog} date={route.date} /> : null}
+          {route.name === 'today' ? (
+            <TodayView key={route.date ?? 'today'} data={data} onLog={openLog} onMarkDone={markPlanned} date={route.date} />
+          ) : null}
           {route.name === 'log' ? (
             <LogView
               key={route.id ? `edit-${route.id}` : `new-${request.token}`}
@@ -209,8 +219,8 @@ function Tracker() {
               }}
             />
           ) : null}
-          {route.name === 'plans' ? <PlansView data={data} goalId={route.id} update={store.update} onLog={openLog} /> : null}
-          {route.name === 'progress' ? <ProgressView data={data} onLog={openLog} /> : null}
+          {route.name === 'plans' ? <PlansView data={data} goalId={route.id} update={store.update} onLog={openLog} onMarkDone={markPlanned} /> : null}
+          {route.name === 'progress' ? <ProgressView data={data} onLog={openLog} onMarkDone={markPlanned} /> : null}
           {route.name === 'activity' ? <ActivityView data={data} /> : null}
           {route.name === 'data' ? (
             <DataView

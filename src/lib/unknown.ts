@@ -3,6 +3,7 @@ import type {
   Goal,
   Plan,
   PlanExercise,
+  PlanCompletion,
   PlanMove,
   PlanPhase,
   PlanSession,
@@ -24,7 +25,8 @@ export const PLAN_SESSION_KEYS = ['id', 'dayOfWeek', 'kind', 'title', 'focus', '
 export const PHASE_CHANGE_KEYS = ['sessionId', 'notes', 'durationMin', 'sets'] as const;
 export const PHASE_KEYS = ['name', 'startDate', 'endDate', 'sessions', 'targets'] as const;
 export const MOVE_KEYS = ['sessionId', 'fromDate', 'toDate', 'updatedAt'] as const;
-export const PLAN_KEYS = ['id', 'goalId', 'name', 'startDate', 'weeks', 'endDate', 'focus', 'notes', 'sessions', 'phases', 'moves', 'status', 'updatedAt'] as const;
+export const COMPLETION_KEYS = ['sessionId', 'date', 'done', 'updatedAt'] as const;
+export const PLAN_KEYS = ['id', 'goalId', 'name', 'startDate', 'weeks', 'endDate', 'focus', 'notes', 'sessions', 'phases', 'moves', 'completions', 'status', 'updatedAt'] as const;
 export const PRESET_KEYS = ['id', 'name', 'kind', 'focus', 'notes', 'exercises', 'createdAt', 'updatedAt'] as const;
 export const SET_KEYS = ['reps', 'weightKg', 'kgPerPiece'] as const;
 export const LOGGED_EXERCISE_KEYS = ['name', 'sets', 'pieces', 'implement'] as const;
@@ -147,6 +149,21 @@ function absorbMove(winner: PlanMove, loser: PlanMove): PlanMove {
   return keepUnknown(cloneData(winner), loser, MOVE_KEYS);
 }
 
+function absorbCompletion(winner: PlanCompletion, loser: PlanCompletion): PlanCompletion {
+  return keepUnknown(cloneData(winner), loser, COMPLETION_KEYS);
+}
+
+function absorbCompletions(winner: PlanCompletion[] | undefined, loser: PlanCompletion[] | undefined): PlanCompletion[] | undefined {
+  if (!winner || !loser) return winner;
+  return winner.map((item, index) => {
+    const previous =
+      winner.length === loser.length
+        ? loser[index]
+        : loser.find((other) => other.sessionId === item.sessionId && other.date === item.date);
+    return previous ? absorbCompletion(item, previous) : item;
+  });
+}
+
 function absorbMoves(winner: PlanMove[] | undefined, loser: PlanMove[] | undefined): PlanMove[] | undefined {
   if (!winner || !loser) return winner;
   return winner.map((move, index) => {
@@ -168,6 +185,8 @@ export function absorbPlan(winner: Plan, loser: Plan): Plan {
   if (phases) copy.phases = phases;
   const moves = absorbMoves(copy.moves, loser.moves);
   if (moves) copy.moves = moves;
+  const completions = absorbCompletions(copy.completions, loser.completions);
+  if (completions) copy.completions = completions;
   return copy;
 }
 
