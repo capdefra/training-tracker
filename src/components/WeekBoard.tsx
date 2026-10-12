@@ -17,6 +17,7 @@ export function WeekBoard({
   data,
   plans,
   onLog,
+  onMarkDone,
   heading = 'h2',
   anchor: anchorProp,
   onAnchor,
@@ -28,6 +29,7 @@ export function WeekBoard({
   data: TrainingData;
   plans: Plan[];
   onLog: (preset: LogPreset) => void;
+  onMarkDone: (item: PlanItem, done: boolean) => void;
   heading?: 'h2' | 'h3';
   anchor?: string;
   onAnchor?: (date: string) => void;
@@ -128,6 +130,7 @@ export function WeekBoard({
           today={today}
           next={next}
           onLog={onLog}
+          onMarkDone={onMarkDone}
           onOpen={goTo}
           summary={summary}
         />
@@ -146,6 +149,7 @@ function DayPlan({
   today,
   next,
   onLog,
+  onMarkDone,
   onOpen,
   summary,
 }: {
@@ -158,6 +162,7 @@ function DayPlan({
   today: string;
   next: PlanItem | null;
   onLog: (preset: LogPreset) => void;
+  onMarkDone: (item: PlanItem, done: boolean) => void;
   onOpen: (date: string) => void;
   summary: boolean;
 }) {
@@ -190,7 +195,7 @@ function DayPlan({
         <section className="day-list" aria-label="Planned">
           <p className="kicker">Planned</p>
           {open.map((item) => (
-            <SessionCard key={`${item.plan.id}-${item.session.id}`} item={item} logs={logs} showPlan={showPlan} showDate={showDate} today={today} onLog={onLog} summary={summary} />
+            <SessionCard key={`${item.plan.id}-${item.session.id}`} item={item} logs={logs} showPlan={showPlan} showDate={showDate} today={today} onLog={onLog} onMarkDone={onMarkDone} summary={summary} />
           ))}
         </section>
       ) : null}
@@ -198,7 +203,7 @@ function DayPlan({
         <section className="day-list" aria-label="Done">
           <p className="kicker">Done</p>
           {done.map((item) => (
-            <SessionCard key={`${item.plan.id}-${item.session.id}`} item={item} logs={logs} showPlan={showPlan} showDate={showDate} today={today} onLog={onLog} summary={summary} />
+            <SessionCard key={`${item.plan.id}-${item.session.id}`} item={item} logs={logs} showPlan={showPlan} showDate={showDate} today={today} onLog={onLog} onMarkDone={onMarkDone} summary={summary} />
           ))}
           {extras.map((session) => (
             <LoggedCard key={session.id} session={session} showDate={showDate} today={today} summary={summary} />
@@ -216,6 +221,7 @@ function SessionCard({
   showDate,
   today,
   onLog,
+  onMarkDone,
   summary,
 }: {
   item: PlanItem;
@@ -224,6 +230,7 @@ function SessionCard({
   showDate: boolean;
   today: string;
   onLog: (preset: LogPreset) => void;
+  onMarkDone: (item: PlanItem, done: boolean) => void;
   summary: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -231,8 +238,7 @@ function SessionCard({
   const hasForm = item.targets.some((target) => findDemo(target.name));
   const line = summary ? summaryLine(item) : null;
   const raw = item.plan.sessions.find((session) => session.id === item.session.id) ?? item.session;
-  const prescriptionDate = item.movedFrom ?? item.date;
-  const model = open ? previewSession(item.plan, raw, prescriptionDate, logs) : null;
+  const model = open ? previewSession(item.plan, raw, item.date, logs) : null;
   const start = () => onLog(buildPreset(item.plan, item.session, item.date, today));
   return (
     <article className="session-card">
@@ -257,6 +263,17 @@ function SessionCard({
       {!summary && item.session.kind === 'run' ? (
         <p className="lead">{item.done ? `Run done · ${runPrescription(item.session)}` : runPrescription(item.session)}</p>
       ) : null}
+      <div className="session-mark">
+        <button
+          type="button"
+          className="btn ghost"
+          aria-pressed={item.done}
+          aria-label={item.done ? `Mark ${item.session.title} not done` : `Mark ${item.session.title} done`}
+          onClick={() => onMarkDone(item, !item.done)}
+        >
+          {item.done ? 'Mark not done' : 'Mark done'}
+        </button>
+      </div>
       <div className="session-action session-action-pair">
         <button type="button" className="btn ghost" onClick={() => setOpen(true)}>
           Preview
@@ -284,6 +301,8 @@ function SessionCard({
       </div>
       <SessionPreview
         model={model}
+        done={item.done}
+        onMarkDone={(done) => onMarkDone(item, done)}
         onClose={() => setOpen(false)}
         onStart={
           item.session.kind === 'strength'

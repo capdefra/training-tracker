@@ -545,7 +545,8 @@ button.form-link.sess-form {
   gap: 8px;
 }
 
-.sess-add {
+.sess-add,
+.sess-mark {
   flex: none;
   height: var(--sess-control);
   border: 1px solid var(--line);

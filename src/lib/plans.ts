@@ -1,6 +1,7 @@
 import type { ExerciseLoadTarget, LogPreset, Plan, PlanExercise, PlanPhase, PlanSession, Session, TrainingData, WorkoutPreset } from '../types';
 import { addDays, daysBetween, formatPretty, startOfWeek, weekdayIndex } from './dates';
 import { resolveExerciseTarget } from './load-target';
+import { completionFor, planWithSessionDone } from './plan-completions';
 import { normalizeMoves } from './plan-moves';
 
 /** Weeks shown on the activity tab, ending with the week that contains today. */
@@ -99,7 +100,7 @@ interface Occurrence {
 /**
  * Places each repeating session on its weekday, then applies `plan.moves`.
  * Each shifted session is written by the planner. Landing on an occupied day does not move that session.
- * The phase is the one that covers `fromDate`, so the occurrence keeps that week's prescription.
+ * The phase is the one that covers the day the card shows (`date`), including after a move.
  */
 function occurrencesForWeek(plan: Plan, dates: string[]): Occurrence[] {
   const weekStart = dates[0];
@@ -179,18 +180,19 @@ export function planItemsForWeek(data: TrainingData, plans: Plan[], anchor: stri
   });
   const weekSessions = sessionsForWeek(data.sessions, occurrences, weekStart, weekEnd);
   return occurrences.map((occurrence) => {
-    const resolved = sessionForDate(occurrence.plan, occurrence.session, occurrence.fromDate);
+    const resolved = sessionForDate(occurrence.plan, occurrence.session, occurrence.date);
     const logs = logsForOccurrence(occurrence, occurrences, weekSessions);
     const sameDay = logs.find((entry) => entry.date === occurrence.date);
+    const manual = completionFor(occurrence.plan, occurrence.session.id, occurrence.date);
     return {
       date: occurrence.date,
       plan: occurrence.plan,
-      phase: phaseOn(occurrence.plan, occurrence.fromDate),
+      phase: phaseOn(occurrence.plan, occurrence.date),
       session: resolved,
       logs,
       logged: sameDay ?? logs[0] ?? null,
       targets: exerciseTargets(resolved, logs),
-      done: sessionTargetsMet(resolved, logs),
+      done: manual ? manual.done : sessionTargetsMet(resolved, logs),
       movedFrom: occurrence.fromDate === occurrence.date ? null : occurrence.fromDate,
     };
   });
@@ -295,6 +297,30 @@ export function buildPreset(plan: Plan, session: Plan['sessions'][number], sched
         ? `From the plan · ${session.title} · ${when} · ${runPrescription(session)} · doing the run is enough`
         : `From the plan · ${session.title} · ${when} · target is sets and reps`,
   };
+}
+
+/** Done flag for the card on `date`, or null when that plan session is not on the card that day. */
+export function occurrenceDone(data: TrainingData, planId: string, sessionId: string, date: string): boolean | null {
+  const plan = data.plans.find((item) => item.id === planId);
+  if (!plan) return null;
+  const item = planItemsForWeek(data, [plan], date).find((entry) => entry.session.id === sessionId && entry.date === date);
+  return item ? item.done : null;
+}
+
+/**
+ * Mark one card done or not done. A choice that matches the logged set count is stored by removing the override.
+ */
+export function applySessionDone(data: TrainingData, planId: string, sessionId: string, date: string, done: boolean, updatedAt: string): TrainingData {
+  const plan = data.plans.find((item) => item.id === planId);
+  if (!plan || !plan.sessions.some((session) => session.id === sessionId)) return data;
+  const rest = (plan.completions ?? []).filter((item) => item.sessionId !== sessionId || item.date !== date);
+  const stripped: Plan = { ...plan };
+  if (rest.length > 0) stripped.completions = rest;
+  else delete stripped.completions;
+  const probe: TrainingData = { ...data, plans: data.plans.map((item) => (item.id === planId ? stripped : item)) };
+  const automatic = planItemsForWeek(probe, [stripped], date).some((item) => item.session.id === sessionId && item.date === date && item.done);
+  const next = planWithSessionDone(plan, sessionId, date, done, automatic, updatedAt);
+  return { ...data, plans: data.plans.map((item) => (item.id === planId ? next : item)) };
 }
 
 export function findPlanSession(data: TrainingData, planSessionId: string, date?: string) {

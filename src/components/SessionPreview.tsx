@@ -6,10 +6,15 @@ export function SessionPreview({
   model,
   onClose,
   onStart,
+  done = null,
+  onMarkDone = null,
 }: {
   model: SessionPreviewModel | null;
   onClose: () => void;
   onStart: (() => void) | null;
+  /** Current done flag for this card. Null hides the manual control. */
+  done?: boolean | null;
+  onMarkDone?: ((done: boolean) => void) | null;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -70,14 +75,21 @@ export function SessionPreview({
               </button>
             </div>
             <div className="preview-actions">
-              {model.kind === 'strength' && onStart ? (
-                <button type="button" className="btn primary" onClick={onStart}>
-                  Start session
+              {onMarkDone && done !== null ? (
+                <button type="button" className="btn ghost" aria-pressed={done} onClick={() => onMarkDone(!done)}>
+                  {done ? 'Mark not done' : 'Mark done'}
                 </button>
               ) : null}
-              <button type="button" className="btn ghost" onClick={requestClose}>
-                Close
-              </button>
+              <div className="preview-actions-row">
+                {model.kind === 'strength' && onStart ? (
+                  <button type="button" className="btn primary" onClick={onStart}>
+                    Start session
+                  </button>
+                ) : null}
+                <button type="button" className="btn ghost" onClick={requestClose}>
+                  Close
+                </button>
+              </div>
             </div>
             {model.kind === 'strength' ? (
               <p className="preview-equipment">

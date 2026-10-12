@@ -9,6 +9,7 @@ import { removeGoal, removePlan } from '../lib/storage';
 import { HOME_SKI_END, HOME_SKI_FOCUS, HOME_SKI_NAME, HOME_SKI_NOTES, HOME_SKI_START, HOME_SKI_WEEKS, homeSkiWeek } from '../lib/templates';
 import { absorbGoal } from '../lib/unknown';
 import { PlanEditor } from './PlanEditor';
+import type { PlanItem } from '../lib/plans';
 import type { Goal, GoalStatus, LogPreset, Plan, TrainingData } from '../types';
 
 export function PlansView({
@@ -16,11 +17,13 @@ export function PlansView({
   goalId,
   update,
   onLog,
+  onMarkDone,
 }: {
   data: TrainingData;
   goalId?: string;
   update: (recipe: (current: TrainingData) => TrainingData) => void;
   onLog: (preset: LogPreset) => void;
+  onMarkDone: (item: PlanItem, done: boolean) => void;
 }) {
   const [creating, setCreating] = useState(data.goals.length === 0);
   const goal = data.goals.find((item) => item.id === goalId) ?? null;
@@ -75,6 +78,7 @@ export function PlansView({
             goal={goal}
             update={update}
             onLog={onLog}
+            onMarkDone={onMarkDone}
             onSave={(next) => saveGoal(next, false)}
           />
         ) : (
@@ -98,12 +102,14 @@ function GoalDetail({
   goal,
   update,
   onLog,
+  onMarkDone,
   onSave,
 }: {
   data: TrainingData;
   goal: Goal;
   update: (recipe: (current: TrainingData) => TrainingData) => void;
   onLog: (preset: LogPreset) => void;
+  onMarkDone: (item: PlanItem, done: boolean) => void;
   onSave: (goal: Goal) => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -173,7 +179,7 @@ function GoalDetail({
       ) : null}
 
       {plans.map((plan) => (
-        <PlanEditor key={plan.id} data={data} plan={plan} onChange={savePlan} onDelete={() => deletePlan(plan.id)} onLog={onLog} />
+        <PlanEditor key={plan.id} data={data} plan={plan} onChange={savePlan} onDelete={() => deletePlan(plan.id)} onLog={onLog} onMarkDone={onMarkDone} />
       ))}
 
       {addingPlan ? (

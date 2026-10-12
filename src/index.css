@@ -620,10 +620,18 @@ html:has(dialog.form-sheet[open]) { overflow: hidden; }
 }
 .preview-actions {
   display: flex;
+  flex-direction: column;
   gap: 8px;
   padding: 0 16px 12px;
 }
-.preview-actions .btn { flex: 1; min-width: 0; }
+.preview-actions > .btn { width: 100%; }
+.preview-actions-row {
+  display: flex;
+  gap: 8px;
+}
+.preview-actions-row .btn { flex: 1; min-width: 0; }
+.session-mark { display: flex; }
+.session-mark .btn { width: 100%; }
 .preview-equipment {
   display: flex;
   flex-direction: column;

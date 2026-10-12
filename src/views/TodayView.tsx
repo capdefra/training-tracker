@@ -9,7 +9,17 @@ import { clearPendingLaunch, loadStrengthProgress, progressHasSets } from '../li
 import { sessionSummary } from '../lib/stats';
 import type { LogPreset, TrainingData } from '../types';
 
-export function TodayView({ data, onLog, date }: { data: TrainingData; onLog: (preset?: LogPreset) => void; date?: string }) {
+export function TodayView({
+  data,
+  onLog,
+  onMarkDone,
+  date,
+}: {
+  data: TrainingData;
+  onLog: (preset?: LogPreset) => void;
+  onMarkDone: (item: PlanItem, done: boolean) => void;
+  date?: string;
+}) {
   const today = todayISO();
   const [focus, setFocus] = useState(date && isISODate(date) ? date : today);
   const goal = activeGoal(data);
@@ -52,6 +62,7 @@ export function TodayView({ data, onLog, date }: { data: TrainingData; onLog: (p
           data={data}
           plans={plans}
           onLog={onLog}
+          onMarkDone={onMarkDone}
           anchor={focus}
           onAnchor={setFocus}
           showDate={false}

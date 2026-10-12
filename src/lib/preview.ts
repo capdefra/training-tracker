@@ -75,7 +75,7 @@ function targetLine(sets: number, repsText: string, weight: { kg: number; perPie
 /**
  * Preview for one session on `date`.
  * `date` is the selected day, or today when the plan list has no other day selected.
- * A moved occurrence should pass the date the phase was resolved with.
+ * A moved occurrence passes the day the card shows, which is also the phase date.
  */
 export function previewSession(plan: Plan | null, session: PlanSession, date: string, logs: Session[]): SessionPreviewModel {
   const phase = plan ? phaseOn(plan, date) : null;

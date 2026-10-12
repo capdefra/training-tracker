@@ -7,7 +7,7 @@ import { WeekBoard } from '../components/WeekBoard';
 import { DAY_OPTIONS, addDays, formatDayMonth, formatLong, startOfWeek, todayISO, weekdayLabel } from '../lib/dates';
 import { uid } from '../lib/ids';
 import { cx } from '../lib/cx';
-import { buildPreset, describePhase, planLastDay, sessionForDate } from '../lib/plans';
+import { buildPreset, describePhase, planLastDay, sessionForDate, type PlanItem } from '../lib/plans';
 import { previewSession } from '../lib/preview';
 import { describePlanSession } from '../lib/targets';
 import { PLAN_EXERCISE_KEYS, absorbPlanSession, keepUnknown } from '../lib/unknown';
@@ -19,12 +19,14 @@ export function PlanEditor({
   onChange,
   onDelete,
   onLog,
+  onMarkDone,
 }: {
   data: TrainingData;
   plan: Plan;
   onChange: (plan: Plan) => void;
   onDelete: () => void;
   onLog: (preset: LogPreset) => void;
+  onMarkDone: (item: PlanItem, done: boolean) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -132,7 +134,7 @@ export function PlanEditor({
         </form>
       ) : null}
 
-      <WeekBoard data={data} plans={[plan]} onLog={onLog} heading="h3" anchor={anchor} onAnchor={setAnchor} />
+      <WeekBoard data={data} plans={[plan]} onLog={onLog} onMarkDone={onMarkDone} heading="h3" anchor={anchor} onAnchor={setAnchor} />
 
       {plan.phases && plan.phases.length > 0 ? (
         <div className="stack">
