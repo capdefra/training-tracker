@@ -539,13 +539,13 @@ button.form-link.sess-form {
 }
 
 .sess-measure.has-timer .sess-caption {
-  padding-left: calc(var(--sess-reset) + 16px);
+  padding-right: calc(var(--sess-reset) * 2 + var(--sess-gap) + 16px);
 }
 
 .sess-timer-open {
   position: absolute;
   top: 8px;
-  left: 8px;
+  right: calc(8px + var(--sess-reset) + var(--sess-gap));
   z-index: 1;
   display: inline-flex;
   align-items: center;
