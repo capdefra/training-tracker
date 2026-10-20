@@ -581,11 +581,14 @@ button.form-link.sess-form {
 }
 
 .timer-head .kicker.is-lead,
+.timer-head .kicker.is-switch,
 .timer-head .kicker.is-rest {
   color: var(--amber);
 }
 
 .timer-head .kicker.is-work,
+.timer-head .kicker.is-side1,
+.timer-head .kicker.is-side2,
 .timer-head .kicker.is-done {
   color: var(--spruce);
 }
@@ -700,6 +703,7 @@ button.form-link.sess-form {
 }
 
 .timer-face.is-lead .timer-arc,
+.timer-face.is-switch .timer-arc,
 .timer-face.is-rest .timer-arc {
   stroke: var(--amber);
 }

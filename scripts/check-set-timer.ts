@@ -1,6 +1,7 @@
 import {
   FINISH_MS,
   LEAD_MS,
+  SWITCH_MS,
   holdElapsed,
   holdSeconds,
   pauseSetTimer,
@@ -67,6 +68,32 @@ check('the last three hold seconds warn', timerSound('work', 3, 20) === 'warn' &
 check('a three second hold starts instead of warning', timerSound('work', 3, 3) === 'start');
 check('logging plays the done tone', timerSound('done', 20, 20) === 'done');
 check('rest itself stays quiet', timerSound('rest', 44, 20) === null);
+
+const both = startSetTimer('side', 30, 20, start, true);
+check('a per-side lead-in is unchanged', viewSetTimer(both, start + 1000)?.caption === 'Get ready');
+const left = viewSetTimer(both, start + LEAD_MS + 1000);
+check('the first hold is the left side', left?.phase === 'side1' && left.caption === 'Left' && left.detail === 'Side 1' && left.secondsLeft === 29);
+check('the left side does not log the set', !holdElapsed(both, both.workEndsAt));
+const switching = viewSetTimer(both, both.workEndsAt + 500);
+check('a switch countdown sits between the sides', switching?.phase === 'switch' && switching.caption === 'Switch' && switching.secondsLeft === 4);
+check('the switch does not log the set', both.switchEndsAt !== undefined && !holdElapsed(both, both.switchEndsAt - 1));
+const right = viewSetTimer(both, (both.switchEndsAt ?? 0) + 1000);
+check('the second hold is the right side', right?.phase === 'side2' && right.caption === 'Right' && right.detail === 'Side 2' && right.secondsLeft === 29);
+check('the set logs only after the right side', both.side2EndsAt !== undefined && holdElapsed(both, both.side2EndsAt) && !holdElapsed(both, both.side2EndsAt - 1));
+check('the logged seconds stay the per-side length', both.seconds === 30 && (both.side2EndsAt ?? 0) - (both.switchEndsAt ?? 0) === 30_000);
+check('the flash follows the right side', both.side2EndsAt !== undefined && both.flashEndsAt - both.side2EndsAt === FINISH_MS);
+const pausedSide = pauseSetTimer(both, (both.switchEndsAt ?? 0) + 1000);
+check('pause freezes the right side', viewSetTimer(pausedSide, (both.side2EndsAt ?? 0) + 5000)?.phase === 'side2' && viewSetTimer(pausedSide, (both.side2EndsAt ?? 0) + 5000)?.secondsLeft === 29);
+const resumedSide = resumeSetTimer(pausedSide, (both.side2EndsAt ?? 0) + 5000);
+check('resume keeps the right side on the clock', viewSetTimer(resumedSide, (resumedSide.switchEndsAt ?? 0) + 1000)?.phase === 'side2');
+check('the switch is its own length', both.switchEndsAt !== undefined && both.switchEndsAt - both.workEndsAt === SWITCH_MS);
+const storedSides = readSetTimer(JSON.parse(JSON.stringify(both)));
+check('a saved per-side timer keeps both ends', storedSides?.perSide === true && storedSides.switchEndsAt === both.switchEndsAt && storedSides.side2EndsAt === both.side2EndsAt);
+check('a per-side timer with a missing side is ignored', readSetTimer({ ...both, side2EndsAt: undefined }) === null);
+check('the switch opens with its own tone', timerSound('switch', 4, 30) === 'switch');
+check('the switch counts down with ticks', timerSound('switch', 3, 30) === 'tick' && timerSound('switch', 1, 30) === 'tick');
+check('each side opens with the start tone', timerSound('side1', 30, 30) === 'start' && timerSound('side2', 30, 30) === 'start');
+check('the end of a side warns', timerSound('side2', 2, 30) === 'warn');
 
 if (failures.length > 0) {
   console.error(failures.join('\n'));

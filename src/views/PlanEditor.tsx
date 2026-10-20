@@ -9,6 +9,7 @@ import { uid } from '../lib/ids';
 import { cx } from '../lib/cx';
 import { buildPreset, describePhase, planLastDay, sessionForDate, type PlanItem } from '../lib/plans';
 import { previewSession } from '../lib/preview';
+import { isPerSide } from '../lib/per-side';
 import { describePlanSession } from '../lib/targets';
 import { PLAN_EXERCISE_KEYS, absorbPlanSession, keepUnknown } from '../lib/unknown';
 import type { LogPreset, Plan, PlanExercise, PlanSession, SessionKind, TrainingData } from '../types';
@@ -286,6 +287,8 @@ function TemplateForm({
           reps: exercise.reps.trim() || '5',
         };
         if (exercise.count === 'seconds') next.count = 'seconds';
+        if (exercise.perSide === true) next.perSide = true;
+        else if (exercise.perSide === false) next.perSide = false;
         if (exercise.alsoCounts && exercise.alsoCounts.length > 0) next.alsoCounts = [...exercise.alsoCounts];
         if (exercise.target) next.target = { ...exercise.target };
         if (exercise.equipment && exercise.equipment.length > 0) next.equipment = [...exercise.equipment];
@@ -344,7 +347,7 @@ function TemplateForm({
       </div>
       {kind === 'strength' ? (
         <div className="stack">
-          <p className="muted fine">Targets are sets and reps, or seconds for a hold. Load is not a target.</p>
+          <p className="muted fine">Targets are sets and reps, or seconds for a hold. /side means each side. Load is not a target.</p>
           {exercises.map((exercise, index) => (
             <div key={`${initial?.id ?? 'new'}-${index}`} className="set-row template-row">
               <input
@@ -379,6 +382,19 @@ function TemplateForm({
                 <option value="reps">reps</option>
                 <option value="seconds">sec</option>
               </select>
+              <button
+                type="button"
+                className={cx('t-side', isPerSide(exercise) && 'on')}
+                aria-pressed={isPerSide(exercise)}
+                aria-label={isPerSide(exercise) ? 'Each side' : 'Not each side'}
+                onClick={() =>
+                  setExercises((current) =>
+                    current.map((item, itemIndex) => (itemIndex === index ? { ...item, perSide: !isPerSide(item) } : item)),
+                  )
+                }
+              >
+                /side
+              </button>
               <button type="button" className="icon-btn t-remove" aria-label="Remove exercise" onClick={() => setExercises((current) => current.filter((_, itemIndex) => itemIndex !== index))}>
                 ×
               </button>

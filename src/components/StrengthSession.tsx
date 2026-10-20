@@ -4,6 +4,7 @@ import { useScreenWakeLock } from '../hooks/useScreenWakeLock';
 import { cx } from '../lib/cx';
 import { blankExercise, withPieces, type Draft, type ExerciseDraft, type SetDraft } from '../lib/draft';
 import { parseNum, trimNum } from '../lib/format';
+import { isPerSide } from '../lib/per-side';
 import { uid } from '../lib/ids';
 import { defaultLoad, shownLoad } from '../lib/load';
 import { requestScreenWakeLock } from '../lib/screen-wake';
@@ -89,6 +90,7 @@ function unlockAudio() {
 function playTimerSound(sound: TimerSound) {
   try {
     if (sound === 'start') navigator.vibrate?.(30);
+    else if (sound === 'switch') navigator.vibrate?.(40);
     else if (sound === 'done') navigator.vibrate?.([80, 40, 80]);
     else if (sound === 'rest') navigator.vibrate?.([40, 30, 40]);
   } catch {
@@ -104,6 +106,10 @@ function playTimerSound(sound: TimerSound) {
       tone(ctx, now + 0.1, 784, 0.12, 0.06, 'sine');
     }
     if (sound === 'warn') tone(ctx, now, 440, 0.08, 0.055, 'triangle');
+    if (sound === 'switch') {
+      tone(ctx, now, 587, 0.07, 0.07, 'square');
+      tone(ctx, now + 0.12, 587, 0.07, 0.05, 'square');
+    }
     if (sound === 'done') {
       tone(ctx, now, 659, 0.12, 0.07, 'sine');
       tone(ctx, now + 0.14, 880, 0.18, 0.07, 'sine');
@@ -142,9 +148,10 @@ function loadForName(exercise: ExerciseDraft): Partial<ExerciseDraft> {
 }
 
 function setToken(exercise: ExerciseDraft, set: SetDraft): string {
+  const side = isPerSide(exercise) ? ' /side' : '';
   const kg = parseNum(set.kgPerPiece) ?? 0;
-  if (exercise.bodyweight || kg <= 0) return exercise.count === 'seconds' ? `${set.reps}s` : set.reps;
-  return `${trimNum(kg)}×${set.reps}`;
+  if (exercise.bodyweight || kg <= 0) return `${exercise.count === 'seconds' ? `${set.reps}s` : set.reps}${side}`;
+  return `${trimNum(kg)}×${set.reps}${side}`;
 }
 
 function bootSession(incoming: StrengthProgress | null): { progress: StrengthProgress | null; ask: Ask | null } {
@@ -242,7 +249,7 @@ export function StrengthSession({
       if (shown && timer.pausedAt === null) {
         const sound = timerSound(shown.phase, shown.secondsLeft, timer.seconds);
         if (sound) {
-          const key = `${timer.workEndsAt}:${sound}:${sound === 'done' ? 0 : shown.secondsLeft}`;
+          const key = `${timer.workEndsAt}:${shown.phase}:${sound}:${sound === 'done' ? 0 : shown.secondsLeft}`;
           if (!playedSound.current.has(key)) {
             playedSound.current.add(key);
             playTimerSound(sound);
@@ -466,8 +473,9 @@ export function StrengthSession({
     const started = Date.now();
     setNow(started);
     const restSec = modalRest > 0 ? modalRest : null;
-    setProgress((prev) => (prev ? { ...prev, timer: startSetTimer(exercise.key, seconds, restSec, started) } : prev));
-    setLive(`Get ready. ${seconds} second hold.`);
+    const eachSide = isPerSide(exercise);
+    setProgress((prev) => (prev ? { ...prev, timer: startSetTimer(exercise.key, seconds, restSec, started, eachSide) } : prev));
+    setLive(eachSide ? `Get ready. ${seconds} seconds each side.` : `Get ready. ${seconds} second hold.`);
     requestScreenWakeLock();
   }
 
@@ -786,6 +794,7 @@ export function StrengthSession({
         <TimerModal
           name={exercise.name.trim() || 'Hold'}
           holdSeconds={Math.max(0, Math.round(parseNum(exercise.pendingReps) ?? 0))}
+          perSide={isPerSide(exercise)}
           restSec={modalRest}
           view={hold}
           paused={Boolean(timer?.pausedAt)}
@@ -896,7 +905,7 @@ function ExercisePane({
   onEdit: (setIndex: number) => void;
 }) {
   const weight = shownLoad(exercise.pieces, exercise.implement, exercise.pendingKg, exercise.pendingAsTotal);
-  const unit = exercise.count === 'seconds' ? 'Seconds' : 'Reps';
+  const unit = `${exercise.count === 'seconds' ? 'Seconds' : 'Reps'}${isPerSide(exercise) ? ' /side' : ''}`;
   const logged = exercise.sets.length;
   const repsDetail = notice
     ? notice
@@ -1079,6 +1088,7 @@ function Review({
 function TimerModal({
   name,
   holdSeconds,
+  perSide,
   restSec,
   view,
   paused,
@@ -1092,6 +1102,7 @@ function TimerModal({
 }: {
   name: string;
   holdSeconds: number;
+  perSide: boolean;
   restSec: number;
   view: TimerView | null;
   paused: boolean;
@@ -1156,12 +1167,12 @@ function TimerModal({
               <circle className="timer-arc" cx="50" cy="50" r="42" pathLength={1} strokeDasharray="1" strokeDashoffset={1 - view.progress} />
             </svg>
             <strong>{figure}</strong>
-            {paused ? <small>Paused</small> : null}
+            {paused ? <small>Paused</small> : view.detail ? <small>{view.detail}</small> : null}
           </p>
         </>
       ) : (
         <>
-          <p className="kicker">Hold</p>
+          <p className="kicker">{perSide ? 'Each side' : 'Hold'}</p>
           <p className="timer-setup-value">{holdSeconds}</p>
           <div className="timer-adjust" aria-label="Hold length">
             <button type="button" onClick={() => onHold(holdSeconds - 5)} aria-label="Decrease hold by 5">

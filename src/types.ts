@@ -31,6 +31,11 @@ export interface PlanExercise {
   /** Seconds are held, not repeated. Side plank uses this. */
   count?: EffortCount;
   /**
+   * This set is each side. Reps and seconds are already per side, not a total of both.
+   * Absent falls back to a name hint. `false` turns that hint off.
+   */
+  perSide?: boolean;
+  /**
    * Logged names that also satisfy this exercise.
    * Optional. Matching is case-insensitive and trimmed.
    */

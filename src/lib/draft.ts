@@ -4,6 +4,7 @@ import { formatDuration, formatKm, formatPace, parseNum, trimNum } from './forma
 import { uid } from './ids';
 import { defaultLoad, roundKg, type LoadDefault } from './load';
 import { lastLoggedExercise, usableTarget } from './load-target';
+import { effortLabel, sideSuffix } from './per-side';
 import { lastExercise } from './stats';
 
 export interface SetDraft {
@@ -22,6 +23,8 @@ export interface ExerciseDraft {
   name: string;
   sets: SetDraft[];
   count: EffortCount;
+  /** The plan's explicit flag. Absent still uses the name hint at display time. */
+  perSide?: boolean;
   targetLabel: string;
   targetSets: number;
   pendingReps: string;
@@ -90,6 +93,7 @@ function makeExercise(fields: {
   name?: string;
   sets?: SetDraft[];
   count?: EffortCount;
+  perSide?: boolean;
   targetLabel?: string;
   targetSets?: number;
   pendingReps?: string;
@@ -111,6 +115,7 @@ function makeExercise(fields: {
     name: fields.name ?? '',
     sets: fields.sets ?? [],
     count: fields.count ?? 'reps',
+    ...(fields.perSide === true || fields.perSide === false ? { perSide: fields.perSide } : {}),
     targetLabel: fields.targetLabel ?? '',
     targetSets: fields.targetSets ?? 3,
     pendingReps: fields.pendingReps ?? seedReps,
@@ -287,31 +292,32 @@ function previousLoad(previous: ExerciseEntry | null, fallback: LoadDefault): Pr
   };
 }
 
-function formatLast(previous: ExerciseEntry | null): string {
+function formatLast(previous: ExerciseEntry | null, side = ''): string {
   if (!previous || previous.sets.length === 0) return '';
   const weighted = [...previous.sets].reverse().find((set) => set.weightKg > 0);
   const ref = weighted ?? previous.sets[previous.sets.length - 1];
   if (!ref) return '';
   const sets = previous.sets.length;
-  if (!weighted) return `Last: ${sets}×${ref.reps}`;
+  if (!weighted) return `Last: ${sets}×${ref.reps}${side}`;
   if (previous.pieces) {
     const per = weighted.kgPerPiece && weighted.kgPerPiece > 0 ? weighted.kgPerPiece : weighted.weightKg / previous.pieces;
-    return `Last: ${sets}×${ref.reps} @ ${trimNum(per)} kg`;
+    return `Last: ${sets}×${ref.reps}${side} @ ${trimNum(per)} kg`;
   }
-  return `Last: ${sets}×${ref.reps} @ ${trimNum(weighted.weightKg)} kg total`;
+  return `Last: ${sets}×${ref.reps}${side} @ ${trimNum(weighted.weightKg)} kg total`;
 }
 
-function formatTarget(target: ExerciseLoadTarget, fallbackSets: number): string {
+function formatTarget(target: ExerciseLoadTarget, fallbackSets: number, side = ''): string {
   const sets = target.sets ?? fallbackSets;
-  if (target.reps !== undefined && target.weightKg !== undefined) return `Target: ${sets}×${target.reps} @ ${trimNum(target.weightKg)} kg`;
-  if (target.reps !== undefined) return `Target: ${sets}×${target.reps}`;
-  if (target.weightKg !== undefined) return `Target: ${sets} sets @ ${trimNum(target.weightKg)} kg`;
-  if (target.sets !== undefined) return `Target: ${target.sets} sets`;
+  if (target.reps !== undefined && target.weightKg !== undefined) return `Target: ${sets}×${target.reps}${side} @ ${trimNum(target.weightKg)} kg`;
+  if (target.reps !== undefined) return `Target: ${sets}×${target.reps}${side}`;
+  if (target.weightKg !== undefined) return `Target: ${sets} sets${side} @ ${trimNum(target.weightKg)} kg`;
+  if (target.sets !== undefined) return `Target: ${target.sets} sets${side}`;
   return '';
 }
 
 interface PlannedLoad {
   count: EffortCount;
+  perSide?: boolean;
   targetSets: number;
   targetLabel: string;
   seedReps: string;
@@ -336,7 +342,8 @@ function plannedLoad(exercise: PlanExercise, sessions: Session[]): PlannedLoad {
   const useWeight = target?.weightKg !== undefined && !bodyweight;
   const targetSets = target?.sets ?? exercise.sets;
   const seedReps = useReps ? String(target.reps) : repSeed(exercise.reps, count);
-  const repsLabel = useReps ? String(target.reps) : exercise.reps;
+  const shownReps = useReps ? String(target.reps) : exercise.reps;
+  const side = sideSuffix(exercise);
   let pieces = load.pieces;
   let implement = load.implement;
   if (useWeight && !pieces && fallback.kind === 'loaded') {
@@ -352,14 +359,15 @@ function plannedLoad(exercise: PlanExercise, sessions: Session[]): PlannedLoad {
     : null;
   const comparisonHint =
     shownTarget && (useReps || useWeight)
-      ? formatLast(history)
+      ? formatLast(history, side)
       : shownTarget
-        ? formatTarget(shownTarget, exercise.sets)
+        ? formatTarget(shownTarget, exercise.sets, side)
         : '';
   return {
     count,
+    ...(exercise.perSide === true || exercise.perSide === false ? { perSide: exercise.perSide } : {}),
     targetSets,
-    targetLabel: count === 'seconds' ? `${targetSets}×${repsLabel} sec` : `${targetSets}×${repsLabel}`,
+    targetLabel: `${targetSets}×${effortLabel(exercise, shownReps)}`,
     seedReps,
     seedKg: useWeight && target?.weightKg !== undefined ? trimNum(target.weightKg) : load.seedKg,
     seedAsTotal: useWeight ? false : load.seedAsTotal,
@@ -384,6 +392,7 @@ export function applyTemplateMeta(draft: Draft, template: PlanExercise[], sessio
       const next: ExerciseDraft = {
         ...exercise,
         count: planned.count,
+        ...(planned.perSide === true || planned.perSide === false ? { perSide: planned.perSide } : { perSide: undefined }),
         targetSets: planned.targetSets,
         targetLabel: planned.targetLabel,
         seedReps: fresh ? planned.seedReps : exercise.seedReps,
@@ -411,6 +420,7 @@ export function exercisesFromTemplate(template: PlanExercise[], sessions: Sessio
     return makeExercise({
       name: exercise.name,
       count: planned.count,
+      perSide: planned.perSide,
       targetLabel: planned.targetLabel,
       targetSets: planned.targetSets,
       pendingReps: planned.seedReps,

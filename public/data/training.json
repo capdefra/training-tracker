@@ -65,7 +65,8 @@
               "name": "Side plank",
               "sets": 3,
               "reps": "20-30",
-              "count": "seconds"
+              "count": "seconds",
+              "perSide": true
             },
             {
               "name": "Chest-supported row",
@@ -108,7 +109,8 @@
             {
               "name": "One-arm dumbbell row",
               "sets": 3,
-              "reps": "8-12"
+              "reps": "8-12",
+              "perSide": true
             },
             {
               "name": "Incline press",
@@ -118,7 +120,8 @@
             {
               "name": "Half-kneeling one-arm overhead press",
               "sets": 3,
-              "reps": "8"
+              "reps": "8",
+              "perSide": true
             },
             {
               "name": "Rear-delt raise",
@@ -160,7 +163,8 @@
             {
               "name": "Single-leg Romanian deadlift",
               "sets": 3,
-              "reps": "8"
+              "reps": "8",
+              "perSide": true
             },
             {
               "name": "Reverse lunge",
@@ -170,7 +174,8 @@
             {
               "name": "Single-leg hip thrust",
               "sets": 3,
-              "reps": "10"
+              "reps": "10",
+              "perSide": true
             },
             {
               "name": "Dead bug",
@@ -186,7 +191,8 @@
               "name": "Suitcase carry",
               "sets": 2,
               "reps": "30",
-              "count": "seconds"
+              "count": "seconds",
+              "perSide": true
             }
           ],
           "distanceKm": null,
@@ -356,7 +362,8 @@
           "name": "Side plank",
           "sets": 3,
           "reps": "20-30",
-          "count": "seconds"
+          "count": "seconds",
+          "perSide": true
         },
         {
           "name": "Chest-supported row",
@@ -397,7 +404,8 @@
         {
           "name": "One-arm dumbbell row",
           "sets": 3,
-          "reps": "8-12"
+          "reps": "8-12",
+          "perSide": true
         },
         {
           "name": "Incline press",
@@ -407,7 +415,8 @@
         {
           "name": "Half-kneeling one-arm overhead press",
           "sets": 3,
-          "reps": "8"
+          "reps": "8",
+          "perSide": true
         },
         {
           "name": "Rear-delt raise",
@@ -448,7 +457,8 @@
         {
           "name": "Single-leg Romanian deadlift",
           "sets": 3,
-          "reps": "8"
+          "reps": "8",
+          "perSide": true
         },
         {
           "name": "Reverse lunge",
@@ -458,7 +468,8 @@
         {
           "name": "Single-leg hip thrust",
           "sets": 3,
-          "reps": "10"
+          "reps": "10",
+          "perSide": true
         },
         {
           "name": "Dead bug",
@@ -474,7 +485,8 @@
           "name": "Suitcase carry",
           "sets": 2,
           "reps": "30",
-          "count": "seconds"
+          "count": "seconds",
+          "perSide": true
         }
       ],
       "createdAt": "2026-10-03T07:51:00.000Z",
