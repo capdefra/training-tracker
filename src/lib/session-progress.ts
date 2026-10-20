@@ -1,4 +1,5 @@
 import type { Draft } from './draft';
+import { readSetTimer, type SetTimer } from './set-timer';
 
 const PROGRESS_KEY = 'training-tracker:strength-progress';
 const PENDING_KEY = 'training-tracker:strength-pending';
@@ -12,6 +13,11 @@ export interface StrengthProgress {
   restOn: boolean;
   restChoice: number;
   draft: Draft;
+  /**
+   * Countdown for a timed set. Local to this phone.
+   * Boundaries are epoch milliseconds so a locked screen keeps the real hold.
+   */
+  timer?: SetTimer | null;
 }
 
 type Store = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
@@ -79,6 +85,7 @@ function readProgress(raw: string | null): StrengthProgress | null {
       restOn: Boolean(parsed.restOn),
       restChoice: parsed.restChoice === 45 || parsed.restChoice === 60 || parsed.restChoice === 90 || parsed.restChoice === 120 ? parsed.restChoice : 90,
       draft: parsed.draft,
+      timer: readSetTimer(parsed.timer),
     };
   } catch {
     return null;

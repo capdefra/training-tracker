@@ -101,6 +101,8 @@ https://capdefra.github.io/training-tracker/
 
 Start, Log, or Continue on a strength day opens a fullscreen session. It uses the plan for that day, including a moved day, and saves through the same log as the rest of the app. An unfinished session stays in this browser until you save or exit. `#/prototype/session` opens Today.
 
+A hold or a carry is an exercise with `count` set to `"seconds"`. Start timer, above the seconds, runs a 4 second get-ready and then counts down the seconds already on the stepper (the first number of a range such as `20-30`, or the phase target when one is set). The ring sits on that number, so the page does not move. The set is logged when the hold reaches zero. Cancel before that logs nothing. Pause freezes the clock. Locking the phone does not: the timer stores timestamps, and a hold that already elapsed is logged when the page returns. If Rest is on, the same ring continues into the rest chosen in the footer (45, 60, 90, or 120 seconds). No new gist field is required. Workout Planner already sends `count`. An optional `timerSec` could later name a countdown that differs from the stepper; that field is not written by this app.
+
 ## Project layout
 
 ```
