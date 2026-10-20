@@ -9,6 +9,7 @@ import {
   startSetTimer,
   viewSetTimer,
 } from '../src/lib/set-timer';
+import { timerSound } from '../src/lib/timer-cues';
 
 const failures: string[] = [];
 
@@ -57,6 +58,15 @@ check('the flash is the documented length', noRest.flashEndsAt - noRest.workEnds
 const stored = readSetTimer(JSON.parse(JSON.stringify(timer)));
 check('a saved timer round-trips', stored?.exerciseKey === 'ex-1' && stored.seconds === 20 && stored.restEndsAt === timer.restEndsAt);
 check('a broken timer is ignored', readSetTimer({ exerciseKey: 'ex-1' }) === null);
+
+check('get-ready is quiet until the last three seconds', timerSound('lead', 4, 20) === null);
+check('the last three get-ready seconds tick', timerSound('lead', 3, 20) === 'tick' && timerSound('lead', 1, 20) === 'tick');
+check('the hold opens with a start tone', timerSound('work', 20, 20) === 'start');
+check('the middle of a hold is quiet', timerSound('work', 15, 20) === null);
+check('the last three hold seconds warn', timerSound('work', 3, 20) === 'warn' && timerSound('work', 1, 20) === 'warn');
+check('a three second hold starts instead of warning', timerSound('work', 3, 3) === 'start');
+check('logging plays the done tone', timerSound('done', 20, 20) === 'done');
+check('rest itself stays quiet', timerSound('rest', 44, 20) === null);
 
 if (failures.length > 0) {
   console.error(failures.join('\n'));

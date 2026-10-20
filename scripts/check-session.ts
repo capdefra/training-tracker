@@ -137,7 +137,8 @@ check('the next exercise sits under the log button', screen.includes('sess-upcom
 check('enabled log label stays light', css.includes('.sess-screen button.sess-log') && css.includes('color: #f6f3ec'));
 check('the session screen does not scroll', css.includes('overflow: hidden') && css.includes('100dvh') && css.includes('overscroll-behavior: none'));
 check('the logger does not write the gist itself', !screen.includes('saveToGist') && !screen.includes('localStorage'));
-check('timed sets count down from timestamps', screen.includes('startSetTimer') && screen.includes('viewSetTimer') && screen.includes('holdElapsed') && screen.includes('Start timer'));
+check('timed sets count down from timestamps', screen.includes('startSetTimer') && screen.includes('viewSetTimer') && screen.includes('holdElapsed') && screen.includes('aria-label="Timer"'));
+check('the timer opens in a modal', screen.includes('timer-modal') && !screen.includes('hold-controls'));
 check('review finishes a fully logged workout', screen.includes("workoutComplete ? 'Complete workout' : 'Save'") && screen.includes('allPlannedSetsLogged'));
 
 const blank = blankDraft('2026-10-09');

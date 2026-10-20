@@ -14,9 +14,9 @@ import {
   resumeSetTimer,
   startSetTimer,
   viewSetTimer,
-  type TimerPhase,
   type TimerView,
 } from '../lib/set-timer';
+import { timerSound, type TimerSound } from '../lib/timer-cues';
 import {
   allPlannedSetsLogged,
   clearPendingLaunch,
@@ -68,43 +68,63 @@ function audioContext(): AudioContext | null {
   return sharedAudio;
 }
 
-/** Unlock audio on the Start tap so the finish beep is allowed to play later. */
-function primeCue() {
+const REST_PRESETS = [0, 30, 45, 60, 90, 120];
+
+/** Create and resume the audio context inside the Start tap so iOS Safari will play later tones. */
+function unlockAudio() {
   const ctx = audioContext();
-  if (ctx?.state === 'suspended') void ctx.resume();
+  if (!ctx) return;
+  if (ctx.state === 'suspended') void ctx.resume();
+  try {
+    const buffer = ctx.createBuffer(1, 1, 22050);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    source.start(0);
+  } catch {
+    /* the resume above is the important part */
+  }
 }
 
-function cueSetFinish() {
+function playTimerSound(sound: TimerSound) {
   try {
-    navigator.vibrate?.([70, 50, 70]);
+    if (sound === 'start') navigator.vibrate?.(30);
+    else if (sound === 'done') navigator.vibrate?.([80, 40, 80]);
+    else if (sound === 'rest') navigator.vibrate?.([40, 30, 40]);
   } catch {
     /* this browser has no vibration */
   }
   try {
     const ctx = audioContext();
     if (!ctx) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.frequency.value = 880;
-    osc.type = 'sine';
-    gain.gain.setValueAtTime(0.04, ctx.currentTime);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    const start = ctx.currentTime;
-    osc.start(start);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.15);
-    osc.stop(start + 0.16);
+    const now = ctx.currentTime;
+    if (sound === 'tick') tone(ctx, now, 988, 0.045, 0.05, 'sine');
+    if (sound === 'start') {
+      tone(ctx, now, 523, 0.09, 0.06, 'sine');
+      tone(ctx, now + 0.1, 784, 0.12, 0.06, 'sine');
+    }
+    if (sound === 'warn') tone(ctx, now, 440, 0.08, 0.055, 'triangle');
+    if (sound === 'done') {
+      tone(ctx, now, 659, 0.12, 0.07, 'sine');
+      tone(ctx, now + 0.14, 880, 0.18, 0.07, 'sine');
+    }
+    if (sound === 'rest') tone(ctx, now, 392, 0.2, 0.06, 'sine');
   } catch {
     /* audio is optional */
   }
 }
 
-function cueRestFinish() {
-  try {
-    navigator.vibrate?.(40);
-  } catch {
-    /* this browser has no vibration */
-  }
+function tone(ctx: AudioContext, when: number, freq: number, duration: number, level: number, type: OscillatorType) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, when);
+  gain.gain.setValueAtTime(level, when);
+  gain.gain.exponentialRampToValueAtTime(0.0001, when + duration);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(when);
+  osc.stop(when + duration + 0.02);
 }
 
 function withName(exercise: ExerciseDraft): ExerciseDraft {
@@ -165,11 +185,14 @@ export function StrengthSession({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [live, setLive] = useState('');
   const [now, setNow] = useState(() => Date.now());
+  const [askTimer, setAskTimer] = useState(false);
+  const [modalRest, setModalRest] = useState(60);
   const snapshot = useRef<PendingSnap | null>(null);
   const swipe = useRef<{ x: number; y: number; pointerId: number } | null>(null);
   const suppressClick = useRef(false);
   const loggedHold = useRef<number | null>(null);
   const restCued = useRef<number | null>(null);
+  const playedSound = useRef(new Set<string>());
   const progressRef = useRef(progress);
 
   useScreenWakeLock();
@@ -215,6 +238,17 @@ export function StrengthSession({
       if (!timer?.pausedAt) setNow(at);
       if (!current || !timer) return;
       const frozen = timer.pausedAt ?? at;
+      const shown = viewSetTimer(timer, frozen);
+      if (shown && timer.pausedAt === null) {
+        const sound = timerSound(shown.phase, shown.secondsLeft, timer.seconds);
+        if (sound) {
+          const key = `${timer.workEndsAt}:${sound}:${sound === 'done' ? 0 : shown.secondsLeft}`;
+          if (!playedSound.current.has(key)) {
+            playedSound.current.add(key);
+            playTimerSound(sound);
+          }
+        }
+      }
       const exerciseIndex = current.draft.exercises.findIndex((item) => item.key === timer.exerciseKey);
       if (exerciseIndex < 0) {
         setProgress((prev) => (prev?.timer ? { ...prev, timer: null } : prev));
@@ -226,7 +260,13 @@ export function StrengthSession({
         const exercise = current.draft.exercises[exerciseIndex];
         const atCap = Boolean(exercise && exercise.targetSets > 0 && exercise.sets.length >= exercise.targetSets);
         const canWrite = Boolean(exercise && exercise.name.trim() && timer.seconds > 0 && !atCap);
-        if (canWrite) cueSetFinish();
+        if (canWrite) {
+          const key = `${timer.workEndsAt}:done:0`;
+          if (!playedSound.current.has(key)) {
+            playedSound.current.add(key);
+            playTimerSound('done');
+          }
+        }
         setProgress((prev) => {
           if (!prev?.timer || prev.timer.logged || prev.timer.workEndsAt !== timer.workEndsAt) return prev;
           const index = prev.draft.exercises.findIndex((item) => item.key === prev.timer?.exerciseKey);
@@ -273,9 +313,14 @@ export function StrengthSession({
       if (viewSetTimer(timer, frozen) === null) {
         if (timer.logged && timer.restEndsAt !== null && restCued.current !== timer.restEndsAt) {
           restCued.current = timer.restEndsAt;
-          cueRestFinish();
+          const key = `${timer.restEndsAt}:rest`;
+          if (!playedSound.current.has(key)) {
+            playedSound.current.add(key);
+            playTimerSound('rest');
+          }
           setLive('Rest done');
         }
+        setAskTimer(false);
         setProgress((prev) => {
           if (!prev?.timer || prev.timer.workEndsAt !== timer.workEndsAt) return prev;
           if (viewSetTimer(prev.timer, prev.timer.pausedAt ?? Date.now()) !== null) return prev;
@@ -339,9 +384,9 @@ export function StrengthSession({
   const timer = workout.timer ?? null;
   const timerHere = Boolean(exercise && timer && timer.exerciseKey === exercise.key);
   const hold = timerHere && timer ? viewSetTimer(timer, timer.pausedAt ?? now) : null;
-  const ringRest = hold?.phase === 'rest' ? hold.secondsLeft : null;
-  const restLabel = ringRest !== null ? clock(ringRest) : !restOn ? 'Off' : remaining === null ? clock(restChoice) : clock(remaining);
-  const restRunning = ringRest !== null || (remaining !== null && remaining > 0);
+  const timerOpen = Boolean(exercise && exercise.count === 'seconds' && (askTimer || hold));
+  const restLabel = !restOn ? 'Off' : remaining === null ? clock(restChoice) : clock(remaining);
+  const restRunning = remaining !== null && remaining > 0;
   const repsNow = exercise ? (parseNum(exercise.pendingReps) ?? 0) : 0;
   // Cap is the exercise target: the plan's set count, or 3 on a blank exercise.
   const atSetCap = Boolean(exercise && exercise.targetSets > 0 && exercise.sets.length >= exercise.targetSets);
@@ -381,6 +426,7 @@ export function StrengthSession({
     snapshot.current = null;
     setEditingKey(null);
     setNotice('');
+    setAskTimer(false);
     setProgress((prev) => {
       if (!prev) return prev;
       return {
@@ -397,17 +443,37 @@ export function StrengthSession({
     });
   }
 
+  function openTimer() {
+    if (!exercise || exercise.count !== 'seconds' || editingKey || atSetCap || !exercise.name.trim()) return;
+    setModalRest(restOn ? restChoice : 60);
+    setAskTimer(true);
+  }
+
+  function closeTimer() {
+    setAskTimer(false);
+    if (!workout.timer) return;
+    const logged = workout.timer.logged;
+    setProgress((prev) => (prev?.timer ? { ...prev, timer: null } : prev));
+    setLive(logged ? 'Timer stopped.' : 'Timer cancelled.');
+  }
+
   function startTimer() {
     if (!exercise || exercise.count !== 'seconds' || editingKey || atSetCap) return;
-    const seconds = Math.round(parseNum(exercise.pendingReps) ?? 0);
-    if (seconds <= 0 || !exercise.name.trim()) return;
-    primeCue();
+    const seconds = Math.max(1, Math.min(300, Math.round(parseNum(exercise.pendingReps) ?? 0)));
+    if (!exercise.name.trim()) return;
+    unlockAudio();
     setRemaining(null);
     const started = Date.now();
     setNow(started);
-    update({ ...workout, timer: startSetTimer(exercise.key, seconds, restOn ? restChoice : null, started) });
+    const restSec = modalRest > 0 ? modalRest : null;
+    setProgress((prev) => (prev ? { ...prev, timer: startSetTimer(exercise.key, seconds, restSec, started) } : prev));
     setLive(`Get ready. ${seconds} second hold.`);
     requestScreenWakeLock();
+  }
+
+  function setHoldSeconds(next: number) {
+    if (!exercise || hold) return;
+    patchExercise(exercise.key, { pendingReps: String(Math.max(1, Math.min(300, next))) });
   }
 
   function pauseTimer() {
@@ -425,23 +491,6 @@ export function StrengthSession({
     update({ ...workout, timer: resumeSetTimer(workout.timer, resumedAt) });
     setLive('Timer resumed.');
     requestScreenWakeLock();
-  }
-
-  function cancelTimer() {
-    if (!workout.timer) return;
-    const logged = workout.timer.logged;
-    setProgress((prev) => (prev?.timer ? { ...prev, timer: null } : prev));
-    setLive(logged ? 'Timer stopped.' : 'Timer cancelled.');
-  }
-
-  function applyRest(nextOn: boolean, choice: number) {
-    setRemaining(null);
-    setProgress((prev) => {
-      if (!prev) return prev;
-      const current = prev.timer;
-      const nextTimer = current && !current.logged ? { ...current, restEndsAt: nextOn ? current.flashEndsAt + choice * 1000 : null } : current;
-      return { ...prev, restOn: nextOn, restChoice: choice, timer: nextTimer ?? null };
-    });
   }
 
   function beginEdit(set: SetDraft) {
@@ -521,14 +570,14 @@ export function StrengthSession({
   }
 
   function bumpKg(delta: number) {
-    if (!exercise || exercise.bodyweight || timerHere) return;
+    if (!exercise || exercise.bodyweight) return;
     const current = parseNum(exercise.pendingKg) ?? 0;
     setNotice('');
     patchExercise(exercise.key, { pendingKg: trimNum(Math.max(0, current + delta)), pendingAsTotal: exercise.pieces ? false : exercise.pendingAsTotal });
   }
 
   function bumpReps(delta: number) {
-    if (!exercise || timerHere) return;
+    if (!exercise) return;
     const current = parseNum(exercise.pendingReps) ?? 0;
     setNotice('');
     patchExercise(exercise.key, { pendingReps: trimNum(Math.max(0, current + delta)) });
@@ -556,14 +605,14 @@ export function StrengthSession({
 
   function onPointerDown(event: ReactPointerEvent<HTMLElement>) {
     suppressClick.current = false;
-    if (event.button !== 0 || sheet) return;
+    if (event.button !== 0 || sheet || timerOpen) return;
     swipe.current = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
   }
 
   function onPointerUp(event: ReactPointerEvent<HTMLElement>) {
     const start = swipe.current;
     swipe.current = null;
-    if (!start || start.pointerId !== event.pointerId || sheet) return;
+    if (!start || start.pointerId !== event.pointerId || sheet || timerOpen) return;
     const dx = event.clientX - start.x;
     const dy = event.clientY - start.y;
     if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.25) return;
@@ -622,14 +671,8 @@ export function StrengthSession({
           exercise={exercise}
           editing={editingKey ? exercise.sets.findIndex((set) => set.key === editingKey) : null}
           notice={notice}
-          hold={hold}
-          holdPaused={Boolean(timer?.pausedAt)}
-          canStartHold={!timerHere && exercise.count === 'seconds' && !editingKey && !atSetCap && repsNow > 0 && Boolean(exercise.name.trim())}
-          holdLocked={timerHere}
-          onStartHold={startTimer}
-          onPauseHold={pauseTimer}
-          onResumeHold={resumeTimer}
-          onCancelHold={cancelTimer}
+          canOpenTimer={exercise.count === 'seconds' && !editingKey && !atSetCap && Boolean(exercise.name.trim())}
+          onOpenTimer={openTimer}
           onName={(name) => patchExercise(exercise.key, { name })}
           onNameCommit={() => patchExercise(exercise.key, loadForName(exercise))}
           onPieces={(pieces, implement) => {
@@ -641,7 +684,6 @@ export function StrengthSession({
           onResetKg={() => patchExercise(exercise.key, { pendingKg: exercise.seedKg, pendingAsTotal: exercise.seedAsTotal })}
           onResetReps={() => patchExercise(exercise.key, { pendingReps: exercise.seedReps })}
           onEdit={(index) => {
-            if (timerHere) return;
             const set = exercise.sets[index];
             if (set) beginEdit(set);
           }}
@@ -655,34 +697,25 @@ export function StrengthSession({
               type="button"
               className={cx(restOn && 'on')}
               aria-pressed={restOn}
-              aria-disabled={Boolean(timer?.logged) || undefined}
               onClick={() => {
-                if (timer?.logged) return;
-                applyRest(!restOn, restChoice);
+                update({ ...workout, restOn: !restOn });
+                setRemaining(null);
               }}
             >
               Rest
             </button>
             <button
               type="button"
-              disabled={!restOn || remaining !== null || ringRest !== null || Boolean(timer?.logged)}
+              disabled={!restOn || remaining !== null}
               aria-label={restOn ? `Rest ${restLabel}. Change duration.` : 'Rest timer off'}
               onClick={() => {
                 const index = REST_CHOICES.indexOf(restChoice);
-                const choice = REST_CHOICES[(index + 1) % REST_CHOICES.length] ?? 90;
-                applyRest(restOn, choice);
+                update({ ...workout, restChoice: REST_CHOICES[(index + 1) % REST_CHOICES.length] ?? 90 });
               }}
             >
               <span className="sess-clock">{restLabel}</span>
             </button>
-            <button
-              type="button"
-              disabled={!restRunning && remaining !== 0}
-              onClick={() => {
-                if (ringRest !== null) cancelTimer();
-                else setRemaining(null);
-              }}
-            >
+            <button type="button" disabled={!restRunning && remaining !== 0} onClick={() => setRemaining(null)}>
               Stop
             </button>
           </div>
@@ -748,6 +781,23 @@ export function StrengthSession({
           </p>
         )}
       </footer>
+
+      {timerOpen && exercise ? (
+        <TimerModal
+          name={exercise.name.trim() || 'Hold'}
+          holdSeconds={Math.max(0, Math.round(parseNum(exercise.pendingReps) ?? 0))}
+          restSec={modalRest}
+          view={hold}
+          paused={Boolean(timer?.pausedAt)}
+          canStart={!editingKey && !atSetCap && repsNow > 0}
+          onHold={setHoldSeconds}
+          onRest={(next) => setModalRest(Math.max(0, Math.min(300, next)))}
+          onStart={startTimer}
+          onPause={pauseTimer}
+          onResume={resumeTimer}
+          onClose={closeTimer}
+        />
+      ) : null}
 
       {sheet === 'exit' ? (
         <Sheet label="Exit session?" onClose={() => setSheet(null)}>
@@ -820,14 +870,8 @@ function ExercisePane({
   exercise,
   editing,
   notice,
-  hold,
-  holdPaused,
-  canStartHold,
-  holdLocked,
-  onStartHold,
-  onPauseHold,
-  onResumeHold,
-  onCancelHold,
+  canOpenTimer,
+  onOpenTimer,
   onName,
   onNameCommit,
   onPieces,
@@ -840,14 +884,8 @@ function ExercisePane({
   exercise: ExerciseDraft;
   editing: number | null;
   notice: string;
-  hold: TimerView | null;
-  holdPaused: boolean;
-  canStartHold: boolean;
-  holdLocked: boolean;
-  onStartHold: () => void;
-  onPauseHold: () => void;
-  onResumeHold: () => void;
-  onCancelHold: () => void;
+  canOpenTimer: boolean;
+  onOpenTimer: () => void;
   onName: (name: string) => void;
   onNameCommit: () => void;
   onPieces: (pieces: LoadPieces, implement: LoadImplement) => void;
@@ -924,7 +962,7 @@ function ExercisePane({
           {PIECE_CHOICES.map((choice) => {
             const on = exercise.pieces === choice.pieces && (choice.pieces === 2 || exercise.implement === choice.implement);
             return (
-              <button key={`${choice.pieces}-${choice.implement}`} type="button" className={cx(on && 'on')} aria-pressed={on} disabled={holdLocked} onClick={() => onPieces(choice.pieces, choice.implement)}>
+              <button key={`${choice.pieces}-${choice.implement}`} type="button" className={cx(on && 'on')} aria-pressed={on} onClick={() => onPieces(choice.pieces, choice.implement)}>
                 <strong>{choice.count}</strong>
                 <small>{choice.label}</small>
               </button>
@@ -934,67 +972,42 @@ function ExercisePane({
       )}
       <section className={cx('sess-measure', exercise.bodyweight && 'is-body')} aria-label={exercise.bodyweight ? 'Bodyweight' : weight.caption}>
         <p className="kicker sess-caption">{exercise.bodyweight ? 'Bodyweight' : weight.caption}</p>
-        <button type="button" className="sess-reset" disabled={exercise.bodyweight || holdLocked} onClick={onResetKg}>
+        <button type="button" className="sess-reset" disabled={exercise.bodyweight} onClick={onResetKg}>
           Reset
         </button>
         <p className="sess-value">
           <strong>{exercise.bodyweight ? 'BW' : weight.value}</strong>
         </p>
         <div className="sess-stepper">
-          <StepButton label={exercise.bodyweight ? 'Bodyweight' : weight.caption} delta={-2} disabled={exercise.bodyweight || holdLocked} onBump={onBumpKg} />
-          <StepButton label={exercise.bodyweight ? 'Bodyweight' : weight.caption} delta={-1} disabled={exercise.bodyweight || holdLocked} onBump={onBumpKg} />
-          <StepButton label={exercise.bodyweight ? 'Bodyweight' : weight.caption} delta={1} disabled={exercise.bodyweight || holdLocked} onBump={onBumpKg} />
-          <StepButton label={exercise.bodyweight ? 'Bodyweight' : weight.caption} delta={2} disabled={exercise.bodyweight || holdLocked} onBump={onBumpKg} />
+          <StepButton label={exercise.bodyweight ? 'Bodyweight' : weight.caption} delta={-2} disabled={exercise.bodyweight} onBump={onBumpKg} />
+          <StepButton label={exercise.bodyweight ? 'Bodyweight' : weight.caption} delta={-1} disabled={exercise.bodyweight} onBump={onBumpKg} />
+          <StepButton label={exercise.bodyweight ? 'Bodyweight' : weight.caption} delta={1} disabled={exercise.bodyweight} onBump={onBumpKg} />
+          <StepButton label={exercise.bodyweight ? 'Bodyweight' : weight.caption} delta={2} disabled={exercise.bodyweight} onBump={onBumpKg} />
         </div>
         <p className="sess-detail">{exercise.bodyweight ? 'Bodyweight' : weight.detail}</p>
       </section>
-      {exercise.count === 'seconds' ? (
-        <div className={cx('hold-controls', hold && 'is-split')} role="group" aria-label="Set timer">
-          {hold ? (
-            <>
-              <button type="button" aria-label={holdPaused ? 'Resume timer' : 'Pause timer'} onClick={holdPaused ? onResumeHold : onPauseHold}>
-                {holdPaused ? 'Resume' : 'Pause'}
-              </button>
-              <button type="button" aria-label="Cancel timer" onClick={onCancelHold}>
-                Cancel
-              </button>
-            </>
-          ) : (
-            <button type="button" disabled={!canStartHold} onClick={onStartHold}>
-              Start timer
-            </button>
-          )}
-        </div>
-      ) : null}
-      <section className="sess-measure" aria-label={hold ? `${hold.caption}, ${hold.secondsLeft} seconds` : unit} data-hold-phase={hold?.phase ?? 'idle'}>
-        <p className={cx('kicker sess-caption', hold && `is-${hold.phase}`)}>{hold ? hold.caption : unit}</p>
-        <button type="button" className="sess-reset" disabled={holdLocked} onClick={onResetReps}>
+      <section className={cx('sess-measure', exercise.count === 'seconds' && 'has-timer')} aria-label={unit}>
+        <p className="kicker sess-caption">{unit}</p>
+        {exercise.count === 'seconds' ? (
+          <button type="button" className="sess-timer-open" aria-label="Timer" disabled={!canOpenTimer} onClick={onOpenTimer}>
+            Timer
+          </button>
+        ) : null}
+        <button type="button" className="sess-reset" onClick={onResetReps}>
           Reset
         </button>
         <p className="sess-value">
-          {hold ? <HoldRing progress={hold.progress} phase={hold.phase} seconds={hold.secondsLeft} /> : <strong>{exercise.pendingReps || '0'}</strong>}
+          <strong>{exercise.pendingReps || '0'}</strong>
         </p>
         <div className="sess-stepper">
-          <StepButton label={unit} delta={-2} disabled={holdLocked} onBump={onBumpReps} />
-          <StepButton label={unit} delta={-1} disabled={holdLocked} onBump={onBumpReps} />
-          <StepButton label={unit} delta={1} disabled={holdLocked} onBump={onBumpReps} />
-          <StepButton label={unit} delta={2} disabled={holdLocked} onBump={onBumpReps} />
+          <StepButton label={unit} delta={-2} onBump={onBumpReps} />
+          <StepButton label={unit} delta={-1} onBump={onBumpReps} />
+          <StepButton label={unit} delta={1} onBump={onBumpReps} />
+          <StepButton label={unit} delta={2} onBump={onBumpReps} />
         </div>
         <p className={cx('sess-detail', notice && 'is-alert')}>{repsDetail}</p>
       </section>
     </main>
-  );
-}
-
-function HoldRing({ progress, phase, seconds }: { progress: number; phase: TimerPhase; seconds: number }) {
-  return (
-    <span className={cx('hold-face', `is-${phase}`)}>
-      <svg viewBox="0 0 100 100" aria-hidden="true">
-        <circle className="hold-track" cx="50" cy="50" r="42" />
-        <circle className="hold-arc" cx="50" cy="50" r="42" pathLength={1} strokeDasharray="1" strokeDashoffset={1 - progress} />
-      </svg>
-      <strong>{seconds}</strong>
-    </span>
   );
 }
 
@@ -1060,6 +1073,136 @@ function Review({
         </button>
       ) : null}
     </main>
+  );
+}
+
+function TimerModal({
+  name,
+  holdSeconds,
+  restSec,
+  view,
+  paused,
+  canStart,
+  onHold,
+  onRest,
+  onStart,
+  onPause,
+  onResume,
+  onClose,
+}: {
+  name: string;
+  holdSeconds: number;
+  restSec: number;
+  view: TimerView | null;
+  paused: boolean;
+  canStart: boolean;
+  onHold: (next: number) => void;
+  onRest: (next: number) => void;
+  onStart: () => void;
+  onPause: () => void;
+  onResume: () => void;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const ignoreClose = useRef(false);
+  const running = view !== null;
+  const figure = !view ? '' : view.phase === 'rest' ? clock(view.secondsLeft) : String(view.secondsLeft);
+
+  useEffect(() => {
+    const dialog = ref.current;
+    if (!dialog) return;
+    if (!dialog.open) dialog.showModal();
+    return () => {
+      ignoreClose.current = true;
+      if (dialog.open) dialog.close();
+    };
+  }, []);
+
+  return (
+    <dialog
+      ref={ref}
+      className="sess-dialog timer-modal"
+      aria-label={running ? `${view.caption} timer` : 'Set timer'}
+      data-timer-phase={view?.phase ?? 'setup'}
+      onPointerDown={(event) => event.stopPropagation()}
+      onClose={() => {
+        if (ignoreClose.current) return;
+        onClose();
+      }}
+      onClick={(event) => {
+        if (running) return;
+        const rect = event.currentTarget.getBoundingClientRect();
+        const inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+        if (!inside) onClose();
+      }}
+    >
+      <div className="timer-head">
+        <p className={cx('kicker', running && `is-${view.phase}`)}>{running ? view.caption : 'Timer'}</p>
+        <h2>{name}</h2>
+      </div>
+      {running ? (
+        <>
+          <div className="timer-actions">
+            <button type="button" onClick={paused ? onResume : onPause}>
+              {paused ? 'Resume' : 'Pause'}
+            </button>
+            <button type="button" onClick={onClose}>
+              Cancel
+            </button>
+          </div>
+          <p className={cx('timer-face', `is-${view.phase}`, paused && 'is-paused')}>
+            <svg viewBox="0 0 100 100" aria-hidden="true">
+              <circle className="timer-track" cx="50" cy="50" r="42" />
+              <circle className="timer-arc" cx="50" cy="50" r="42" pathLength={1} strokeDasharray="1" strokeDashoffset={1 - view.progress} />
+            </svg>
+            <strong>{figure}</strong>
+            {paused ? <small>Paused</small> : null}
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="kicker">Hold</p>
+          <p className="timer-setup-value">{holdSeconds}</p>
+          <div className="timer-adjust" aria-label="Hold length">
+            <button type="button" onClick={() => onHold(holdSeconds - 5)} aria-label="Decrease hold by 5">
+              −5
+            </button>
+            <button type="button" onClick={() => onHold(holdSeconds - 1)} aria-label="Decrease hold by 1">
+              −1
+            </button>
+            <button type="button" onClick={() => onHold(holdSeconds + 1)} aria-label="Increase hold by 1">
+              +1
+            </button>
+            <button type="button" onClick={() => onHold(holdSeconds + 5)} aria-label="Increase hold by 5">
+              +5
+            </button>
+          </div>
+          <p className="kicker">Rest</p>
+          <div className="timer-presets" role="group" aria-label="Rest presets">
+            {REST_PRESETS.map((preset) => (
+              <button key={preset} type="button" className={cx(restSec === preset && 'on')} aria-pressed={restSec === preset} onClick={() => onRest(preset)}>
+                {preset === 0 ? 'Off' : preset}
+              </button>
+            ))}
+          </div>
+          <div className="timer-adjust timer-adjust-rest" aria-label="Rest length">
+            <button type="button" onClick={() => onRest(restSec - 15)} aria-label="Decrease rest by 15 seconds">
+              −15
+            </button>
+            <strong>{restSec === 0 ? 'Off' : clock(restSec)}</strong>
+            <button type="button" onClick={() => onRest(restSec + 15)} aria-label="Increase rest by 15 seconds">
+              +15
+            </button>
+          </div>
+          <button type="button" className="sess-log" disabled={!canStart} aria-label="Start timer" onClick={onStart}>
+            Start
+          </button>
+          <button type="button" onClick={onClose}>
+            Close
+          </button>
+        </>
+      )}
+    </dialog>
   );
 }
 
