@@ -1,4 +1,5 @@
 import type { ExerciseEntry, PlanExercise, PlanSession, Session } from '../types';
+import { effortLabel } from './per-side';
 import { exerciseKey } from './stats';
 
 export interface ExerciseTarget {
@@ -10,7 +11,7 @@ export interface ExerciseTarget {
 }
 
 export function repsLabel(exercise: PlanExercise): string {
-  return exercise.count === 'seconds' ? `${exercise.reps} sec` : exercise.reps;
+  return effortLabel(exercise);
 }
 
 export function exerciseTargetLabel(exercise: PlanExercise): string {

@@ -17,16 +17,16 @@ const LOWER_A: PlanExercise[] = [
   { name: 'Bulgarian split squat', sets: 3, reps: '8' },
   { name: 'Step-up', sets: 3, reps: '8' },
   { name: 'Dumbbell Romanian deadlift', sets: 3, reps: '8-12' },
-  { name: 'Side plank', sets: 3, reps: '20-30', count: 'seconds' },
+  { name: 'Side plank', sets: 3, reps: '20-30', count: 'seconds', perSide: true },
   { name: 'Chest-supported row', sets: 2, reps: '10' },
   { name: 'Standing calf raise', sets: 3, reps: '12-15' },
 ];
 
 const UPPER: PlanExercise[] = [
   { name: 'Flat dumbbell bench press', sets: 3, reps: '8-12' },
-  { name: 'One-arm dumbbell row', sets: 3, reps: '8-12' },
+  { name: 'One-arm dumbbell row', sets: 3, reps: '8-12', perSide: true },
   { name: 'Incline press', sets: 3, reps: '8-12' },
-  { name: 'Half-kneeling one-arm overhead press', sets: 3, reps: '8' },
+  { name: 'Half-kneeling one-arm overhead press', sets: 3, reps: '8', perSide: true },
   { name: 'Rear-delt raise', sets: 3, reps: '12-15' },
   { name: 'Dumbbell curl', sets: 2, reps: '10-15' },
   { name: 'Overhead triceps extension', sets: 2, reps: '10-15' },
@@ -35,12 +35,12 @@ const UPPER: PlanExercise[] = [
 
 const LOWER_B: PlanExercise[] = [
   { name: 'Kettlebell swing', sets: 4, reps: '12' },
-  { name: 'Single-leg Romanian deadlift', sets: 3, reps: '8' },
+  { name: 'Single-leg Romanian deadlift', sets: 3, reps: '8', perSide: true },
   { name: 'Reverse lunge', sets: 3, reps: '8' },
-  { name: 'Single-leg hip thrust', sets: 3, reps: '10' },
+  { name: 'Single-leg hip thrust', sets: 3, reps: '10', perSide: true },
   { name: 'Dead bug', sets: 3, reps: '8' },
   { name: 'Push-up', sets: 2, reps: '8-15' },
-  { name: 'Suitcase carry', sets: 2, reps: '30', count: 'seconds' },
+  { name: 'Suitcase carry', sets: 2, reps: '30', count: 'seconds', perSide: true },
 ];
 
 interface SessionSpec {
@@ -168,6 +168,7 @@ const PHASES: PlanPhase[] = [
 function cloneExercise(exercise: PlanExercise): PlanExercise {
   const copy: PlanExercise = { name: exercise.name, sets: exercise.sets, reps: exercise.reps };
   if (exercise.count) copy.count = exercise.count;
+  if (exercise.perSide === true || exercise.perSide === false) copy.perSide = exercise.perSide;
   if (exercise.alsoCounts && exercise.alsoCounts.length > 0) copy.alsoCounts = [...exercise.alsoCounts];
   if (exercise.equipment && exercise.equipment.length > 0) copy.equipment = [...exercise.equipment];
   return copy;

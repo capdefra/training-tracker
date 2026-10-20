@@ -193,6 +193,8 @@ function normalizeExercise(value: unknown): PlanExercise | null {
     reps: text(record.reps) || '5',
   };
   if (record.count === 'seconds') exercise.count = 'seconds';
+  if (record.perSide === true) exercise.perSide = true;
+  else if (record.perSide === false) exercise.perSide = false;
   const aliases = alsoCountsList(record.alsoCounts);
   if (aliases) exercise.alsoCounts = aliases;
   const target = normalizeLoadTarget(record.target);

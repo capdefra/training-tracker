@@ -4,6 +4,7 @@ import { blankDraft, draftFromPreset, exercisesFromTemplate, type Draft } from '
 import { addDays } from '../src/lib/dates';
 import { buildPreset, planItemsForWeek } from '../src/lib/plans';
 import { allPlannedSetsLogged, decideLaunch, freshProgress, isDirty, loadStrengthProgress, progressHasSets, saveStrengthProgress, type StrengthProgress } from '../src/lib/session-progress';
+import { startSetTimer } from '../src/lib/set-timer';
 import { sessionFromDraft } from '../src/lib/session-save';
 import { normalize } from '../src/lib/storage';
 import type { TrainingData } from '../src/types';
@@ -118,6 +119,10 @@ const stored = freshProgress(draftFromPreset({ date: '2026-10-08', kind: 'streng
 saveStrengthProgress(stored, memory);
 const loaded = loadStrengthProgress(memory);
 check('progress round-trips in storage', loaded?.sessionId === 'keep' && loaded.draft.title === 'Lower A' && loaded.restChoice === 90 && loaded.baseline === '');
+const running = startSetTimer('side-plank', 20, 90, 1_700_000_000_000);
+saveStrengthProgress({ ...stored, timer: running }, memory);
+const resumed = loadStrengthProgress(memory);
+check('a timed set survives reload', resumed?.timer?.exerciseKey === 'side-plank' && resumed.timer.leadEndsAt === running.leadEndsAt && resumed.timer.seconds === 20 && resumed.timer.pausedAt === null);
 
 check('session route is the logger', parseHash('#/session').name === 'session');
 check('old preview route opens Today', parseHash('#/prototype/session').name === 'today' && parseHash('#/prototype/session/ps-upper').name === 'today');
@@ -132,6 +137,8 @@ check('the next exercise sits under the log button', screen.includes('sess-upcom
 check('enabled log label stays light', css.includes('.sess-screen button.sess-log') && css.includes('color: #f6f3ec'));
 check('the session screen does not scroll', css.includes('overflow: hidden') && css.includes('100dvh') && css.includes('overscroll-behavior: none'));
 check('the logger does not write the gist itself', !screen.includes('saveToGist') && !screen.includes('localStorage'));
+check('timed sets count down from timestamps', screen.includes('startSetTimer') && screen.includes('viewSetTimer') && screen.includes('holdElapsed') && screen.includes('aria-label="Timer"'));
+check('the timer opens in a modal', screen.includes('timer-modal') && !screen.includes('hold-controls'));
 check('review finishes a fully logged workout', screen.includes("workoutComplete ? 'Complete workout' : 'Save'") && screen.includes('allPlannedSetsLogged'));
 
 const blank = blankDraft('2026-10-09');

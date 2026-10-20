@@ -121,7 +121,7 @@ check('after the phase the exercise target is the suggestion', after.exercise?.t
 check('a target on another session does not apply', after.exercise?.targetLabel !== 'Target: 9×9 @ 99 kg per piece');
 
 const hip = row(data, '2026-10-16', 'ps-lower-b', 'Single-leg hip thrust', history);
-check('with no written target the last weight is the reference', hip.exercise?.planLabel === '3×10' && hip.exercise?.targetLabel === 'Target: 3×10 @ 12 kg per piece' && hip.exercise?.lastLabel === 'Last: 3×8 @ 12 kg');
+check('with no written target the last weight is the reference', hip.exercise?.planLabel === '3×10 /side' && hip.exercise?.targetLabel === 'Target: 3×10 /side @ 12 kg per piece' && hip.exercise?.lastLabel === 'Last: 3×8 /side @ 12 kg');
 
 const bare = row(data, '2026-10-16', 'ps-lower-b', 'Dead bug');
 check('with no target and no log the plan sets and reps are the suggestion', bare.exercise?.targetLabel === 'Target: 3×8' && bare.exercise?.lastLabel === '');

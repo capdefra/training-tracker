@@ -6,6 +6,7 @@ import { exerciseGear, gearLabel, sessionGear, visiblePhaseNotes } from './equip
 import { defaultLoad } from './load';
 import { lastLoggedExercise, resolveExerciseTarget, usableTarget } from './load-target';
 import { phaseOn } from './plans';
+import { effortLabel, sideSuffix } from './per-side';
 import { repsLabel } from './targets';
 
 export interface ExercisePreview {
@@ -41,18 +42,18 @@ function exerciseNote(exercise: PlanExercise): string {
   return typeof notes === 'string' ? notes.trim() : '';
 }
 
-function formatLast(previous: ExerciseEntry | null): string {
+function formatLast(previous: ExerciseEntry | null, side = ''): string {
   if (!previous || previous.sets.length === 0) return '';
   const weighted = [...previous.sets].reverse().find((set) => set.weightKg > 0);
   const ref = weighted ?? previous.sets[previous.sets.length - 1];
   if (!ref) return '';
   const sets = previous.sets.length;
-  if (!weighted) return `Last: ${sets}×${ref.reps}`;
+  if (!weighted) return `Last: ${sets}×${ref.reps}${side}`;
   if (previous.pieces) {
     const per = weighted.kgPerPiece && weighted.kgPerPiece > 0 ? weighted.kgPerPiece : weighted.weightKg / previous.pieces;
-    return `Last: ${sets}×${ref.reps} @ ${trimNum(per)} kg`;
+    return `Last: ${sets}×${ref.reps}${side} @ ${trimNum(per)} kg`;
   }
-  return `Last: ${sets}×${ref.reps} @ ${trimNum(weighted.weightKg)} kg total`;
+  return `Last: ${sets}×${ref.reps}${side} @ ${trimNum(weighted.weightKg)} kg total`;
 }
 
 function lastPerPiece(previous: ExerciseEntry | null): { kg: number; perPiece: boolean } | null {
@@ -86,11 +87,7 @@ export function previewSession(plan: Plan | null, session: PlanSession, date: st
         const plannedSets = change?.sets ?? exercise.sets;
         const resolved = plan ? resolveExerciseTarget(phase, session.id, exercise) : usableTarget(exercise.target);
         const sets = resolved?.sets ?? plannedSets;
-        const repsText = resolved?.reps !== undefined
-          ? exercise.count === 'seconds'
-            ? `${resolved.reps} sec`
-            : String(resolved.reps)
-          : repsLabel({ ...exercise, sets: plannedSets });
+        const repsText = resolved?.reps !== undefined ? effortLabel(exercise, String(resolved.reps)) : repsLabel(exercise);
         const history = lastLoggedExercise(logs, exercise);
         const bodyweight = defaultLoad(exercise.name).kind === 'bodyweight';
         const loggedWeight = bodyweight ? null : lastPerPiece(history);
@@ -101,7 +98,7 @@ export function previewSession(plan: Plan | null, session: PlanSession, date: st
           name: exercise.name,
           planLabel: `${plannedSets}×${repsLabel(exercise)}`,
           targetLabel: targetLine(sets, repsText, weight),
-          lastLabel: formatLast(history),
+          lastLabel: formatLast(history, sideSuffix(exercise)),
           notes: exerciseNote(exercise),
           equipmentLabel: gearLabel(exerciseGear(exercise), ' · '),
           hasDemo: findDemo(exercise.name) !== undefined,

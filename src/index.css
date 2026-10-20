@@ -459,13 +459,25 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .set-head { color: var(--muted); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
 .set-row input { min-width: 0; }
 .template-row {
-  grid-template-columns: minmax(0, 1.4fr) 3.2rem 3.2rem 4.8rem auto;
-  grid-template-areas: "name sets reps unit remove";
+  grid-template-columns: minmax(0, 1.4fr) 3.2rem 3.2rem 4.8rem auto auto;
+  grid-template-areas: "name sets reps unit side remove";
 }
 .t-name { grid-area: name; }
 .t-sets { grid-area: sets; }
 .t-reps { grid-area: reps; }
 .t-unit { grid-area: unit; }
+.t-side {
+  grid-area: side;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--field);
+  color: var(--ink);
+  font-size: 0.8rem;
+}
+.t-side.on { background: var(--accent-fill); color: var(--on-accent); border-color: var(--accent-fill); }
 .t-remove { grid-area: remove; }
 .inset { margin-top: 8px; }
 .check { display: flex; gap: 10px; align-items: flex-start; }
@@ -541,7 +553,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
     grid-template-columns: minmax(0, 1fr) 3rem 3rem auto;
     grid-template-areas:
       "name sets reps remove"
-      "unit unit unit unit";
+      "unit unit side side";
   }
 }
 

@@ -538,6 +538,196 @@ button.form-link.sess-form {
   color: var(--ember);
 }
 
+.sess-measure.has-timer .sess-caption {
+  padding-right: calc(var(--sess-reset) * 2 + var(--sess-gap) + 16px);
+}
+
+.sess-timer-open {
+  position: absolute;
+  top: 8px;
+  right: calc(8px + var(--sess-reset) + var(--sess-gap));
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sess-reset);
+  height: var(--sess-control);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  box-shadow: var(--btn-shadow);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.timer-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.timer-modal h2 {
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.timer-head {
+  min-width: 0;
+}
+
+.timer-head .kicker.is-lead,
+.timer-head .kicker.is-switch,
+.timer-head .kicker.is-rest {
+  color: var(--amber);
+}
+
+.timer-head .kicker.is-work,
+.timer-head .kicker.is-side1,
+.timer-head .kicker.is-side2,
+.timer-head .kicker.is-done {
+  color: var(--spruce);
+}
+
+.timer-setup-value,
+.timer-adjust-rest strong {
+  margin: 0;
+  font-family: var(--display);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  text-align: center;
+  line-height: 1;
+}
+
+.timer-setup-value {
+  font-size: 3rem;
+}
+
+.timer-adjust,
+.timer-presets,
+.timer-actions {
+  display: grid;
+  gap: 8px;
+  height: var(--sess-control);
+}
+
+.timer-adjust {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.timer-adjust-rest {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr);
+  align-items: center;
+}
+
+.timer-adjust-rest strong {
+  font-size: 1.35rem;
+}
+
+.timer-presets {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.timer-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.timer-modal button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--sess-control);
+  min-width: 0;
+  padding: 0 4px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  box-shadow: var(--btn-shadow);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.timer-presets button {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-modal button.on {
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
+  color: #f6f3ec;
+  box-shadow: none;
+}
+
+.timer-modal button.sess-log {
+  width: 100%;
+  border: 0;
+  background: var(--accent-fill);
+  color: #f6f3ec;
+  box-shadow: none;
+}
+
+.timer-face {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: min(42dvh, 240px);
+  margin: 0;
+}
+
+.timer-face svg {
+  width: auto;
+  height: 100%;
+  aspect-ratio: 1;
+  max-width: 100%;
+  transform: rotate(-90deg);
+}
+
+.timer-face circle {
+  fill: none;
+  stroke-width: 5;
+}
+
+.timer-track {
+  stroke: var(--track);
+}
+
+.timer-arc {
+  stroke: var(--spruce);
+  stroke-linecap: round;
+}
+
+.timer-face.is-lead .timer-arc,
+.timer-face.is-switch .timer-arc,
+.timer-face.is-rest .timer-arc {
+  stroke: var(--amber);
+}
+
+.timer-face strong {
+  position: absolute;
+  font-family: var(--display);
+  font-size: clamp(2.4rem, 12dvh, 4.2rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.timer-face small {
+  position: absolute;
+  bottom: 18%;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .sess-footer {
   flex: none;
   display: flex;
