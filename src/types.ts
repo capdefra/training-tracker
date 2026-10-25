@@ -124,6 +124,17 @@ export interface PlanCompletion {
   updatedAt?: string;
 }
 
+/**
+ * One saved workout placed on a single date.
+ * `presetId` matches `presets[].id`. `date` is the day the card shows, `YYYY-MM-DD`.
+ * The same preset and date keep the later `updatedAt`.
+ */
+export interface PlanExtra {
+  presetId: string;
+  date: string;
+  updatedAt?: string;
+}
+
 export interface Plan {
   id: string;
   goalId: string;
@@ -143,6 +154,11 @@ export interface Plan {
    * The planner can read and write this list. The site writes an entry only when the choice differs from that count.
    */
   completions?: PlanCompletion[];
+  /**
+   * Dated one-off sessions, each pointing at a saved preset.
+   * Absent means the week is only its repeating sessions. The site does not edit this list.
+   */
+  extras?: PlanExtra[];
   status: GoalStatus;
   updatedAt?: string;
 }

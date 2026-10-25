@@ -1,4 +1,5 @@
 import { isRealISODate } from './dates';
+import { extraSessionId } from './plan-extras';
 import { COMPLETION_KEYS, keepUnknown } from './unknown';
 import type { Plan, PlanCompletion, PlanSession } from '../types';
 
@@ -6,9 +7,9 @@ import type { Plan, PlanCompletion, PlanSession } from '../types';
  * Drops malformed entries. The same session and date keep the latest `updatedAt`.
  * An equal stamp keeps the later entry. `date` is the day the card shows.
  */
-export function normalizeCompletions(value: unknown, sessions: PlanSession[]): PlanCompletion[] {
+export function normalizeCompletions(value: unknown, sessions: PlanSession[], extraIds: readonly string[] = []): PlanCompletion[] {
   if (!Array.isArray(value)) return [];
-  const known = new Set(sessions.map((session) => session.id));
+  const known = new Set<string>([...sessions.map((session) => session.id), ...extraIds]);
   const winners = new Map<string, PlanCompletion>();
   for (const item of value) {
     const completion = readCompletion(item, known);
@@ -47,7 +48,8 @@ export function planWithSessionDone(plan: Plan, sessionId: string, date: string,
   }
   const fresh: PlanCompletion = { sessionId, date, done, updatedAt };
   const entry = existing ? keepUnknown(fresh, existing, COMPLETION_KEYS) : fresh;
-  const completions = normalizeCompletions([...rest, entry], plan.sessions);
+  const extraIds = (plan.extras ?? []).map((extra) => extraSessionId(extra.presetId));
+  const completions = normalizeCompletions([...rest, entry], plan.sessions, extraIds);
   if (completions.length > 0) next.completions = completions;
   else delete next.completions;
   return next;

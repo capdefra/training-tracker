@@ -2,6 +2,7 @@ import type { ExerciseLoadTarget, LogPreset, Plan, PlanExercise, PlanPhase, Plan
 import { addDays, daysBetween, formatPretty, startOfWeek, weekdayIndex } from './dates';
 import { resolveExerciseTarget } from './load-target';
 import { completionFor, planWithSessionDone } from './plan-completions';
+import { extraSessionId, normalizeExtras, sessionFromPreset } from './plan-extras';
 import { normalizeMoves } from './plan-moves';
 
 /** Weeks shown on the activity tab, ending with the week that contains today. */
@@ -19,6 +20,8 @@ export interface PlanItem {
   done: boolean;
   /** The usual date, when this occurrence was moved. */
   movedFrom: string | null;
+  /** A dated preset, shown once, after the repeating sessions that day. */
+  extra: boolean;
 }
 
 export function planLastDay(plan: Plan): string {
@@ -95,6 +98,7 @@ interface Occurrence {
   session: PlanSession;
   fromDate: string;
   date: string;
+  extra?: boolean;
 }
 
 /**
@@ -123,6 +127,23 @@ function occurrencesForWeek(plan: Plan, dates: string[]): Occurrence[] {
     const session = plan.sessions.find((item) => item.id === move.sessionId);
     if (!session) continue;
     found.push({ plan, session, fromDate: move.fromDate, date: move.toDate });
+  }
+  return found;
+}
+
+/**
+ * Places each dated extra on its date when that week is on screen.
+ * A missing preset or a date outside the plan leaves the entry in the data and draws no card.
+ */
+function extraOccurrences(plan: Plan, dates: string[], presets: TrainingData['presets']): Occurrence[] {
+  const week = new Set(dates);
+  const byId = new Map(presets.map((preset) => [preset.id, preset]));
+  const found: Occurrence[] = [];
+  for (const extra of normalizeExtras(plan.extras)) {
+    if (!week.has(extra.date) || !planCovers(plan, extra.date)) continue;
+    const preset = byId.get(extra.presetId);
+    if (!preset) continue;
+    found.push({ plan, session: sessionFromPreset(preset, extra.date), fromDate: extra.date, date: extra.date, extra: true });
   }
   return found;
 }
@@ -166,21 +187,23 @@ export function planItemsForWeek(data: TrainingData, plans: Plan[], anchor: stri
   const dates = Array.from({ length: 7 }, (_, index) => addDays(monday, index));
   const weekStart = dates[0] ?? monday;
   const weekEnd = dates[6] ?? monday;
-  const occurrences = plans.flatMap((plan) => occurrencesForWeek(plan, dates));
+  const occurrences = plans.flatMap((plan) => [...occurrencesForWeek(plan, dates), ...extraOccurrences(plan, dates, data.presets)]);
   const planOrder = new Map(plans.map((plan, index) => [plan.id, index]));
   occurrences.sort((a, b) => {
     const byDate = a.date.localeCompare(b.date);
     if (byDate !== 0) return byDate;
     const byPlan = (planOrder.get(a.plan.id) ?? 0) - (planOrder.get(b.plan.id) ?? 0);
     if (byPlan !== 0) return byPlan;
+    const byExtra = Number(Boolean(a.extra)) - Number(Boolean(b.extra));
+    if (byExtra !== 0) return byExtra;
     const aIndex = a.plan.sessions.findIndex((session) => session.id === a.session.id);
     const bIndex = b.plan.sessions.findIndex((session) => session.id === b.session.id);
     if (aIndex !== bIndex) return aIndex - bIndex;
-    return a.fromDate.localeCompare(b.fromDate);
+    return a.session.title.localeCompare(b.session.title) || a.fromDate.localeCompare(b.fromDate);
   });
   const weekSessions = sessionsForWeek(data.sessions, occurrences, weekStart, weekEnd);
   return occurrences.map((occurrence) => {
-    const resolved = sessionForDate(occurrence.plan, occurrence.session, occurrence.date);
+    const resolved = occurrence.extra ? occurrence.session : sessionForDate(occurrence.plan, occurrence.session, occurrence.date);
     const logs = logsForOccurrence(occurrence, occurrences, weekSessions);
     const sameDay = logs.find((entry) => entry.date === occurrence.date);
     const manual = completionFor(occurrence.plan, occurrence.session.id, occurrence.date);
@@ -194,6 +217,7 @@ export function planItemsForWeek(data: TrainingData, plans: Plan[], anchor: stri
       targets: exerciseTargets(resolved, logs),
       done: manual ? manual.done : sessionTargetsMet(resolved, logs),
       movedFrom: occurrence.fromDate === occurrence.date ? null : occurrence.fromDate,
+      extra: Boolean(occurrence.extra),
     };
   });
 }
@@ -312,7 +336,11 @@ export function occurrenceDone(data: TrainingData, planId: string, sessionId: st
  */
 export function applySessionDone(data: TrainingData, planId: string, sessionId: string, date: string, done: boolean, updatedAt: string): TrainingData {
   const plan = data.plans.find((item) => item.id === planId);
-  if (!plan || !plan.sessions.some((session) => session.id === sessionId)) return data;
+  const allowed = new Set([
+    ...(plan?.sessions.map((session) => session.id) ?? []),
+    ...(plan?.extras ?? []).map((extra) => extraSessionId(extra.presetId)),
+  ]);
+  if (!plan || !allowed.has(sessionId)) return data;
   const rest = (plan.completions ?? []).filter((item) => item.sessionId !== sessionId || item.date !== date);
   const stripped: Plan = { ...plan };
   if (rest.length > 0) stripped.completions = rest;
@@ -327,6 +355,16 @@ export function findPlanSession(data: TrainingData, planSessionId: string, date?
   for (const plan of data.plans) {
     const session = plan.sessions.find((item) => item.id === planSessionId);
     if (session) return { plan, session: date ? sessionForDate(plan, session, date) : session };
+  }
+  if (!planSessionId.startsWith('extra:')) return null;
+  const presetId = planSessionId.slice('extra:'.length);
+  const preset = data.presets.find((item) => item.id === presetId);
+  if (!preset) return null;
+  for (const plan of data.plans) {
+    const match = (plan.extras ?? []).find((extra) => extra.presetId === presetId && (date === undefined || extra.date === date));
+    if (!match) continue;
+    if (date !== undefined && !planCovers(plan, date)) continue;
+    return { plan, session: sessionFromPreset(preset, match.date) };
   }
   return null;
 }

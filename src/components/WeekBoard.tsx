@@ -195,7 +195,7 @@ function DayPlan({
         <section className="day-list" aria-label="Planned">
           <p className="kicker">Planned</p>
           {open.map((item) => (
-            <SessionCard key={`${item.plan.id}-${item.session.id}`} item={item} logs={logs} showPlan={showPlan} showDate={showDate} today={today} onLog={onLog} onMarkDone={onMarkDone} summary={summary} />
+            <SessionCard key={`${item.plan.id}-${item.session.id}-${item.date}`} item={item} logs={logs} showPlan={showPlan} showDate={showDate} today={today} onLog={onLog} onMarkDone={onMarkDone} summary={summary} />
           ))}
         </section>
       ) : null}
@@ -203,7 +203,7 @@ function DayPlan({
         <section className="day-list" aria-label="Done">
           <p className="kicker">Done</p>
           {done.map((item) => (
-            <SessionCard key={`${item.plan.id}-${item.session.id}`} item={item} logs={logs} showPlan={showPlan} showDate={showDate} today={today} onLog={onLog} onMarkDone={onMarkDone} summary={summary} />
+            <SessionCard key={`${item.plan.id}-${item.session.id}-${item.date}`} item={item} logs={logs} showPlan={showPlan} showDate={showDate} today={today} onLog={onLog} onMarkDone={onMarkDone} summary={summary} />
           ))}
           {extras.map((session) => (
             <LoggedCard key={session.id} session={session} showDate={showDate} today={today} summary={summary} />
@@ -251,6 +251,7 @@ function SessionCard({
             {item.session.focus ? ` · ${item.session.focus}` : ''}
             {showPlan ? ` · ${item.plan.name}` : ''}
             {item.movedFrom ? <span className="moved-hint"> · Moved from {formatWeekday(item.movedFrom)}</span> : null}
+            {item.extra ? <span className="moved-hint"> · Extra</span> : null}
           </p>
           <h2>{item.session.title}</h2>
           {!summary && item.session.kind === 'strength' && item.session.durationMin ? <p className="muted">{item.session.durationMin} min</p> : null}

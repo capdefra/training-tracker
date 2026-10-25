@@ -4,6 +4,7 @@ import type {
   Plan,
   PlanExercise,
   PlanCompletion,
+  PlanExtra,
   PlanMove,
   PlanPhase,
   PlanSession,
@@ -26,7 +27,8 @@ export const PHASE_CHANGE_KEYS = ['sessionId', 'notes', 'durationMin', 'sets'] a
 export const PHASE_KEYS = ['name', 'startDate', 'endDate', 'sessions', 'targets'] as const;
 export const MOVE_KEYS = ['sessionId', 'fromDate', 'toDate', 'updatedAt'] as const;
 export const COMPLETION_KEYS = ['sessionId', 'date', 'done', 'updatedAt'] as const;
-export const PLAN_KEYS = ['id', 'goalId', 'name', 'startDate', 'weeks', 'endDate', 'focus', 'notes', 'sessions', 'phases', 'moves', 'completions', 'status', 'updatedAt'] as const;
+export const EXTRA_KEYS = ['presetId', 'date', 'updatedAt'] as const;
+export const PLAN_KEYS = ['id', 'goalId', 'name', 'startDate', 'weeks', 'endDate', 'focus', 'notes', 'sessions', 'phases', 'moves', 'completions', 'extras', 'status', 'updatedAt'] as const;
 export const PRESET_KEYS = ['id', 'name', 'kind', 'focus', 'notes', 'exercises', 'createdAt', 'updatedAt'] as const;
 export const SET_KEYS = ['reps', 'weightKg', 'kgPerPiece'] as const;
 export const LOGGED_EXERCISE_KEYS = ['name', 'sets', 'pieces', 'implement'] as const;
@@ -164,6 +166,21 @@ function absorbCompletions(winner: PlanCompletion[] | undefined, loser: PlanComp
   });
 }
 
+function absorbExtra(winner: PlanExtra, loser: PlanExtra): PlanExtra {
+  return keepUnknown(cloneData(winner), loser, EXTRA_KEYS);
+}
+
+function absorbExtras(winner: PlanExtra[] | undefined, loser: PlanExtra[] | undefined): PlanExtra[] | undefined {
+  if (!winner || !loser) return winner;
+  return winner.map((extra, index) => {
+    const previous =
+      winner.length === loser.length
+        ? loser[index]
+        : loser.find((item) => item.presetId === extra.presetId && item.date === extra.date);
+    return previous ? absorbExtra(extra, previous) : extra;
+  });
+}
+
 function absorbMoves(winner: PlanMove[] | undefined, loser: PlanMove[] | undefined): PlanMove[] | undefined {
   if (!winner || !loser) return winner;
   return winner.map((move, index) => {
@@ -187,6 +204,8 @@ export function absorbPlan(winner: Plan, loser: Plan): Plan {
   if (moves) copy.moves = moves;
   const completions = absorbCompletions(copy.completions, loser.completions);
   if (completions) copy.completions = completions;
+  const extras = absorbExtras(copy.extras, loser.extras);
+  if (extras) copy.extras = extras;
   return copy;
 }
 
