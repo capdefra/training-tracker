@@ -1,5 +1,6 @@
 import { migrateExercise, roundKg } from './load';
 import { normalizeCompletions } from './plan-completions';
+import { extraSessionId, normalizeExtras } from './plan-extras';
 import { normalizeMoves } from './plan-moves';
 import {
   DELETIONS_KEYS,
@@ -330,7 +331,12 @@ function normalizePlan(value: unknown): Plan | null {
     ? record.sessions.map(normalizePlanSession).filter((item) => item !== null)
     : [];
   const moves = normalizeMoves(record.moves, sessions);
-  const completions = normalizeCompletions(record.completions, sessions);
+  const extras = normalizeExtras(record.extras);
+  const completions = normalizeCompletions(
+    record.completions,
+    sessions,
+    extras.map((extra) => extraSessionId(extra.presetId)),
+  );
   const updatedAt = optionalStamp(record.updatedAt);
   const plan: Plan = {
     id: text(record.id) || `plan-${Math.random().toString(36).slice(2, 8)}`,
@@ -345,6 +351,7 @@ function normalizePlan(value: unknown): Plan | null {
     ...(phases.length > 0 ? { phases } : {}),
     ...(moves.length > 0 ? { moves } : {}),
     ...(completions.length > 0 ? { completions } : {}),
+    ...(extras.length > 0 ? { extras } : {}),
     status: status(record.status),
     ...(updatedAt ? { updatedAt } : {}),
   };

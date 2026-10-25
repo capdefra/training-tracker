@@ -225,6 +225,26 @@ The site does not shift any other session. If the new day already has a workout,
 
 A move is ignored when `moves` is missing or not an array, the session id is unknown, a date is not a real calendar day, `fromDate` is not that session’s weekday, `fromDate` equals `toDate`, or `fromDate` falls outside the plan. Other weeks stay on their usual days. The phase, the targets, and the done check use the day the card shows (`toDate`). The card label reads “Moved from Wed”.
 
+### One-off extra sessions
+
+A saved preset can be placed on one date without joining the repeating week. Leave `extras` off and nothing is added. The site does not edit this list. The card uses the preset as written: phase set changes do not rewrite it. `presetId` must match `presets[].id`. The logged session id is `extra:` plus that preset id, for example `extra:preset-full-body`.
+
+```json
+"extras": [
+  {
+    "presetId": "preset-full-body",
+    "date": "2026-10-25",
+    "updatedAt": "2026-10-25T09:00:00.000Z"
+  }
+]
+```
+
+`date` is the day the card shows, `YYYY-MM-DD`. `updatedAt` can be omitted. When the same preset and date appear twice, the later stamp wins, and an equal stamp keeps the later entry. An empty list is omitted on save.
+
+The card shows on that date, after the repeating sessions, when the preset exists and the date is inside the plan. Today, the week board, and the activity calendar all use that card. Start opens the preset with its targets filled in. Logging the planned sets, or marking the card done, counts it like any other planned session. A completion for it uses session id `extra:preset-full-body` and the card’s date.
+
+An entry is kept but not drawn when the preset id is unknown or the date falls outside the plan. An entry is dropped when `extras` is not an array, `presetId` is blank, or `date` is not a real calendar day. A past date inside the plan still shows on that day, and only on that day.
+
 ### Marking a session done
 
 The site can mark any planned card done or not done from the day view, the session preview, and the strength review screen. The planner reads and writes the same list on the plan. Leave `completions` off and every card follows its logged set count.

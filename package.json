@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "node --experimental-strip-types scripts/check-screen-wake.mjs && node scripts/run-ts.mjs scripts/check-load.ts && node scripts/run-ts.mjs scripts/check-moves.ts && node scripts/run-ts.mjs scripts/check-phases.ts && node scripts/run-ts.mjs scripts/check-session.ts && node scripts/run-ts.mjs scripts/check-unknown.ts && node scripts/run-ts.mjs scripts/check-load-target.ts && node scripts/run-ts.mjs scripts/check-preview.ts && node scripts/run-ts.mjs scripts/check-done.ts && node scripts/run-ts.mjs scripts/check-set-timer.ts && node scripts/run-ts.mjs scripts/check-per-side.ts",
+    "test": "node --experimental-strip-types scripts/check-screen-wake.mjs && node scripts/run-ts.mjs scripts/check-load.ts && node scripts/run-ts.mjs scripts/check-moves.ts && node scripts/run-ts.mjs scripts/check-phases.ts && node scripts/run-ts.mjs scripts/check-session.ts && node scripts/run-ts.mjs scripts/check-unknown.ts && node scripts/run-ts.mjs scripts/check-load-target.ts && node scripts/run-ts.mjs scripts/check-preview.ts && node scripts/run-ts.mjs scripts/check-done.ts && node scripts/run-ts.mjs scripts/check-set-timer.ts && node scripts/run-ts.mjs scripts/check-per-side.ts && node scripts/run-ts.mjs scripts/check-extras.ts",
     "sample-data": "node --experimental-strip-types scripts/sample-data.mjs",
     "preview": "vite preview"
   },
