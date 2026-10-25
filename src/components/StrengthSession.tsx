@@ -10,7 +10,6 @@ import { defaultLoad, shownLoad } from '../lib/load';
 import { requestScreenWakeLock } from '../lib/screen-wake';
 import { sessionFromDraft } from '../lib/session-save';
 import {
-  holdElapsed,
   pauseSetTimer,
   resumeSetTimer,
   startSetTimer,
@@ -69,8 +68,6 @@ function audioContext(): AudioContext | null {
   return sharedAudio;
 }
 
-const REST_PRESETS = [0, 30, 45, 60, 90, 120];
-
 /** Create and resume the audio context inside the Start tap so iOS Safari will play later tones. */
 function unlockAudio() {
   const ctx = audioContext();
@@ -89,32 +86,39 @@ function unlockAudio() {
 
 function playTimerSound(sound: TimerSound) {
   try {
-    if (sound === 'start') navigator.vibrate?.(30);
-    else if (sound === 'switch') navigator.vibrate?.(40);
-    else if (sound === 'done') navigator.vibrate?.([80, 40, 80]);
-    else if (sound === 'rest') navigator.vibrate?.([40, 30, 40]);
+    if (sound === 'tick') navigator.vibrate?.(25);
+    else if (sound === 'start') navigator.vibrate?.([50, 30, 70]);
+    else if (sound === 'warn') navigator.vibrate?.(45);
+    else if (sound === 'switch') navigator.vibrate?.([70, 40, 70, 40, 90]);
+    else if (sound === 'done') navigator.vibrate?.([90, 50, 140]);
+    else if (sound === 'rest') navigator.vibrate?.([40, 30, 60]);
   } catch {
     /* this browser has no vibration */
   }
   try {
     const ctx = audioContext();
     if (!ctx) return;
+    if (ctx.state === 'suspended') void ctx.resume();
     const now = ctx.currentTime;
-    if (sound === 'tick') tone(ctx, now, 988, 0.045, 0.05, 'sine');
+    if (sound === 'tick') tone(ctx, now, 988, 0.09, 0.28, 'square');
     if (sound === 'start') {
-      tone(ctx, now, 523, 0.09, 0.06, 'sine');
-      tone(ctx, now + 0.1, 784, 0.12, 0.06, 'sine');
+      tone(ctx, now, 523, 0.12, 0.34, 'square');
+      tone(ctx, now + 0.14, 784, 0.16, 0.34, 'square');
     }
-    if (sound === 'warn') tone(ctx, now, 440, 0.08, 0.055, 'triangle');
+    if (sound === 'warn') tone(ctx, now, 440, 0.12, 0.32, 'square');
     if (sound === 'switch') {
-      tone(ctx, now, 587, 0.07, 0.07, 'square');
-      tone(ctx, now + 0.12, 587, 0.07, 0.05, 'square');
+      tone(ctx, now, 587, 0.1, 0.36, 'square');
+      tone(ctx, now + 0.14, 784, 0.1, 0.36, 'square');
+      tone(ctx, now + 0.28, 988, 0.14, 0.36, 'square');
     }
     if (sound === 'done') {
-      tone(ctx, now, 659, 0.12, 0.07, 'sine');
-      tone(ctx, now + 0.14, 880, 0.18, 0.07, 'sine');
+      tone(ctx, now, 659, 0.16, 0.4, 'square');
+      tone(ctx, now + 0.18, 880, 0.22, 0.4, 'square');
     }
-    if (sound === 'rest') tone(ctx, now, 392, 0.2, 0.06, 'sine');
+    if (sound === 'rest') {
+      tone(ctx, now, 349, 0.12, 0.32, 'square');
+      tone(ctx, now + 0.14, 523, 0.16, 0.32, 'square');
+    }
   } catch {
     /* audio is optional */
   }
@@ -193,12 +197,10 @@ export function StrengthSession({
   const [live, setLive] = useState('');
   const [now, setNow] = useState(() => Date.now());
   const [askTimer, setAskTimer] = useState(false);
-  const [modalRest, setModalRest] = useState(60);
+  const [modalRest, setModalRest] = useState(10);
   const snapshot = useRef<PendingSnap | null>(null);
   const swipe = useRef<{ x: number; y: number; pointerId: number } | null>(null);
   const suppressClick = useRef(false);
-  const loggedHold = useRef<number | null>(null);
-  const restCued = useRef<number | null>(null);
   const playedSound = useRef(new Set<string>());
   const progressRef = useRef(progress);
 
@@ -247,9 +249,10 @@ export function StrengthSession({
       const frozen = timer.pausedAt ?? at;
       const shown = viewSetTimer(timer, frozen);
       if (shown && timer.pausedAt === null) {
-        const sound = timerSound(shown.phase, shown.secondsLeft, timer.seconds);
+        const phaseSeconds = shown.phase === 'lead' || shown.phase === 'switch' || shown.phase === 'rest' ? timer.restSec : timer.seconds;
+        const sound = timerSound(shown.phase, shown.secondsLeft, phaseSeconds);
         if (sound) {
-          const key = `${timer.workEndsAt}:${shown.phase}:${sound}:${sound === 'done' ? 0 : shown.secondsLeft}`;
+          const key = `${timer.workEndsAt}:${shown.phase}:${sound}:${shown.secondsLeft}`;
           if (!playedSound.current.has(key)) {
             playedSound.current.add(key);
             playTimerSound(sound);
@@ -259,53 +262,6 @@ export function StrengthSession({
       const exerciseIndex = current.draft.exercises.findIndex((item) => item.key === timer.exerciseKey);
       if (exerciseIndex < 0) {
         setProgress((prev) => (prev?.timer ? { ...prev, timer: null } : prev));
-        return;
-      }
-      if (holdElapsed(timer, frozen)) {
-        if (loggedHold.current === timer.workEndsAt || timer.logged) return;
-        loggedHold.current = timer.workEndsAt;
-        const exercise = current.draft.exercises[exerciseIndex];
-        const atCap = Boolean(exercise && exercise.targetSets > 0 && exercise.sets.length >= exercise.targetSets);
-        const canWrite = Boolean(exercise && exercise.name.trim() && timer.seconds > 0 && !atCap);
-        if (canWrite) {
-          const key = `${timer.workEndsAt}:done:0`;
-          if (!playedSound.current.has(key)) {
-            playedSound.current.add(key);
-            playTimerSound('done');
-          }
-        }
-        setProgress((prev) => {
-          if (!prev?.timer || prev.timer.logged || prev.timer.workEndsAt !== timer.workEndsAt) return prev;
-          const index = prev.draft.exercises.findIndex((item) => item.key === prev.timer?.exerciseKey);
-          const item = prev.draft.exercises[index];
-          if (!item) return { ...prev, timer: null };
-          const blocked = item.targetSets > 0 && item.sets.length >= item.targetSets;
-          if (blocked || !item.name.trim() || prev.timer.seconds <= 0) {
-            return { ...prev, cursor: index, timer: { ...prev.timer, logged: true } };
-          }
-          const ready = { ...item, name: item.name.trim() };
-          const sets = [
-            ...ready.sets,
-            {
-              key: uid('set'),
-              reps: String(prev.timer.seconds),
-              kgPerPiece: ready.bodyweight ? '' : ready.pendingKg,
-              asTotal: ready.bodyweight ? false : !ready.pieces || ready.pendingAsTotal,
-            },
-          ];
-          return {
-            ...prev,
-            cursor: index,
-            timer: { ...prev.timer, logged: true },
-            draft: {
-              ...prev.draft,
-              exercises: prev.draft.exercises.map((entry) => (entry.key === ready.key ? { ...ready, sets } : entry)),
-            },
-          };
-        });
-        if (canWrite && exercise) setLive(`Logged set ${exercise.sets.length + 1}.`);
-        setEditingKey(null);
-        setNotice('');
         return;
       }
       if (current.cursor !== exerciseIndex) {
@@ -318,15 +274,12 @@ export function StrengthSession({
         return;
       }
       if (viewSetTimer(timer, frozen) === null) {
-        if (timer.logged && timer.restEndsAt !== null && restCued.current !== timer.restEndsAt) {
-          restCued.current = timer.restEndsAt;
-          const key = `${timer.restEndsAt}:rest`;
-          if (!playedSound.current.has(key)) {
-            playedSound.current.add(key);
-            playTimerSound('rest');
-          }
-          setLive('Rest done');
+        const key = `${timer.workEndsAt}:end`;
+        if (!playedSound.current.has(key)) {
+          playedSound.current.add(key);
+          playTimerSound('done');
         }
+        setLive('Timer done. Log the set when you are ready.');
         setAskTimer(false);
         setProgress((prev) => {
           if (!prev?.timer || prev.timer.workEndsAt !== timer.workEndsAt) return prev;
@@ -452,16 +405,14 @@ export function StrengthSession({
 
   function openTimer() {
     if (!exercise || exercise.count !== 'seconds' || editingKey || atSetCap || !exercise.name.trim()) return;
-    setModalRest(restOn ? restChoice : 60);
     setAskTimer(true);
   }
 
   function closeTimer() {
     setAskTimer(false);
     if (!workout.timer) return;
-    const logged = workout.timer.logged;
     setProgress((prev) => (prev?.timer ? { ...prev, timer: null } : prev));
-    setLive(logged ? 'Timer stopped.' : 'Timer cancelled.');
+    setLive('Timer cancelled.');
   }
 
   function startTimer() {
@@ -472,10 +423,13 @@ export function StrengthSession({
     setRemaining(null);
     const started = Date.now();
     setNow(started);
-    const restSec = modalRest > 0 ? modalRest : null;
+    const restSec = Math.max(0, Math.min(300, Math.round(modalRest)));
+    // One hold unless this exercise is per side. Explicit perSide wins.
+    // A missing flag only matches side plank, single-leg, single-arm, one-arm, and suitcase.
+    // Any other name, or an explicit false, is a single countdown of `seconds`.
     const eachSide = isPerSide(exercise);
     setProgress((prev) => (prev ? { ...prev, timer: startSetTimer(exercise.key, seconds, restSec, started, eachSide) } : prev));
-    setLive(eachSide ? `Get ready. ${seconds} seconds each side.` : `Get ready. ${seconds} second hold.`);
+    setLive(eachSide ? `Rest ${restSec} seconds. Then ${seconds} seconds on the left and ${seconds} seconds on the right.` : `Rest ${restSec} seconds, then a ${seconds} second hold.`);
     requestScreenWakeLock();
   }
 
@@ -1117,7 +1071,7 @@ function TimerModal({
   const ref = useRef<HTMLDialogElement>(null);
   const ignoreClose = useRef(false);
   const running = view !== null;
-  const figure = !view ? '' : view.phase === 'rest' ? clock(view.secondsLeft) : String(view.secondsLeft);
+  const figure = !view ? '' : String(view.secondsLeft);
 
   useEffect(() => {
     const dialog = ref.current;
@@ -1148,7 +1102,7 @@ function TimerModal({
       }}
     >
       <div className="timer-head">
-        <p className={cx('kicker', running && `is-${view.phase}`)}>{running ? view.caption : 'Timer'}</p>
+        <p className="kicker">Timer</p>
         <h2>{name}</h2>
       </div>
       {running ? (
@@ -1161,22 +1115,17 @@ function TimerModal({
               Cancel
             </button>
           </div>
-          <p className={cx('timer-face', `is-${view.phase}`, paused && 'is-paused')}>
-            <svg viewBox="0 0 100 100" aria-hidden="true">
-              <circle className="timer-track" cx="50" cy="50" r="42" />
-              <circle className="timer-arc" cx="50" cy="50" r="42" pathLength={1} strokeDasharray="1" strokeDashoffset={1 - view.progress} />
-            </svg>
-            <strong>{figure}</strong>
-            {paused ? <small>Paused</small> : view.detail ? <small>{view.detail}</small> : null}
-          </p>
+          <p className={cx('timer-side', `is-${view.phase}`)}>{view.caption}</p>
+          <p className="timer-count">{figure}</p>
+          <p className="timer-detail">{paused ? 'Paused' : view.detail || '\u00a0'}</p>
         </>
       ) : (
         <>
           <p className="kicker">{perSide ? 'Each side' : 'Hold'}</p>
           <p className="timer-setup-value">{holdSeconds}</p>
           <div className="timer-adjust" aria-label="Hold length">
-            <button type="button" onClick={() => onHold(holdSeconds - 5)} aria-label="Decrease hold by 5">
-              −5
+            <button type="button" onClick={() => onHold(holdSeconds - 2)} aria-label="Decrease hold by 2">
+              −2
             </button>
             <button type="button" onClick={() => onHold(holdSeconds - 1)} aria-label="Decrease hold by 1">
               −1
@@ -1184,27 +1133,27 @@ function TimerModal({
             <button type="button" onClick={() => onHold(holdSeconds + 1)} aria-label="Increase hold by 1">
               +1
             </button>
-            <button type="button" onClick={() => onHold(holdSeconds + 5)} aria-label="Increase hold by 5">
-              +5
+            <button type="button" onClick={() => onHold(holdSeconds + 2)} aria-label="Increase hold by 2">
+              +2
             </button>
           </div>
           <p className="kicker">Rest</p>
-          <div className="timer-presets" role="group" aria-label="Rest presets">
-            {REST_PRESETS.map((preset) => (
-              <button key={preset} type="button" className={cx(restSec === preset && 'on')} aria-pressed={restSec === preset} onClick={() => onRest(preset)}>
-                {preset === 0 ? 'Off' : preset}
-              </button>
-            ))}
-          </div>
-          <div className="timer-adjust timer-adjust-rest" aria-label="Rest length">
-            <button type="button" onClick={() => onRest(restSec - 15)} aria-label="Decrease rest by 15 seconds">
-              −15
+          <p className="timer-setup-value">{restSec}</p>
+          <div className="timer-adjust" aria-label="Rest length">
+            <button type="button" onClick={() => onRest(restSec - 2)} aria-label="Decrease rest by 2 seconds">
+              −2
             </button>
-            <strong>{restSec === 0 ? 'Off' : clock(restSec)}</strong>
-            <button type="button" onClick={() => onRest(restSec + 15)} aria-label="Increase rest by 15 seconds">
-              +15
+            <button type="button" onClick={() => onRest(restSec - 1)} aria-label="Decrease rest by 1 second">
+              −1
+            </button>
+            <button type="button" onClick={() => onRest(restSec + 1)} aria-label="Increase rest by 1 second">
+              +1
+            </button>
+            <button type="button" onClick={() => onRest(restSec + 2)} aria-label="Increase rest by 2 seconds">
+              +2
             </button>
           </div>
+          <p className="timer-rest-note">Before the hold, between sides, and after</p>
           <button type="button" className="sess-log" disabled={!canStart} aria-label="Start timer" onClick={onStart}>
             Start
           </button>
