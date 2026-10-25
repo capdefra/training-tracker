@@ -580,36 +580,38 @@ button.form-link.sess-form {
   min-width: 0;
 }
 
-.timer-head .kicker.is-lead,
-.timer-head .kicker.is-switch,
-.timer-head .kicker.is-rest {
-  color: var(--amber);
-}
-
-.timer-head .kicker.is-work,
-.timer-head .kicker.is-side1,
-.timer-head .kicker.is-side2,
-.timer-head .kicker.is-done {
-  color: var(--spruce);
-}
-
-.timer-setup-value,
-.timer-adjust-rest strong {
+.timer-modal p.timer-setup-value,
+.timer-modal p.timer-rest-note,
+.timer-modal p.timer-side,
+.timer-modal p.timer-count,
+.timer-modal p.timer-detail {
   margin: 0;
+}
+
+.timer-setup-value {
+  height: 3rem;
   font-family: var(--display);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   letter-spacing: -0.04em;
   text-align: center;
-  line-height: 1;
+  line-height: 3rem;
+  font-size: 3rem;
+  color: var(--ink);
 }
 
-.timer-setup-value {
-  font-size: 3rem;
+.timer-rest-note {
+  height: 1rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1rem;
 }
 
 .timer-adjust,
-.timer-presets,
 .timer-actions {
   display: grid;
   gap: 8px;
@@ -618,19 +620,6 @@ button.form-link.sess-form {
 
 .timer-adjust {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.timer-adjust-rest {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr);
-  align-items: center;
-}
-
-.timer-adjust-rest strong {
-  font-size: 1.35rem;
-}
-
-.timer-presets {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
 .timer-actions {
@@ -652,11 +641,6 @@ button.form-link.sess-form {
   cursor: pointer;
 }
 
-.timer-presets button {
-  font-size: 0.8rem;
-  font-variant-numeric: tabular-nums;
-}
-
 .timer-modal button.on {
   background: var(--accent-fill);
   border-color: var(--accent-fill);
@@ -672,59 +656,52 @@ button.form-link.sess-form {
   box-shadow: none;
 }
 
-.timer-face {
-  position: relative;
-  display: grid;
-  place-items: center;
-  height: min(42dvh, 240px);
-  margin: 0;
-}
-
-.timer-face svg {
-  width: auto;
-  height: 100%;
-  aspect-ratio: 1;
-  max-width: 100%;
-  transform: rotate(-90deg);
-}
-
-.timer-face circle {
-  fill: none;
-  stroke-width: 5;
-}
-
-.timer-track {
-  stroke: var(--track);
-}
-
-.timer-arc {
-  stroke: var(--spruce);
-  stroke-linecap: round;
-}
-
-.timer-face.is-lead .timer-arc,
-.timer-face.is-switch .timer-arc,
-.timer-face.is-rest .timer-arc {
-  stroke: var(--amber);
-}
-
-.timer-face strong {
-  position: absolute;
+.timer-side {
+  height: 4.25rem;
+  line-height: 4.25rem;
+  text-align: center;
   font-family: var(--display);
-  font-size: clamp(2.4rem, 12dvh, 4.2rem);
+  font-size: 3.5rem;
   font-weight: 600;
   letter-spacing: -0.04em;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
+  color: var(--ink);
 }
 
-.timer-face small {
-  position: absolute;
-  bottom: 18%;
+.timer-side.is-lead,
+.timer-side.is-switch,
+.timer-side.is-rest {
+  color: var(--amber);
+}
+
+.timer-side.is-work,
+.timer-side.is-side1,
+.timer-side.is-side2 {
+  color: var(--spruce);
+}
+
+.timer-count {
+  height: 5.5rem;
+  line-height: 5.5rem;
+  text-align: center;
+  font-family: var(--display);
+  font-size: 5.5rem;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.timer-detail {
+  height: 1.25rem;
+  line-height: 1.25rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: center;
   color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 

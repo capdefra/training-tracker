@@ -1,36 +1,32 @@
-/** Lead-in before a timed hold. Four seconds sits in the 3–5s range Marc asked for. */
-export const LEAD_MS = 4000;
-/** How long the finished ring stays before rest, or before the controls return. */
-export const FINISH_MS = 1600;
-/** Time to change sides between the left and right holds. */
-export const SWITCH_MS = 4000;
-
 /**
  * A timed set running in the strength session.
  * Every boundary is an epoch millisecond. Pausing shifts those boundaries.
  * The display reads the clock; it does not subtract one each tick.
+ *
+ * `restSec` is the one rest the modal sets before Start. It counts down
+ * before the first hold, between the left and right holds, and after the last hold.
+ * Zero skips those gaps. The timer never writes a set.
  */
 export interface SetTimer {
   exerciseKey: string;
-  /** Seconds logged when the hold finishes. */
+  /** Seconds for one hold. A per-side set uses this length on each side. */
   seconds: number;
+  restSec: number;
   leadEndsAt: number;
   workEndsAt: number;
-  flashEndsAt: number;
+  /** End of the rest after the last hold. Null when `restSec` is 0. */
   restEndsAt: number | null;
   pausedAt: number | null;
-  logged: boolean;
   /**
    * Both sides of one set. `workEndsAt` is the end of the left hold,
    * then `switchEndsAt`, then `side2EndsAt` for the right hold.
-   * The logged seconds stay the per-side length.
    */
   perSide?: boolean;
   switchEndsAt?: number;
   side2EndsAt?: number;
 }
 
-export type TimerPhase = 'lead' | 'work' | 'side1' | 'switch' | 'side2' | 'done' | 'rest';
+export type TimerPhase = 'lead' | 'work' | 'side1' | 'switch' | 'side2' | 'rest';
 
 export interface TimerView {
   phase: TimerPhase;
@@ -38,8 +34,9 @@ export interface TimerView {
   secondsLeft: number;
   /** 0 at the start of the phase, 1 at the end. */
   progress: number;
+  /** The large label: Rest, Left, Switch, Right, or Hold. */
   caption: string;
-  /** Side 1 / Side 2, shown under the countdown. */
+  /** Shown under the countdown. */
   detail?: string;
 }
 
@@ -51,23 +48,22 @@ export function holdSeconds(text: string): number | null {
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
-export function startSetTimer(exerciseKey: string, seconds: number, restSec: number | null, now: number, perSide = false): SetTimer {
-  const leadEndsAt = now + LEAD_MS;
+export function startSetTimer(exerciseKey: string, seconds: number, restSec: number, now: number, perSide = false): SetTimer {
+  const rest = Math.max(0, Math.round(restSec));
+  const restMs = rest * 1000;
+  const leadEndsAt = now + restMs;
   const workEndsAt = leadEndsAt + seconds * 1000;
-  const switchEndsAt = perSide ? workEndsAt + SWITCH_MS : undefined;
+  const switchEndsAt = perSide ? workEndsAt + restMs : undefined;
   const side2EndsAt = perSide && switchEndsAt !== undefined ? switchEndsAt + seconds * 1000 : undefined;
   const finishedAt = side2EndsAt ?? workEndsAt;
-  const flashEndsAt = finishedAt + FINISH_MS;
-  const restEndsAt = restSec !== null && restSec > 0 ? flashEndsAt + restSec * 1000 : null;
   return {
     exerciseKey,
     seconds,
+    restSec: rest,
     leadEndsAt,
     workEndsAt,
-    flashEndsAt,
-    restEndsAt,
+    restEndsAt: rest > 0 ? finishedAt + restMs : null,
     pausedAt: null,
-    logged: false,
     ...(perSide ? { perSide: true, switchEndsAt, side2EndsAt } : {}),
   };
 }
@@ -82,57 +78,44 @@ export function resumeSetTimer(timer: SetTimer, now: number): SetTimer {
   return { ...shift(timer, now - timer.pausedAt), pausedAt: null };
 }
 
-/** What the ring should show. Null means the timer is over and can be dropped. */
+/** What the countdown should show. Null means the timer is over and can be dropped. */
 export function viewSetTimer(timer: SetTimer, now: number): TimerView | null {
   const at = timer.pausedAt ?? now;
-  if (at < timer.leadEndsAt) {
-    return phaseView('lead', 'Get ready', at, timer.leadEndsAt - LEAD_MS, timer.leadEndsAt);
+  const restMs = timer.restSec * 1000;
+  if (restMs > 0 && at < timer.leadEndsAt) {
+    return phaseView('lead', 'Rest', at, timer.leadEndsAt - restMs, timer.leadEndsAt, timer.perSide ? 'Then left' : 'Then hold');
   }
   if (timer.perSide && typeof timer.switchEndsAt === 'number' && typeof timer.side2EndsAt === 'number') {
     if (at < timer.workEndsAt) return phaseView('side1', 'Left', at, timer.leadEndsAt, timer.workEndsAt, 'Side 1');
-    if (at < timer.switchEndsAt) return phaseView('switch', 'Switch', at, timer.workEndsAt, timer.switchEndsAt, 'Change sides');
+    if (restMs > 0 && at < timer.switchEndsAt) return phaseView('switch', 'Switch', at, timer.workEndsAt, timer.switchEndsAt, 'Then right');
     if (at < timer.side2EndsAt) return phaseView('side2', 'Right', at, timer.switchEndsAt, timer.side2EndsAt, 'Side 2');
   } else if (at < timer.workEndsAt) {
     return phaseView('work', 'Hold', at, timer.leadEndsAt, timer.workEndsAt);
   }
-  if (!timer.logged || at < timer.flashEndsAt) {
-    return { phase: 'done', secondsLeft: timer.seconds, progress: 1, caption: 'Logged' };
-  }
   if (timer.restEndsAt !== null && at < timer.restEndsAt) {
-    return phaseView('rest', 'Rest', at, timer.flashEndsAt, timer.restEndsAt);
+    const finishedAt = timer.perSide && typeof timer.side2EndsAt === 'number' ? timer.side2EndsAt : timer.workEndsAt;
+    return phaseView('rest', 'Rest', at, finishedAt, timer.restEndsAt, 'Then log the set');
   }
   return null;
-}
-
-/** Epoch when both sides, or the single hold, are finished. */
-export function holdCompleteAt(timer: SetTimer): number {
-  if (timer.perSide && typeof timer.side2EndsAt === 'number') return timer.side2EndsAt;
-  return timer.workEndsAt;
-}
-
-/** True once the hold has elapsed and the set still needs to be written. A per-side set waits for the right side. */
-export function holdElapsed(timer: SetTimer, now: number): boolean {
-  const at = timer.pausedAt ?? now;
-  return !timer.logged && at >= holdCompleteAt(timer);
 }
 
 export function readSetTimer(value: unknown): SetTimer | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const record = value as Partial<SetTimer>;
   const seconds = typeof record.seconds === 'number' ? Math.round(record.seconds) : 0;
-  if (typeof record.exerciseKey !== 'string' || record.exerciseKey === '' || seconds <= 0) return null;
-  if (!Number.isFinite(record.leadEndsAt) || !Number.isFinite(record.workEndsAt) || !Number.isFinite(record.flashEndsAt)) return null;
+  const restSec = typeof record.restSec === 'number' && Number.isFinite(record.restSec) ? Math.max(0, Math.round(record.restSec)) : null;
+  if (typeof record.exerciseKey !== 'string' || record.exerciseKey === '' || seconds <= 0 || restSec === null) return null;
+  if (!Number.isFinite(record.leadEndsAt) || !Number.isFinite(record.workEndsAt)) return null;
   const perSide = record.perSide === true;
   if (perSide && (!Number.isFinite(record.switchEndsAt) || !Number.isFinite(record.side2EndsAt))) return null;
   return {
     exerciseKey: record.exerciseKey,
     seconds,
+    restSec,
     leadEndsAt: record.leadEndsAt as number,
     workEndsAt: record.workEndsAt as number,
-    flashEndsAt: record.flashEndsAt as number,
     restEndsAt: typeof record.restEndsAt === 'number' && Number.isFinite(record.restEndsAt) ? record.restEndsAt : null,
     pausedAt: typeof record.pausedAt === 'number' && Number.isFinite(record.pausedAt) ? record.pausedAt : null,
-    logged: Boolean(record.logged),
     ...(perSide
       ? { perSide: true as const, switchEndsAt: record.switchEndsAt as number, side2EndsAt: record.side2EndsAt as number }
       : {}),
@@ -144,7 +127,6 @@ function shift(timer: SetTimer, delta: number): SetTimer {
     ...timer,
     leadEndsAt: timer.leadEndsAt + delta,
     workEndsAt: timer.workEndsAt + delta,
-    flashEndsAt: timer.flashEndsAt + delta,
     restEndsAt: timer.restEndsAt === null ? null : timer.restEndsAt + delta,
     ...(typeof timer.switchEndsAt === 'number' ? { switchEndsAt: timer.switchEndsAt + delta } : {}),
     ...(typeof timer.side2EndsAt === 'number' ? { side2EndsAt: timer.side2EndsAt + delta } : {}),
