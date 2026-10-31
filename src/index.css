@@ -808,11 +808,33 @@ details.card > summary::marker { color: var(--spruce); }
   font-weight: 500;
   line-height: 1;
 }
-.activity-swatch { width: 12px; height: 12px; border-radius: 3px; display: block; flex: none; }
-.activity-swatch.empty { background: var(--track); }
-.activity-swatch.planned { background: transparent; box-shadow: inset 0 0 0 1.5px var(--spruce); }
-.activity-swatch.partial { background: var(--partial); }
-.activity-swatch.done { background: var(--spruce); }
+.activity-swatch {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: block;
+  flex: none;
+  background: var(--track);
+  border: 1px solid transparent;
+}
+.activity-swatch.skipped { background: transparent; border-color: var(--spruce); }
+.activity-swatch.done { background: var(--spruce); border-color: var(--spruce); }
+.activity-swatch.extra { background: color-mix(in srgb, var(--spruce) 48%, var(--track)); border-color: transparent; }
+.activity-swatch.has-extra::after,
+.activity-cell.has-extra::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 0 1px rgba(12, 13, 16, 0.55);
+}
+.activity-swatch.has-extra::after {
+  top: 1px;
+  right: 1px;
+  width: 4px;
+  height: 4px;
+}
 .activity { display: flex; flex-direction: column; gap: 4px; }
 .activity-head, .activity-week {
   display: grid;
@@ -836,6 +858,7 @@ details.card > summary::marker { color: var(--spruce); }
   color: var(--muted);
 }
 .activity-cell {
+  position: relative;
   display: block;
   width: 100%;
   aspect-ratio: 1;
@@ -844,9 +867,15 @@ details.card > summary::marker { color: var(--spruce); }
   background: var(--track);
   border: 1px solid transparent;
 }
-.activity-cell.planned { background: transparent; border-color: var(--spruce); }
-.activity-cell.partial { background: var(--partial); border-color: var(--partial); }
+.activity-cell.skipped { background: transparent; border-color: var(--spruce); }
 .activity-cell.done { background: var(--spruce); border-color: var(--spruce); }
+.activity-cell.extra { background: color-mix(in srgb, var(--spruce) 48%, var(--track)); border-color: transparent; }
+.activity-cell.has-extra::after {
+  top: 12%;
+  right: 12%;
+  width: 18%;
+  height: 18%;
+}
 .activity-cell.is-today { box-shadow: inset 0 0 0 2px var(--amber); }
 .phase-jump {
   width: 100%;
