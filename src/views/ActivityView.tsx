@@ -1,15 +1,18 @@
-import { activityMondays, activeGoal, dayProgress, extraLogsForDay, planItemsForWeek, type DayProgress, type PlanItem } from '../lib/plans';
+import { activityDayFor, activitySummary, type ActivityMark } from '../lib/activity';
+import { activityMondays, activeGoal, planItemsForWeek } from '../lib/plans';
 import { addDays, formatDayMonth, formatPretty, formatWeekday, startOfWeek, todayISO, weekdayLabel } from '../lib/dates';
 import { cx } from '../lib/cx';
-import type { Session, TrainingData } from '../types';
+import type { TrainingData } from '../types';
 
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 0] as const;
 
-const LEVELS: { id: DayProgress; label: string }[] = [
-  { id: 'empty', label: 'Nothing' },
-  { id: 'planned', label: 'Planned' },
-  { id: 'partial', label: 'Partly done' },
+const LEVELS: { id: ActivityMark; extra?: boolean; label: string }[] = [
+  { id: 'neutral', label: 'Rest' },
+  { id: 'skipped', label: 'Missed' },
+  { id: 'skipped', extra: true, label: 'Missed + extra' },
   { id: 'done', label: 'Done' },
+  { id: 'done', extra: true, label: 'Done + extra' },
+  { id: 'extra', extra: true, label: 'Extra' },
 ];
 
 export function ActivityView({ data }: { data: TrainingData }) {
@@ -28,8 +31,8 @@ export function ActivityView({ data }: { data: TrainingData }) {
       </header>
       <div className="activity-legend" aria-hidden="true">
         {LEVELS.map((level) => (
-          <span key={level.id}>
-            <i className={cx('activity-swatch', level.id)} />
+          <span key={`${level.id}-${level.extra ? 'extra' : 'plain'}`}>
+            <i className={cx('activity-swatch', level.id, level.extra && 'has-extra')} />
             {level.label}
           </span>
         ))}
@@ -51,15 +54,14 @@ export function ActivityView({ data }: { data: TrainingData }) {
               {Array.from({ length: 7 }, (_, index) => {
                 const date = addDays(monday, index);
                 const planned = items.filter((item) => item.date === date);
-                const extras = extraLogsForDay(data.sessions, planned, date);
-                const level = dayProgress(planned, extras);
+                const day = activityDayFor(date, today, items, data.sessions);
                 return (
                   <a
                     key={date}
                     role="gridcell"
                     href={`#/today/${date}`}
-                    className={cx('activity-cell', level, date === today && 'is-today')}
-                    aria-label={cellLabel(date, planned, extras, level)}
+                    className={cx('activity-cell', day.mark, day.extra && 'has-extra', date === today && 'is-today')}
+                    aria-label={cellLabel(date, planned, day)}
                     aria-current={date === today ? 'date' : undefined}
                   />
                 );
@@ -72,11 +74,10 @@ export function ActivityView({ data }: { data: TrainingData }) {
   );
 }
 
-function cellLabel(date: string, planned: PlanItem[], extras: Session[], level: DayProgress): string {
-  const names = [...planned.map((item) => item.session.title), ...extras.map((session) => session.title)];
-  const state =
-    level === 'empty' ? 'nothing planned' : level === 'planned' ? 'planned, not done' : level === 'partial' ? 'partly done' : planned.length === 0 ? 'logged' : 'done';
+function cellLabel(date: string, planned: { extra: boolean; session: { title: string } }[], day: { mark: ActivityMark; extra: boolean }): string {
+  const names = planned.map((item) => item.session.title);
+  const scheduled = planned.filter((item) => !item.extra).length;
   const detail = names.length > 0 ? `, ${names.join(', ')}` : '';
   const when = date === todayISO() ? `${formatPretty(date)}, today` : `${formatWeekday(date, 'long')} ${formatPretty(date)}`;
-  return `${when}, ${state}${detail}`;
+  return `${when}, ${activitySummary(day, scheduled)}${detail}`;
 }

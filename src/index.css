@@ -15,6 +15,7 @@
   --on-accent: #f6f3ec;
   --ember: #ff8f78;
   --amber: #f0b429;
+  --activity-gold: #f2c14d;
   --good: #8ee8bf;
   --warn: #f5c451;
   --good-bg: #123528;
@@ -808,11 +809,24 @@ details.card > summary::marker { color: var(--spruce); }
   font-weight: 500;
   line-height: 1;
 }
-.activity-swatch { width: 12px; height: 12px; border-radius: 3px; display: block; flex: none; }
-.activity-swatch.empty { background: var(--track); }
-.activity-swatch.planned { background: transparent; box-shadow: inset 0 0 0 1.5px var(--spruce); }
-.activity-swatch.partial { background: var(--partial); }
-.activity-swatch.done { background: var(--spruce); }
+.activity-swatch {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: block;
+  flex: none;
+  background: var(--track);
+  border: 1px solid transparent;
+  box-sizing: border-box;
+}
+.activity-swatch.skipped { background: transparent; border-color: var(--spruce); }
+.activity-swatch.done { background: var(--spruce); border-color: var(--spruce); }
+.activity-swatch.extra { background: color-mix(in srgb, var(--spruce) 48%, var(--track)); border-color: transparent; }
+.activity-swatch.has-extra {
+  border-color: var(--activity-gold);
+  box-shadow: inset 0 0 0 1.5px var(--activity-gold);
+}
 .activity { display: flex; flex-direction: column; gap: 4px; }
 .activity-head, .activity-week {
   display: grid;
@@ -836,6 +850,7 @@ details.card > summary::marker { color: var(--spruce); }
   color: var(--muted);
 }
 .activity-cell {
+  position: relative;
   display: block;
   width: 100%;
   aspect-ratio: 1;
@@ -844,10 +859,22 @@ details.card > summary::marker { color: var(--spruce); }
   background: var(--track);
   border: 1px solid transparent;
 }
-.activity-cell.planned { background: transparent; border-color: var(--spruce); }
-.activity-cell.partial { background: var(--partial); border-color: var(--partial); }
+.activity-cell.skipped { background: transparent; border-color: var(--spruce); }
 .activity-cell.done { background: var(--spruce); border-color: var(--spruce); }
-.activity-cell.is-today { box-shadow: inset 0 0 0 2px var(--amber); }
+.activity-cell.extra { background: color-mix(in srgb, var(--spruce) 48%, var(--track)); border-color: transparent; }
+.activity-cell.has-extra,
+.activity-swatch.skipped.has-extra {
+  border-color: var(--activity-gold);
+}
+.activity-cell.has-extra {
+  box-shadow: inset 0 0 0 2px var(--activity-gold);
+}
+.activity-cell.skipped.has-extra { background: transparent; }
+.activity-cell.is-today { box-shadow: inset 0 0 0 2px var(--ink); }
+.activity-cell.is-today.has-extra {
+  border-color: var(--activity-gold);
+  box-shadow: inset 0 0 0 2px var(--activity-gold), inset 0 0 0 4px var(--ink);
+}
 .phase-jump {
   width: 100%;
   display: flex;
