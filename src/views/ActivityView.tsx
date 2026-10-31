@@ -9,9 +9,10 @@ const WEEKDAYS = [1, 2, 3, 4, 5, 6, 0] as const;
 const LEVELS: { id: ActivityMark; extra?: boolean; label: string }[] = [
   { id: 'neutral', label: 'Rest' },
   { id: 'skipped', label: 'Missed' },
+  { id: 'skipped', extra: true, label: 'Missed + extra' },
   { id: 'done', label: 'Done' },
-  { id: 'extra', extra: true, label: 'Extra' },
   { id: 'done', extra: true, label: 'Done + extra' },
+  { id: 'extra', extra: true, label: 'Extra' },
 ];
 
 export function ActivityView({ data }: { data: TrainingData }) {

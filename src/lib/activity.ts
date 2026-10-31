@@ -12,7 +12,7 @@ export type ActivityMark = 'neutral' | 'skipped' | 'done' | 'extra';
 
 export interface ActivityDay {
   mark: ActivityMark;
-  /** Gold dot. An extra was completed, on top of whatever the square already shows. */
+  /** Gold border. An extra was completed, on top of whatever the square already shows. */
   extra: boolean;
 }
 

@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { activityDayFor, activitySummary } from '../src/lib/activity';
 import { extraSessionId } from '../src/lib/plan-extras';
 import { applySessionDone, extraLogsForDay, planItemsForWeek } from '../src/lib/plans';
@@ -132,14 +133,28 @@ check('an unplanned session on a rest day is an extra', see(unplannedRest, '2026
 
 const missedPlus = withPlan({}, [log('2026-10-30', null, 3, 'log-free-fri')]);
 const friday = see(missedPlus, '2026-10-30');
-check('a missed plan with an unplanned session stays an outline and gains the dot', friday.mark === 'skipped' && friday.extra === true);
+check('a missed plan with an unplanned session stays an outline and keeps the extra', friday.mark === 'skipped' && friday.extra === true);
 check('the missed-plus-extra label says both', activitySummary(friday) === 'planned workout missed, extra logged');
 
 const orphan = withPlan({}, [log('2026-10-22', 'extra:preset-missing', 3, 'log-orphan')]);
 check('an extra id with no card still counts as an unplanned extra', see(orphan, '2026-10-22').mark === 'extra');
 
+const todayExtra = withPlan({}, [log(today, null, 3, 'log-today-extra')]);
+const todayOpen = see(todayExtra, today);
+check('an extra on an open today stays neutral and is still an extra', todayOpen.mark === 'neutral' && todayOpen.extra === true);
+check('that today is described as still open, with the extra', activitySummary(todayOpen, 1) === 'planned workout still open, extra logged');
+
 const todayDone = mark(base, 'ps-long', today);
 check('finishing today fills the square', see(todayDone, today).mark === 'done');
+
+const css = readFileSync(join(process.cwd(), 'src/index.css'), 'utf8');
+const view = readFileSync(join(process.cwd(), 'src/views/ActivityView.tsx'), 'utf8');
+check('an extra draws a gold border', css.includes('--activity-gold') && css.includes('.activity-cell.has-extra') && css.includes('inset 0 0 0 2px var(--activity-gold)'));
+check('the corner dot is gone', !css.includes('.activity-cell.has-extra::after') && !css.includes('.activity-swatch.has-extra::after'));
+check('a missed extra replaces the green outline with gold', css.includes('.activity-cell.skipped.has-extra') && css.includes('border-color: var(--activity-gold)'));
+check('today is a light ring, not the gold border', /activity-cell\.is-today \{[^}]*var\(--ink\)/.test(css) && !/activity-cell\.is-today \{[^}]*amber/.test(css));
+check('today with an extra keeps a light ring inside the gold', css.includes('.activity-cell.is-today.has-extra') && css.includes('inset 0 0 0 2px var(--activity-gold), inset 0 0 0 4px var(--ink)'));
+check('the legend shows the gold frame on each extra state', view.includes('Missed + extra') && view.includes('Done + extra') && view.includes("level.extra && 'has-extra'"));
 
 if (failures.length > 0) {
   console.error(failures.join('\n'));

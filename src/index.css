@@ -15,6 +15,7 @@
   --on-accent: #f6f3ec;
   --ember: #ff8f78;
   --amber: #f0b429;
+  --activity-gold: #f2c14d;
   --good: #8ee8bf;
   --warn: #f5c451;
   --good-bg: #123528;
@@ -817,23 +818,14 @@ details.card > summary::marker { color: var(--spruce); }
   flex: none;
   background: var(--track);
   border: 1px solid transparent;
+  box-sizing: border-box;
 }
 .activity-swatch.skipped { background: transparent; border-color: var(--spruce); }
 .activity-swatch.done { background: var(--spruce); border-color: var(--spruce); }
 .activity-swatch.extra { background: color-mix(in srgb, var(--spruce) 48%, var(--track)); border-color: transparent; }
-.activity-swatch.has-extra::after,
-.activity-cell.has-extra::after {
-  content: '';
-  position: absolute;
-  border-radius: 50%;
-  background: var(--amber);
-  box-shadow: 0 0 0 1px rgba(12, 13, 16, 0.55);
-}
-.activity-swatch.has-extra::after {
-  top: 1px;
-  right: 1px;
-  width: 4px;
-  height: 4px;
+.activity-swatch.has-extra {
+  border-color: var(--activity-gold);
+  box-shadow: inset 0 0 0 1.5px var(--activity-gold);
 }
 .activity { display: flex; flex-direction: column; gap: 4px; }
 .activity-head, .activity-week {
@@ -870,13 +862,19 @@ details.card > summary::marker { color: var(--spruce); }
 .activity-cell.skipped { background: transparent; border-color: var(--spruce); }
 .activity-cell.done { background: var(--spruce); border-color: var(--spruce); }
 .activity-cell.extra { background: color-mix(in srgb, var(--spruce) 48%, var(--track)); border-color: transparent; }
-.activity-cell.has-extra::after {
-  top: 12%;
-  right: 12%;
-  width: 18%;
-  height: 18%;
+.activity-cell.has-extra,
+.activity-swatch.skipped.has-extra {
+  border-color: var(--activity-gold);
 }
-.activity-cell.is-today { box-shadow: inset 0 0 0 2px var(--amber); }
+.activity-cell.has-extra {
+  box-shadow: inset 0 0 0 2px var(--activity-gold);
+}
+.activity-cell.skipped.has-extra { background: transparent; }
+.activity-cell.is-today { box-shadow: inset 0 0 0 2px var(--ink); }
+.activity-cell.is-today.has-extra {
+  border-color: var(--activity-gold);
+  box-shadow: inset 0 0 0 2px var(--activity-gold), inset 0 0 0 4px var(--ink);
+}
 .phase-jump {
   width: 100%;
   display: flex;
