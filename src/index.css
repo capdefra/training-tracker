@@ -822,11 +822,6 @@ details.card > summary::marker { color: var(--spruce); }
 }
 .activity-swatch.skipped { background: transparent; border-color: var(--spruce); }
 .activity-swatch.done { background: var(--spruce); border-color: var(--spruce); }
-.activity-swatch.extra { background: color-mix(in srgb, var(--spruce) 48%, var(--track)); border-color: transparent; }
-.activity-swatch.has-extra {
-  border-color: var(--activity-gold);
-  box-shadow: inset 0 0 0 1.5px var(--activity-gold);
-}
 .activity { display: flex; flex-direction: column; gap: 4px; }
 .activity-head, .activity-week {
   display: grid;
@@ -861,17 +856,15 @@ details.card > summary::marker { color: var(--spruce); }
 }
 .activity-cell.skipped { background: transparent; border-color: var(--spruce); }
 .activity-cell.done { background: var(--spruce); border-color: var(--spruce); }
-.activity-cell.extra { background: color-mix(in srgb, var(--spruce) 48%, var(--track)); border-color: transparent; }
 .activity-cell.has-extra,
-.activity-swatch.skipped.has-extra {
+.activity-swatch.has-extra {
+  background: var(--spruce);
   border-color: var(--activity-gold);
-}
-.activity-cell.has-extra {
   box-shadow: inset 0 0 0 2px var(--activity-gold);
 }
-.activity-cell.skipped.has-extra { background: transparent; }
 .activity-cell.is-today { box-shadow: inset 0 0 0 2px var(--ink); }
 .activity-cell.is-today.has-extra {
+  background: var(--spruce);
   border-color: var(--activity-gold);
   box-shadow: inset 0 0 0 2px var(--activity-gold), inset 0 0 0 4px var(--ink);
 }

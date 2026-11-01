@@ -149,12 +149,13 @@ check('finishing today fills the square', see(todayDone, today).mark === 'done')
 
 const css = readFileSync(join(process.cwd(), 'src/index.css'), 'utf8');
 const view = readFileSync(join(process.cwd(), 'src/views/ActivityView.tsx'), 'utf8');
-check('an extra draws a gold border', css.includes('--activity-gold') && css.includes('.activity-cell.has-extra') && css.includes('inset 0 0 0 2px var(--activity-gold)'));
+check('an extra draws a gold border', css.includes('--activity-gold') && css.includes('inset 0 0 0 2px var(--activity-gold)'));
 check('the corner dot is gone', !css.includes('.activity-cell.has-extra::after') && !css.includes('.activity-swatch.has-extra::after'));
-check('a missed extra replaces the green outline with gold', css.includes('.activity-cell.skipped.has-extra') && css.includes('border-color: var(--activity-gold)'));
+check('every gold square uses the done green', css.includes('.activity-cell.has-extra,\n.activity-swatch.has-extra {\n  background: var(--spruce);'));
+check('a missed extra is not an empty frame', !css.includes('skipped.has-extra') && !css.includes('color-mix(in srgb, var(--spruce)'));
 check('today is a light ring, not the gold border', /activity-cell\.is-today \{[^}]*var\(--ink\)/.test(css) && !/activity-cell\.is-today \{[^}]*amber/.test(css));
 check('today with an extra keeps a light ring inside the gold', css.includes('.activity-cell.is-today.has-extra') && css.includes('inset 0 0 0 2px var(--activity-gold), inset 0 0 0 4px var(--ink)'));
-check('the legend shows the gold frame on each extra state', view.includes('Missed + extra') && view.includes('Done + extra') && view.includes("level.extra && 'has-extra'"));
+check('the legend keeps one gold state beside done', view.includes("label: 'Rest'") && view.includes("label: 'Missed'") && view.includes("label: 'Done'") && view.includes("label: 'Extra'") && !view.includes('Missed + extra') && view.includes("level.extra && 'has-extra'"));
 
 if (failures.length > 0) {
   console.error(failures.join('\n'));
