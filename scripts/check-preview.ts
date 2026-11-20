@@ -103,7 +103,8 @@ const inPhase = row(data, '2026-10-16', 'ps-lower-b', 'Reverse lunge', history);
 check('the selected day inside the phase uses the phase target', inPhase.exercise?.targetLabel === 'Target: 3×8 @ 10 kg per piece');
 check('the plan line keeps the template sets and reps', inPhase.exercise?.planLabel === '3×8');
 check('history is quoted beside the target', inPhase.exercise?.lastLabel === 'Last: 3×8 @ 8 kg');
-check('a loads summary is left off and the coaching note stays', inPhase.model.phaseNotes === 'Shoulders on the bench for the hip thrust.' && inPhase.model.phaseName === 'Easy base');
+check('a strength coaching note is left off the preview', inPhase.model.phaseNotes === '' && inPhase.model.phaseName === 'Easy base');
+check('the strength session note is not copied into the preview', !JSON.stringify(inPhase.model).includes('Shoulders on the bench'));
 check(
   'lower b lists the pair, the kettlebell, the bench, and a mat',
   inPhase.model.equipmentLabel === '2× dumbbells, kettlebell, bench, mat',
@@ -183,6 +184,11 @@ const keptCarry = roundTrip.plans[0]?.sessions.find((item) => item.id === 'ps-lo
 check('an exercise note still round-trips as an unknown field', kept?.notes === 'Each leg');
 check('equipment round-trips and a duplicate is dropped', keptCarry?.equipment?.join('|') === 'resistance band');
 check('a field beside equipment still round-trips', keptCarry?.cue === 'left side');
+
+const longNote = 'Fri 20 Nov (moved from Sunday). Stop each set with 2 reps in reserve.';
+sessionOf(data, 'ps-lower-b').notes = longNote;
+const withSessionNote = previewSession(planOf(data), sessionOf(data, 'ps-lower-b'), '2026-11-20', []);
+check('a long strength session note stays out of the preview', withSessionNote.phaseNotes === '' && withSessionNote.runLine === '' && !JSON.stringify(withSessionNote).includes('2 reps in reserve'));
 
 if (failures.length > 0) {
   console.error(failures.join('\n'));

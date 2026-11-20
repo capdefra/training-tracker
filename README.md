@@ -185,7 +185,7 @@ An exercise can list the gear it needs. Each entry is a short label. `2× dumbbe
 { "name": "Reverse lunge", "sets": 3, "reps": "8", "equipment": ["2× dumbbells"] }
 ```
 
-A phase note that only restates those loads, including a paragraph that starts with `Loads:`, is left off the preview. A coaching sentence after it, and a run note such as `20-25 min easy`, still show.
+A phase note that only restates those loads, including a paragraph that starts with `Loads:`, is left off a run preview. The strength preview does not show the session coaching note or the phase coaching note. A run note such as `20-25 min easy` still shows.
 
 ### One-off moves
 
