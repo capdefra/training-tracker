@@ -97,8 +97,9 @@ export function SessionPreview({
                 <span>{model.equipmentLabel || 'None'}</span>
               </p>
             ) : null}
-            {model.phaseNotes ? <p className="preview-phase">{model.phaseNotes}</p> : null}
-            {model.runLine && !model.phaseNotes ? <p className="preview-phase">{model.runLine}</p> : null}
+            {model.kind === 'run' && (model.runLine || model.phaseNotes) ? (
+              <p className="preview-phase">{model.runLine || model.phaseNotes}</p>
+            ) : null}
           </div>
           {model.exercises.length > 0 ? (
             <ul className="preview-list">

@@ -81,7 +81,9 @@ function targetLine(sets: number, repsText: string, weight: { kg: number; perPie
 export function previewSession(plan: Plan | null, session: PlanSession, date: string, logs: Session[]): SessionPreviewModel {
   const phase = plan ? phaseOn(plan, date) : null;
   const change = phase?.sessions.find((item) => item.sessionId === session.id);
-  const phaseNotes = visiblePhaseNotes(change?.notes?.trim() ?? '');
+  const coaching = visiblePhaseNotes(change?.notes?.trim() ?? '');
+  // Strength preview leaves the free-text coaching note out. The plan still stores it.
+  const phaseNotes = session.kind === 'run' ? coaching : '';
   const exercises = session.kind === 'strength'
     ? session.exercises.map((exercise) => {
         const plannedSets = change?.sets ?? exercise.sets;
@@ -105,7 +107,7 @@ export function previewSession(plan: Plan | null, session: PlanSession, date: st
         };
       })
     : [];
-  const runNotes = phaseNotes || session.notes.trim();
+  const runNotes = coaching || session.notes.trim();
   return {
     title: session.title,
     date,
